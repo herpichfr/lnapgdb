@@ -1,0 +1,36 @@
+[
+    {
+        "colname": "id",
+        "default": 0,
+        "datatype": "Integer",
+        "primary_key": true,
+        "nullable": false,
+        "description": "Primary key"
+    },
+    {
+        "colname": "SIMPLE",
+        "default": "T",
+        "datatype": "Boolean",
+        "allowed_values": {"T", "F"},
+        "description": "Standard FITS (NOST-100-2.0)"
+    },
+    {
+        "colname": "BUNIT",
+        "default": "adu",
+        "datatype": "String",
+        "description": "Physical unit of array values"
+    },
+    {
+        "colname": "NAXIS",
+        "default": "2",
+        "datatype": "Integer",
+        "description": "# of axes in frame"
+    },
+    {
+        "colname": "RADESYS",
+        "default": "FK5'",
+        "datatype": "String",
+        "description": "Reference system"
+    },
+
+]
