@@ -18,7 +18,7 @@ or copyright holders be liable for any claim, damages or other liability,
 whether in an action of contract, tort or otherwise, arising from, out of or in
 connection with the code or the use or other dealings in the code.
 """
-
+# NOTE: Authentication to the database depends on psycopg2 and pg_hba.conf settings.
 import os
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Date, DateTime, Boolean, Numeric
 from sqlalchemy.ext.declarative import declarative_base
@@ -86,13 +86,20 @@ def add_columns_from_json(table_class):
         setattr(table_class, col['name'], Column(type_class, nullable=True))
 
 
-if __name__ == '__main__':
-    # Create engine and session
-    engine = create_engine('postgresql://user:password@localhost/dbname')
-
-    # Create tables
+def main():
+    creds = get_db_credentials()
+    engine = create_engine(
+        f"postgresql://{creds['username']}:{creds['password']
+                                            }@{creds['host']}/{creds['database']}"
+    )
+    Base.metadata.drop_all(engine)  # Drop existing tables
     Base.metadata.create_all(engine)
-    print("Tables created successfully!")
+    print("Database and tables created successfully!")
+
+
+if __name__ == '__main__':
+    main()
+
 # Uncomment to use dynamically loaded columns:
 # add_columns_from_json(PrimaryTable)
 # add_columns_from_json(CommonKeywords)
