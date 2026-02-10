@@ -18,7 +18,9 @@ or copyright holders be liable for any claim, damages or other liability,
 whether in an action of contract, tort or otherwise, arising from, out of or in
 connection with the code or the use or other dealings in the code.
 """
-# NOTE: Authentication to the database depends on psycopg2 and pg_hba.conf settings.
+# NOTE: Authentication to the database depends on psycopg2 and
+# pg_hba.conf settings.
+
 import os
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Date, DateTime, Boolean, Numeric
 from sqlalchemy.ext.declarative import declarative_base
@@ -47,16 +49,20 @@ class CommonKeywords(Base):
 def map_type_to_sqlalchemy(type_str):
     type_mapping = {
         'integer': Integer,
+        'Integer': Integer,
         'int': Integer,
         'int4': Integer,
         'string': String,
+        'String': String,
         'str': String,
         'varchar': String,
         'text': String,
         'boolean': Boolean,
+        'Boolean': Boolean,
         'bool': Boolean,
         'numeric': Numeric,
         'float': Float,
+        'Float': Float,
         'float4': Float,
         'float8': Float,
         'date': Date,
@@ -76,9 +82,13 @@ def get_db_credentials():
 
 
 def add_columns_from_json(table_class):
-    json_path = f'data/{table_class.__name__.lower()}.json'
+    if not hasattr(table_class, '__tablename__'):
+        raise ValueError("Provided class must have a __tablename__ attribute.")
+    json_path = f'data/{table_class.__tablename__.lower()}.json'
     with open(json_path) as f:
         config = load(f)
+    import pdb
+    pdb.set_trace()
     for col in config['columns']:
         # Map SQLAlchemy type
         type_class = map_type_to_sqlalchemy(col['type'])
@@ -90,16 +100,16 @@ def main():
     creds = get_db_credentials()
     engine = create_engine(
         f"postgresql://{creds['username']}:{creds['password']
-                                            }@{creds['host']}/{creds['database']}"
+                                            }@{creds['host']}:{creds['port']}/{creds['database']}"
     )
-    Base.metadata.drop_all(engine)  # Drop existing tables
-    Base.metadata.create_all(engine)
-    print("Database and tables created successfully!")
+    if False:
+        Base.metadata.drop_all(engine)  # Drop existing tables
+        Base.metadata.create_all(engine)
+        print("Database and tables created successfully!")
+    add_columns_from_json(PrimaryTable)
 
 
 if __name__ == '__main__':
+    # NOTE: File execution is SUCCESSFULL.
+    # Creating new columns from JSON
     main()
-
-# Uncomment to use dynamically loaded columns:
-# add_columns_from_json(PrimaryTable)
-# add_columns_from_json(CommonKeywords)
