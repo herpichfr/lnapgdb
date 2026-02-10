@@ -58,7 +58,7 @@
     },
     {
         "colname": "OBJECT",
-        "default": "NGC1234'",
+        "default": "NGC1234",
         "datatype": "String",
         "description": "Target as given by the user"
     },
@@ -113,20 +113,20 @@
     },
     {
         "colname": "OBSTYPE",
-        "default": "OBJECT'",
+        "default": "OBJECT",
         "datatype": "string",
         "allowed_values": "OBJECT,ZERO,FLAT,DARK,FOCUS",
         "description": "Image type: OBJECT, ZERO, FLAT, DARK, FOCUS"
     },
     {
         "colname": "ORIGFILE",
-        "default": "20251105_S4C1_00001.fits'",
+        "default": "20251105_S4C1_00001.fits",
         "datatype": "String",
         "description": "Original file name"
     },
     {
         "colname": "DATE-OBS",
-        "default": "2001-08-19T09:33:11.950'",
+        "default": "2001-08-19T09:33:11.950",
         "datatype": "String",
         "description": "Exposure start"
     },
@@ -186,7 +186,7 @@
     },
     {
         "colname": "DATE",
-        "default": "2001-08-19T09:34:52.676'",
+        "default": "2001-08-19T09:34:52.676",
         "datatype": "String",
         "description": "Date the file was written"
     },
@@ -204,7 +204,7 @@
     },
     {
         "colname": "DATE-END",
-        "default": "2001-08-19T09:34:51.950'",
+        "default": "2001-08-19T09:34:51.950",
         "datatype": "String",
         "description": "Exposure end"
     },
