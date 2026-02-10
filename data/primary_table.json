@@ -41,7 +41,7 @@
         "colname": "EXTEND",
         "default": "T",
         "datatype": "Boolean",
-        "allowed_values": {"T", "F"},
+        "allowed_values": {"values": "T,F"},
         "description": "Extensions may be present"
     },
     {
@@ -115,7 +115,7 @@
         "colname": "OBSTYPE",
         "default": "OBJECT'",
         "datatype": "string",
-        "allowed_values": {"OBJECT", "ZERO", "FLAT", "DARK", "FOCUS"},
+        "allowed_values": "OBJECT,ZERO,FLAT,DARK,FOCUS",
         "description": "Image type: OBJECT, ZERO, FLAT, DARK, FOCUS"
     },
     {
