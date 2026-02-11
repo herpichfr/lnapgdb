@@ -1,13 +1,5 @@
 [
     {
-        "colname": "id",
-        "default": 0,
-        "datatype": "Integer",
-        "primary_key": true,
-        "nullable": false,
-        "description": "Primary key"
-    },
-    {
         "colname": "BSCALE",
         "default": "1",
         "datatype": "Integer",
@@ -41,7 +33,7 @@
         "colname": "EXTEND",
         "default": "T",
         "datatype": "Boolean",
-        "allowed_values": {"values": "T,F"},
+        "allowed_values": "T,F",
         "description": "Extensions may be present"
     },
     {
@@ -127,7 +119,7 @@
     {
         "colname": "DATE-OBS",
         "default": "2001-08-19T09:33:11.950",
-        "datatype": "String",
+        "datatype": "timestamp",
         "description": "Exposure start"
     },
     {
@@ -187,7 +179,7 @@
     {
         "colname": "DATE",
         "default": "2001-08-19T09:34:52.676",
-        "datatype": "String",
+        "datatype": "timestamp",
         "description": "Date the file was written"
     },
     {
@@ -205,7 +197,7 @@
     {
         "colname": "DATE-END",
         "default": "2001-08-19T09:34:51.950",
-        "datatype": "String",
+        "datatype": "timestamp",
         "description": "Exposure end"
     },
     {
@@ -249,6 +241,31 @@
         "default": "0265279410",
         "datatype": "String",
         "description": "Data unit checksum"
+    },
+    {
+        "colname": "SIMPLE",
+        "default": "T",
+        "datatype": "Boolean",
+        "allowed_values": "T,F",
+        "description": "Standard FITS (NOST-100-2.0)"
+    },
+    {
+        "colname": "BUNIT",
+        "default": "adu",
+        "datatype": "String",
+        "description": "Physical unit of array values"
+    },
+    {
+        "colname": "NAXIS",
+        "default": "2",
+        "datatype": "Integer",
+        "description": "# of axes in frame"
+    },
+    {
+        "colname": "RADESYS",
+        "default": "FK5'",
+        "datatype": "String",
+        "description": "Reference system"
     },
     {
         "colname": "COMMENT",
