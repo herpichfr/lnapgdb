@@ -86,14 +86,23 @@ def add_columns_from_json(table_class):
         raise ValueError("Provided class must have a __tablename__ attribute.")
     json_path = f'data/{table_class.__tablename__.lower()}.json'
     with open(json_path) as f:
-        config = load(f)
-    import pdb
-    pdb.set_trace()
-    for col in config['columns']:
+        table_cols = load(f)
+    for col in table_cols:
+        colname = col['colname']
+        default_value = col.get('default', None)
         # Map SQLAlchemy type
-        type_class = map_type_to_sqlalchemy(col['type'])
-        # Create column dynamically
-        setattr(table_class, col['name'], Column(type_class, nullable=True))
+        type_class = map_type_to_sqlalchemy(col['datatype'])
+        description = col.get('description', '')
+        if 'allowed_values' in col.keys():
+            allowed_values = col['allowed_values'].split(',')
+            # Add a check constraint for allowed values
+            new_column = Column(type_class, nullable=True, default=default_value,
+                                info={'allowed_values': allowed_values, 'description': description})
+        else:
+            new_column = Column(type_class, nullable=True, default=default_value,
+                                info={'description': description})
+        setattr(table_class, colname, new_column)
+        table_class.__table__.append_column(new_column)
 
 
 def main():
@@ -102,11 +111,11 @@ def main():
         f"postgresql://{creds['username']}:{creds['password']
                                             }@{creds['host']}:{creds['port']}/{creds['database']}"
     )
-    if False:
-        Base.metadata.drop_all(engine)  # Drop existing tables
-        Base.metadata.create_all(engine)
-        print("Database and tables created successfully!")
+    Base.metadata.drop_all(engine)  # Drop existing tables
+    print("Database and tables created successfully!")
     add_columns_from_json(PrimaryTable)
+    print("Columns added to PrimaryTable successfully!")
+    Base.metadata.create_all(engine)  # Create tables with new columns
 
 
 if __name__ == '__main__':
