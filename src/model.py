@@ -34,16 +34,39 @@ class PrimaryTable(Base):
     __tablename__ = 'primary_table'
     __table_args__ = {'schema': 'public'}  # Optional schema
 
-    id = Column(Integer, primary_key=True)
-    # Add other columns dynamically
+    id = Column(Integer, primary_key=True, nullable=False)
+    instrume = Column(String, nullable=False, info={
+                      'description': 'Instrument used'})
+
+    # Polymorphic identity for inheritance
+    __mapper_args__ = {
+        'polymorphic_identity': 'primary_table',
+        'polymorphic_on': instrume
+    }
 
 
-class CommonKeywords(Base):
-    __tablename__ = 'common_keywords'
+class Spar4(Base):
+    __tablename__ = 'sparc4'
     __table_args__ = {'schema': 'public'}  # Optional schema
 
-    id = Column(Integer, primary_key=True)
-    # Add other columns dynamically
+    id = Column(Integer, ForeignKey('public.primary_table.id',
+                ondelete='CASCADE'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'sparc4',
+    }
+
+
+class Echarpe(Base):
+    __tablename__ = 'echarpe'
+    __table_args__ = {'schema': 'public'}  # Optional schema
+
+    id = Column(Integer, ForeignKey('public.primary_table.id',
+                ondelete='CASCADE'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'echarpe',
+    }
 
 
 def map_type_to_sqlalchemy(type_str):
@@ -67,6 +90,7 @@ def map_type_to_sqlalchemy(type_str):
         'float8': Float,
         'date': Date,
         'timestamp': DateTime,
+        'datetime': DateTime,
     }
     return type_mapping.get(type_str.lower(), String)
 
