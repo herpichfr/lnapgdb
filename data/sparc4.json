@@ -1,276 +1,478 @@
 [
     {
-        "colname": "BSCALE",
-        "default": "1",
-        "datatype": "Integer",
-        "description": "Linear factor in scaling equation"
-    },
-    {
-        "colname": "BZERO",
-        "default": "32768",
-        "datatype": "Float",
-        "description": "value = fits-value*BSCALE+BZERO"
-    },
-    {
-        "colname": "BITPIX",
-        "default": "16",
-        "datatype": "Integer",
-        "description": "# bits storing pix values"
-    },
-    {
-        "colname": "NAXIS1",
-        "default": "2080",
-        "datatype": "Integer",
-        "description": "# of pixels/row"
-    },
-    {
-        "colname": "NAXIS2",
-        "default": "2048",
-        "datatype": "Integer",
-        "description": "# of rows (also # of scan lines)"
-    },
-    {
-        "colname": "EXTEND",
-        "default": "T",
-        "datatype": "Boolean",
-        "allowed_values": "T,F",
-        "description": "Extensions may be present"
-    },
-    {
-        "colname": "PROPID",
-        "default": "OP2025B-001",
-        "datatype": "String",
-        "description": "The identification code assigned to each observing run by the Science Committee"
-    },
-    {
-        "colname": "OBSERVER",
-        "default": "CHIMERA",
-        "datatype": "String",
-        "description": "Name of the observer"
-    },
-    {
-        "colname": "OBJECT",
-        "default": "NGC1234",
-        "datatype": "String",
-        "description": "Target as given by the user"
-    },
-    {
-        "colname": "ORIGIN",
-        "default": "LNA",
-        "datatype": "String",
-        "description": "Who delivers the data"
-    },
-    {
-        "colname": "TELESCOP",
-        "default": "PE160",
-        "datatype": "String",
-        "description": "Telescope name"
-    },
-    {
-        "colname": "OBSLONG",
-        "default": 45,
-        "datatype": "Float",
-        "description": "Observatory East Longitude (DEG, -180 to 180)"
-    },
-    {
-        "colname": "OBSLAT",
-        "default": -22,
-        "datatype": "Float",
-        "allowed_values": "-90,90",
-        "description": "Observatory North Latitude (DEG, -90 to 90)"
-    },
-    {
-        "colname": "OBSALT",
-        "default": 1864,
-        "datatype": "float",
-        "description": "Observatory elevation above sea level (m)"
-    },
-    {
-        "colname": "INSTRUME",
-        "default": "SPARC4",
-        "datatype": "String",
-        "description": "Instrument used"
-    },
-    {
-        "colname": "OBSTECH",
-        "default": "PHOTOMETRY",
+        "colname": "INSTMODE",
+        "default_value": "PHOTOMETRY",
         "datatype": "String",
         "description": "Technique used during the observation"
     },
     {
+        "colname": "SYNCMODE",
+        "datatype": "String",
+        "allowed_values": "SYNC,ASYNC",
+        "description": "Synchronization across channels at start of acq"
+    },
+    {
+        "colname": "INSTROT",
+        "default_value": "GUIDEANG",
+        "datatype": "float",
+        "allowed_values": "360",
+        "description": "Instrument rotator angle in degrees"
+    },
+    {
         "colname": "FILTER",
-        "default": "V",
+        "default_value": "V",
         "datatype": "String",
         "description": "Filter name"
     },
     {
-        "colname": "OBSTYPE",
-        "default": "OBJECT",
+        "colname": "CHANNEL",
+        "datatype": "integer",
+        "allowed_values": "1,4",
+        "description": "Instrument channel: 1 (g), 2 (r), 3 (i), 4 (z)"
+    },
+    {
+        "colname": "CHANNEL1",
+        "default_value": "CHANNEL 1",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Channel 1 is on (T) or off (F)"
+    },
+    {
+        "colname": "CHANNEL2",
+        "default_value": "CHANNEL 2",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Channel 2 is on (T) or off (F)"
+    },
+    {
+        "colname": "CHANNEL3",
+        "default_value": "CHANNEL 3",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Channel 3 is on (T) or off (F)"
+    },
+    {
+        "colname": "CHANNEL4",
+        "default_value": "CHANNEL 4",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Channel 4 is on (T) or off (F)"
+    },
+    {
+        "colname": "CCDSERN",
+        "datatype": "integer",
+        "allowed_values": "99,149,917",
+        "description": "CCD serial number"
+    },
+    {
+        "colname": "NCYCLES",
+        "datatype": "integer",
+        "allowed_values": "1,inf",
+        "description": "Number of cycles"
+    },
+    {
+        "colname": "CYCLIND",
+        "datatype": "integer",
+        "allowed_values": "1,inf",
+        "description": "Cycle index"
+    },
+    {
+        "colname": "NSEQ",
+        "datatype": "integer",
+        "allowed_values": "1,16",
+        "description": "Number of sequences in one cycle"
+    },
+    {
+        "colname": "SEQINDEX",
+        "datatype": "integer",
+        "allowed_values": "1,16",
+        "description": "Sequence index in the cycle"
+    },
+    {
+        "colname": "NFRAMES",
+        "datatype": "integer",
+        "allowed_values": "191,500",
+        "description": "Number of frames in sequence"
+    },
+    {
+        "colname": "FRAMEIND",
+        "datatype": "integer",
+        "allowed_values": "191,500",
+        "description": "Frame index in sequence"
+    },
+    {
+        "colname": "ACQMODE",
         "datatype": "string",
-        "allowed_values": "OBJECT,ZERO,FLAT,DARK,FOCUS",
-        "description": "Image type: OBJECT, ZERO, FLAT, DARK, FOCUS"
+        "allowed_values": "Single Scan,Kinetics",
+        "description": "Acquisition mode"
     },
     {
-        "colname": "ORIGFILE",
-        "default": "20251105_S4C1_00001.fits",
-        "datatype": "String",
-        "description": "Original file name"
+        "colname": "PREAMP",
+        "datatype": "string",
+        "allowed_values": "Gain 1,Gain 2",
+        "description": "Pre-amplifier gain"
     },
     {
-        "colname": "DATE-OBS",
-        "default": "2001-08-19T09:33:11.950",
-        "datatype": "timestamp",
-        "description": "Exposure start"
+        "colname": "READRATE",
+        "datatype": "float",
+        "allowed_values": "0.1,1,10,20,30",
+        "description": "Readout rate (MHz)"
     },
     {
-        "colname": "UTC",
-        "default": "34391",
-        "datatype": "Float",
-        "description": "UTC at start (s)"
+        "colname": "VSHIFT",
+        "datatype": "float",
+        "allowed_values": "0.6,1.13,2.2,4.33",
+        "description": "Vertical shift speed (ms)"
     },
     {
-        "colname": "EXPTIME",
-        "default": "60",
-        "datatype": "Float",
-        "description": "Exposure time (s)"
+        "colname": "TRIGGER",
+        "datatype": "string",
+        "allowed_values": "Internal,External",
+        "description": "Trigger mode"
+    },
+    {
+        "colname": "EMMODE",
+        "datatype": "string",
+        "allowed_values": "Electron Multiplying,Conventional",
+        "description": "Output amplifier mode"
+    },
+    {
+        "colname": "EMGAIN",
+        "datatype": "integer",
+        "allowed_values": "2,300",
+        "description": "Electron multiplier gain"
+    },
+    {
+        "colname": "VBIN",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Vertical binning (pix)"
+    },
+    {
+        "colname": "HBIN",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Horizontal binning (pix)"
+    },
+    {
+        "colname": "INITLIN",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Initial line (pix)"
+    },
+    {
+        "colname": "INITCOL",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Initial column (pix)"
+    },
+    {
+        "colname": "FINALLIN",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Final line (pix)"
+    },
+    {
+        "colname": "FINALCOL",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Final column (pix)"
+    },
+    {
+        "colname": "SHUTTER",
+        "datatype": "string",
+        "allowed_values": "Open,Closed",
+        "description": "Shutter mode"
+    },
+    {
+        "colname": "COOLER",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "CCD cooler on: T or F"
+    },
+    {
+        "colname": "CCDTEMP",
+        "datatype": "integer",
+        "allowed_values": "-80,25",
+        "description": "CCD temperature (deg C)"
+    },
+    {
+        "colname": "TGTEMP",
+        "datatype": "integer",
+        "allowed_values": "-80,25",
+        "description": "CCD target temperature (deg C)"
+    },
+    {
+        "colname": "TEMPST",
+        "datatype": "string",
+        "allowed_values": "TEMPERATURE_OFF,TEMPERATURE_NOT_REACHED,TEMPERATURE_NOT_STABILIZED,TEMPERATURE_STABILIZED",
+        "description": "CCD temperature status"
+    },
+    {
+        "colname": "FRAMETRF",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Frame transfer on: T or F"
+    },
+    {
+        "colname": "VCLKAMP",
+        "datatype": "string",
+        "allowed_values": "Normal,+1,+2,+3,+4",
+        "description": "Clock amplitude: Normal, +1, +2, +3, +4"
     },
     {
         "colname": "GAIN",
-        "default": "2",
+        "default_value": "2",
         "datatype": "Float",
         "description": "Specifies the detector sensitivity in number of electrons per data"
     },
     {
-        "colname": "DETRON",
-        "default": "10.1",
+        "colname": "RDNOISE",
+        "default_value": "10.1",
         "datatype": "Float",
         "description": "Specifies the detector readout noise in electrons"
     },
     {
         "colname": "EFFRON",
-        "default": "1.1",
+        "default_value": "1.1",
         "datatype": "Float",
         "description": "Specifies the median over all pixels of the effective readout noise"
     },
     {
-        "colname": "RA",
-        "default": "21.955217",
-        "datatype": "Float",
-        "description": "Pointing (deg) (J2000.0)"
-    },
-    {
-        "colname": "DEC",
-        "default": "-1.8821",
-        "datatype": "Float",
-        "description": "Pointing (deg) (J2000.0)"
-    },
-    {
-        "colname": "EQUINOX",
-        "default": "2000",
-        "datatype": "Float",
-        "description": "Standard FK5 epoc"
-    },
-    {
-        "colname": "AIRMASS",
-        "default": 1,
+        "colname": "GFOC",
         "datatype": "float",
-        "description": "Airmass at start of observation"
+        "allowed_values": "0,inf",
+        "description": "Guiding focus position (mm)"
     },
     {
-        "colname": "DATE",
-        "default": "2001-08-19T09:34:52.676",
-        "datatype": "timestamp",
-        "description": "Date the file was written"
+        "colname": "GMIR",
+        "datatype": "float",
+        "allowed_values": "360",
+        "description": "Rotation angle of the guiding mirror (deg)"
     },
     {
-        "colname": "MJD-OBS",
-        "default": "52140.39805",
+        "colname": "ACSVRSN",
+        "datatype": "string",
+        "description": "S4ACS software version"
+    },
+    {
+        "colname": "ICSVRSN",
+        "datatype": "string",
+        "description": "S4ICS software version"
+    },
+    {
+        "colname": "GUIVRSN",
+        "datatype": "string",
+        "description": "S4GUI software version"
+    },
+    {
+        "colname": "CTRLINTE",
+        "datatype": "string",
+        "allowed_values": "S4GUI,S4GEI",
+        "description": "Graphical control interface of ACS"
+    },
+    {
+        "colname": "ACSMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "ACS: real (T) or simulated (F)"
+    },
+    {
+        "colname": "WPROMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Waveplate rotator: real (T) or simulated (F)"
+    },
+    {
+        "colname": "WPSEMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Waveplate selector: real (T) or simulated (F)"
+    },
+    {
+        "colname": "ANMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Analyzer: real (T) or simulated (F)"
+    },
+    {
+        "colname": "CALWMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Calibration wheel: real (T) or simulated (F)"
+    },
+    {
+        "colname": "GMIRMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Guiding mirror: real (T) or simulated (F)"
+    },
+    {
+        "colname": "GFOCMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Guiding focuser: real (T) or simulated (F)"
+    },
+    {
+        "colname": "TCSMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "TCS: real (T) or simulated (F)"
+    },
+    {
+        "colname": "WPROSTAT",
+        "datatype": "string",
+        "allowed_values": "READY,ACK,BUSY,ERROR,TIMEOUT,NONE",
+        "description": "Waveplate rotator status"
+    },
+    {
+        "colname": "WPSESTAT",
+        "datatype": "string",
+        "allowed_values": "READY,ACK,BUSY,ERROR,TIMEOUT,NONE",
+        "description": "Waveplate selector status"
+    },
+    {
+        "colname": "ANSTAT",
+        "datatype": "string",
+        "allowed_values": "READY,ACK,BUSY,ERROR,TIMEOUT,NONE",
+        "description": "Analyzer status"
+    },
+    {
+        "colname": "CALWSTAT",
+        "datatype": "string",
+        "allowed_values": "READY,ACK,BUSY,ERROR,TIMEOUT,NONE",
+        "description": "Calibration wheel status"
+    },
+    {
+        "colname": "GMIRSTAT",
+        "datatype": "string",
+        "allowed_values": "READY,ACK,BUSY,ERROR,TIMEOUT,NONE",
+        "description": "Guiduing mirror status"
+    },
+    {
+        "colname": "GFOCSTAT",
+        "datatype": "string",
+        "allowed_values": "READY,ACK,BUSY,ERROR,TIMEOUT,NONE",
+        "description": "Guiding focuser status"
+    },
+    {
+        "colname": "WPSEL",
+        "datatype": "string",
+        "allowed_values": "None,L2,L4",
+        "description": "Waveplate: half-wave (L2), quarter-wave (L4)"
+    },
+    {
+        "colname": "WPSELPO",
+        "datatype": "float",
+        "allowed_values": "-5,165",
+        "description": "Waveplate selector position (mm)"
+    },
+    {
+        "colname": "WPPOS",
+        "datatype": "integer",
+        "allowed_values": "0,16",
+        "description": "Waveplate idx position from 1 to 16, 0 if none"
+    },
+    {
+        "colname": "WPANG",
+        "datatype": "float",
+        "allowed_values": "360",
+        "description": "Waveplate position angle (deg)"
+    },
+    {
+        "colname": "CALW",
+        "datatype": "string",
+        "allowed_values": "POLARIZER,DEPOLARIZER,CLEAR,SPARE,CLOSED",
+        "description": "Selected element in calibration wheel"
+    },
+    {
+        "colname": "CALWANG",
+        "datatype": "float",
+        "allowed_values": "360",
+        "description": "Calibration wheel position angle (deg)"
+    },
+    {
+        "colname": "ASEL",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Savart prism analyzer selected"
+    },
+    {
+        "colname": "ANALANG",
+        "datatype": "float",
+        "allowed_values": "360",
+        "description": "Analyzer position angle (deg)"
+    },
+    {
+        "colname": "ACQERROR",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Acquisition error - see comments"
+    },
+    {
+        "colname": "WEIGHT",
+        "default_value": "0.8",
         "datatype": "Float",
-        "description": "MJD at exposure start (d)"
+        "description": "This is the median over all pixels of the weight map"
     },
     {
-        "colname": "MJD-END",
-        "default": "52140.39875",
+        "colname": "BLANK",
+        "default_value": "0",
+        "datatype": "Integer",
+        "description": "Value used for NULL pixels"
+    },
+    {
+        "colname": "DATAMAX",
+        "default_value": "43212",
         "datatype": "Float",
-        "description": "MJD at exposure end (d)"
+        "description": "Maximal pixel value"
     },
     {
-        "colname": "DATE-END",
-        "default": "2001-08-19T09:34:51.950",
-        "datatype": "timestamp",
-        "description": "Exposure end"
-    },
-    {
-        "colname": "TIMESYS",
-        "default": "UTC",
-        "datatype": "String",
-        "description": "Time system used"
-    },
-    {
-        "colname": "LST",
-        "default": "19:51:15.380",
-        "datatype": "String",
-        "description": "LST at start (s)"
-    },
-    {
-        "colname": "PI-COI",
-        "default": "SCIENTIST",
-        "datatype": "String",
-        "description": "Name of the PI/Co-I"
-    },
-    {
-        "colname": "OBID",
-        "default": "311",
-        "datatype": "Integer",
-        "description": "Observation Block ID run number"
-    },
-    {
-        "colname": "PRODCATG",
-        "default": "SCIENCE.IMAGE",
-        "datatype": "String",
-        "description": "Data product category"
-    },
-    {
-        "colname": "CHECKSUM",
-        "default": "B5445389D6586A3E",
-        "datatype": "String",
-        "description": "HDU checksum"
-    },
-    {
-        "colname": "DATASUM",
-        "default": "0265279410",
-        "datatype": "String",
-        "description": "Data unit checksum"
-    },
-    {
-        "colname": "SIMPLE",
-        "default": "T",
-        "datatype": "Boolean",
-        "allowed_values": {"T", "F"},
-        "description": "Standard FITS (NOST-100-2.0)"
-    },
-    {
-        "colname": "BUNIT",
-        "default": "adu",
-        "datatype": "String",
-        "description": "Physical unit of array values"
-    },
-    {
-        "colname": "NAXIS",
-        "default": "2",
-        "datatype": "Integer",
-        "description": "# of axes in frame"
+        "colname": "DATAMIN",
+        "default_value": "323",
+        "datatype": "Float",
+        "description": "Minimal pixel value"
     },
     {
         "colname": "RADESYS",
-        "default": "FK5'",
+        "default_value": "FK5",
         "datatype": "String",
         "description": "Reference system"
     },
     {
-        "colname": "COMMENT",
-        "default": "Any comment",
+        "colname": "NCOMBINE",
+        "default_value": "1",
+        "datatype": "Integer",
+        "description": "Number of raw science data files that were combined to generate this data\nproduct"
+    },
+    {
+        "colname": "DISPELEM",
+        "default_value": "LR_blue",
         "datatype": "String",
-        "description": ""
+        "description": "Dispersion element name"
+    },
+    {
+        "colname": "ARCFILE",
+        "default_value": "20251105_S4C1_00001.fits",
+        "datatype": "String",
+        "description": "Archive file name"
+    },
+    {
+        "colname": "PROCSOFT",
+        "default_value": "Chimera v1.99",
+        "datatype": "String",
+        "description": "Version of the software used to produce this data product"
+    },
+    {
+        "colname": "REFERENC",
+        "default_value": "1924MNRAS..84..308E",
+        "datatype": "String",
+        "description": "Primary scientific publication associated with this data\nproduct"
+    },
+    {
+        "colname": "PROVi",
+        "default_value": "20251105_S4C1_00001",
+        "datatype": "String",
+        "description": "Processing provenance in terms of the list of science files originating this\ndata product"
     }
 ]

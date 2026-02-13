@@ -1,5 +1,13 @@
 [
     {
+        "colname": "SIMPLE",
+        "default": "T",
+        "datatype": "Boolean",
+        "nullable": false,
+        "allowed_values": "T,F",
+        "description": "Standard FITS (NOST-100-2.0)"
+    },
+    {
         "colname": "BSCALE",
         "default": "1",
         "datatype": "Integer",
@@ -12,27 +20,43 @@
         "description": "value = fits-value*BSCALE+BZERO"
     },
     {
+        "colname": "BUNIT",
+        "default": "adu",
+        "datatype": "String",
+        "description": "Physical unit of array values"
+    },
+    {
         "colname": "BITPIX",
         "default": "16",
         "datatype": "Integer",
         "description": "# bits storing pix values"
     },
     {
+        "colname": "NAXIS",
+        "default": "2",
+        "datatype": "Integer",
+        "nullable": false,
+        "description": "# of axes in frame"
+    },
+    {
         "colname": "NAXIS1",
         "default": "2080",
         "datatype": "Integer",
+        "nullable": false,
         "description": "# of pixels/row"
     },
     {
         "colname": "NAXIS2",
         "default": "2048",
         "datatype": "Integer",
+        "nullable": false,
         "description": "# of rows (also # of scan lines)"
     },
     {
         "colname": "EXTEND",
         "default": "T",
         "datatype": "Boolean",
+        "nullable": false,
         "allowed_values": "T,F",
         "description": "Extensions may be present"
     },
@@ -40,6 +64,7 @@
         "colname": "PROPID",
         "default": "OP2025B-001",
         "datatype": "String",
+        "nullable": false,
         "description": "The identification code assigned to each observing run by the Science Committee"
     },
     {
@@ -89,6 +114,7 @@
         "colname": "INSTRUME",
         "default": "SPARC4",
         "datatype": "String",
+        "nullable": false,
         "description": "Instrument used"
     },
     {
@@ -111,15 +137,17 @@
         "description": "Image type: OBJECT, ZERO, FLAT, DARK, FOCUS"
     },
     {
-        "colname": "ORIGFILE",
+        "colname": "FILENAME",
         "default": "20251105_S4C1_00001.fits",
         "datatype": "String",
+        "nullable": false,
         "description": "Original file name"
     },
     {
         "colname": "DATE-OBS",
         "default": "2001-08-19T09:33:11.950",
         "datatype": "timestamp",
+        "nullable": false,
         "description": "Exposure start"
     },
     {
@@ -234,32 +262,15 @@
         "colname": "CHECKSUM",
         "default": "B5445389D6586A3E",
         "datatype": "String",
+        "nullable": false,
         "description": "HDU checksum"
     },
     {
         "colname": "DATASUM",
         "default": "0265279410",
         "datatype": "String",
+        "nullable": false,
         "description": "Data unit checksum"
-    },
-    {
-        "colname": "SIMPLE",
-        "default": "T",
-        "datatype": "Boolean",
-        "allowed_values": "T,F",
-        "description": "Standard FITS (NOST-100-2.0)"
-    },
-    {
-        "colname": "BUNIT",
-        "default": "adu",
-        "datatype": "String",
-        "description": "Physical unit of array values"
-    },
-    {
-        "colname": "NAXIS",
-        "default": "2",
-        "datatype": "Integer",
-        "description": "# of axes in frame"
     },
     {
         "colname": "RADESYS",
