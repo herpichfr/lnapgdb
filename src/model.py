@@ -45,7 +45,7 @@ class PrimaryTable(Base):
     }
 
 
-class Spar4(Base):
+class Sparc4(Base):
     __tablename__ = 'sparc4'
     __table_args__ = {'schema': 'public'}  # Optional schema
 
@@ -113,17 +113,29 @@ def add_columns_from_json(table_class):
         table_cols = load(f)
     for col in table_cols:
         colname = col['colname']
+        # NOTE: Colname INSTRUME is reserved for the polymorphic identity, but
+        # it needs to be defined in the JSON files either way. However, if it
+        # is defined in the JSON file, it will be ignored and not added as a
+        # column to the table.
+        if colname.upper() == 'INSTRUME':
+            continue
         default_value = col.get('default', None)
         # Map SQLAlchemy type
         type_class = map_type_to_sqlalchemy(col['datatype'])
+        is_nullable = col.get('nullable', True)
         description = col.get('description', '')
         if 'allowed_values' in col.keys():
             allowed_values = col['allowed_values'].split(',')
             # Add a check constraint for allowed values
-            new_column = Column(type_class, nullable=True, default=default_value,
-                                info={'allowed_values': allowed_values, 'description': description})
+            new_column = Column(type_class,
+                                nullable=is_nullable,
+                                default=default_value,
+                                info={'allowed_values': allowed_values,
+                                      'description': description})
         else:
-            new_column = Column(type_class, nullable=True, default=default_value,
+            new_column = Column(type_class,
+                                nullable=is_nullable,
+                                default=default_value,
                                 info={'description': description})
         setattr(table_class, colname, new_column)
         table_class.__table__.append_column(new_column)
@@ -138,6 +150,7 @@ def main():
     Base.metadata.drop_all(engine)  # Drop existing tables
     print("Database and tables created successfully!")
     add_columns_from_json(PrimaryTable)
+    add_columns_from_json(Sparc4)
     print("Columns added to PrimaryTable successfully!")
     Base.metadata.create_all(engine)  # Create tables with new columns
 
