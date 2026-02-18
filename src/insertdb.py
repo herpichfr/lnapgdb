@@ -22,6 +22,7 @@ from model import Base, PrimaryTable, Sparc4, Echarpe
 import argparse
 from astropy.io import fits
 import logging
+from json import load
 
 
 def parse_args():
@@ -71,6 +72,78 @@ def collect_header_keys(fits_file):
     return header_data
 
 
+def get_primary_model():
+    """Get the primary model class based on the header data."""
+    # This function should determine which primary model to use based on the
+    # header data. For example, if the header contains a key 'INSTRUME' with
+    # value 'SPARC4', then the primary model should be Sparc4. If the header
+    # contains a key 'INSTRUME' with value 'ECHARPE', then the primary model
+    # should be Echarpe. If the header does not contain a key 'INSTRUME', then
+    # the primary model should be PrimaryTable.
+    # data directory
+    data_dir = os.path.join(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))), 'data')
+    # Load the JSON file in the one-derectory-up 'data' folder
+    with open(os.path.expanduser(f'{data_dir}/primary_table.json'), 'r') as f:
+        primary_model_mapping = load(f)
+
+    primary_model = {}
+    for col in primary_model_mapping:
+        colname = col['colname']
+        primary_model[colname] = col
+
+    return primary_model
+
+
+def validate_data(header_data, primary_model):
+    """Validate the header data against the primary model schema."""
+    datatypes_mapping = {
+        'string': str,
+        'integer': int,
+        'float': float,
+        'boolean': bool
+    }
+
+    for key, value in header_data.items():
+        is_nullable = primary_model[key].get('nullable', True)
+        datatype = primary_model[key].get('datatype', None)
+        datatype = datatypes_mapping.get(
+            datatype.lower(), str) if datatype else str
+        # if datatype is bool, allowed values are True and False
+        if datatype == bool:
+            allowed_values = [True, False]
+        else:
+            allowed_values = primary_model[key].get('allowed_values', None)
+            if '-' in allowed_values:
+                allowed_values = allowed_values.split('-')
+                minmax = True
+            elif ',' in allowed_values:
+                allowed_values = allowed_values.split(
+                    ',') if allowed_values else None
+                minmax = False
+            else:
+                allowed_values = [allowed_values] if allowed_values else None
+                minmax = False
+            allowed_values = [val.strip().format(datatype=datatype)
+                              for val in allowed_values] if allowed_values else None
+
+        if key in primary_model:
+            if not is_nullable and value is None:
+                raise ValueError(f"Key '{key}' cannot be null.")
+            # TODO: Implement type checking and conversion based on the datatype defined in the primary model
+            # Take into account for the possibility of min and max or fixed allowed values
+            if allowed_values and value not in allowed_values:
+                raise ValueError(
+                    f"Key '{key}' has value '{value}' which is not in the allowed values: {allowed_values}.")
+        elif key not in primary_model:
+            if not is_nullable:
+                raise ValueError(
+                    f"Key '{key}' is not defined in the primary model and cannot be null.")
+
+        import pdb
+        pdb.set_trace()
+
+
 def insert_data(session, header_data):
     """Insert data into the database based on the header data."""
 
@@ -81,6 +154,11 @@ def main(args):
                            getattr(logging, args.loglevel))
     fits_file = args.fits_file
     header_keys = collect_header_keys(fits_file)
+    primary_model = get_primary_model()
+    validate_data(header_keys, primary_model)
+
+    import pdb
+    pdb.set_trace()
 
 
 if __name__ == '__main__':
