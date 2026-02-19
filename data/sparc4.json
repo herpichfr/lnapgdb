@@ -27,7 +27,7 @@
     {
         "colname": "CHANNEL",
         "datatype": "integer",
-        "allowed_values": "1,4",
+        "allowed_values": "1,2,3,4",
         "description": "Instrument channel: 1 (g), 2 (r), 3 (i), 4 (z)"
     },
     {
@@ -67,13 +67,13 @@
     {
         "colname": "NCYCLES",
         "datatype": "integer",
-        "allowed_values": "1,inf",
+        "allowed_values": "between:1,inf",
         "description": "Number of cycles"
     },
     {
         "colname": "CYCLIND",
         "datatype": "integer",
-        "allowed_values": "1,inf",
+        "allowed_values": "between:1,inf",
         "description": "Cycle index"
     },
     {
@@ -193,13 +193,13 @@
     {
         "colname": "CCDTEMP",
         "datatype": "integer",
-        "allowed_values": "-80,25",
+        "allowed_values": "between:-80,25",
         "description": "CCD temperature (deg C)"
     },
     {
         "colname": "TGTEMP",
         "datatype": "integer",
-        "allowed_values": "-80,25",
+        "allowed_values": "between:-80,25",
         "description": "CCD target temperature (deg C)"
     },
     {
@@ -241,7 +241,7 @@
     {
         "colname": "GFOC",
         "datatype": "float",
-        "allowed_values": "0,inf",
+        "allowed_values": "between:0,inf",
         "description": "Guiding focus position (mm)"
     },
     {
@@ -364,13 +364,13 @@
     {
         "colname": "WPSELPO",
         "datatype": "float",
-        "allowed_values": "-5,165",
+        "allowed_values": "between:-5,165",
         "description": "Waveplate selector position (mm)"
     },
     {
         "colname": "WPPOS",
         "datatype": "integer",
-        "allowed_values": "0,16",
+        "allowed_values": "between:0,16",
         "description": "Waveplate idx position from 1 to 16, 0 if none"
     },
     {

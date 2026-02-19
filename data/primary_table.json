@@ -95,13 +95,14 @@
         "colname": "OBSLONG",
         "default": 45,
         "datatype": "Float",
+        "allowed_values": "between:-180,180",
         "description": "Observatory East Longitude (DEG, -180 to 180)"
     },
     {
         "colname": "OBSLAT",
         "default": -22,
         "datatype": "Float",
-        "allowed_values": "-90,90",
+        "allowed_values": "between:-90,90",
         "description": "Observatory North Latitude (DEG, -90 to 90)"
     },
     {
@@ -183,19 +184,19 @@
     {
         "colname": "RA",
         "default": "21.955217",
-        "datatype": "Float",
+        "datatype": "string",
         "description": "Pointing (deg) (J2000.0)"
     },
     {
         "colname": "DEC",
         "default": "-1.8821",
-        "datatype": "Float",
+        "datatype": "string",
         "description": "Pointing (deg) (J2000.0)"
     },
     {
         "colname": "EQUINOX",
         "default": "2000",
-        "datatype": "Float",
+        "datatype": "string",
         "description": "Standard FK5 epoc"
     },
     {
