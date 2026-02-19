@@ -16,25 +16,33 @@ model.py module.
 """
 
 import os
+from astropy.io import fits
+from json import load
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from model import Base, PrimaryTable, Sparc4, Echarpe
 import argparse
-from astropy.io import fits
 import logging
-from json import load
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Insert data into the LNA DB.')
-    parser.add_argument('fits_file', type=str,
-                        help='Path to the FITS file to be inserted into the database.')
-    parser.add_argument('--verbose', '-v', action='store_true',
+    parser.add_argument('fits_file',
+                        type=str,
+                        help='Path to the FITS file to be inserted into \
+                        the database.')
+    parser.add_argument('--verbose', '-v',
+                        action='store_true',
                         help='Enable verbose logging.')
-    parser.add_argument('--logfile', '-l', type=str,
-                        help='Path to the log file. If not provided, logs will be printed to the console.')
-    parser.add_argument('--loglevel', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+    parser.add_argument('--logfile', '-l',
+                        type=str,
+                        help='Path to the log file. If not provided, logs \
+                        will be printed to the console.')
+    parser.add_argument('--loglevel',
+                        type=str,
+                        choices=['DEBUG', 'INFO',
+                                 'WARNING', 'ERROR', 'CRITICAL'],
                         default='INFO', help='Logging level. Default is INFO.')
     return parser.parse_args()
 
@@ -128,7 +136,7 @@ def get_allowed_values(data_model, key):
     else:
         allowed_values = data_model[key].get('allowed_values', None)
         if allowed_values is not None:
-            if 'between' in allowed_values:
+            if 'between' in allowed_values.lower():
                 allowed_values = allowed_values.split(':')[
                     1].split(',')
                 min_val, max_val = allowed_values
@@ -176,7 +184,8 @@ def validate_data(
 
             if not is_nullable and value is None:
                 logger.critical(
-                    f"Key '{key}' is not defined in the primary model and cannot be null.")
+                    f"Key '{key}' is not defined in the primary model and \
+                    cannot be null.")
                 return False, primary_data, instrument_data
 
             allowed_values, datatype, minmax = get_allowed_values(
@@ -187,21 +196,28 @@ def validate_data(
                 value = datatype(value)
             except ValueError as e:
                 logger.error(
-                    f"Key '{key}' has value '{value}' which cannot be converted to the required datatype '{datatype.__name__}'. Error: {e}")
+                    f"Key '{key}' has value '{value}' which cannot be \
+                    converted to the required datatype '{datatype.__name__}'. \
+                    Error: {e}")
                 return False, primary_data, instrument_data
 
             if minmax:
                 if not (isinstance(value, datatype) and allowed_values[0] <= value <= allowed_values[1]):
                     logger.error(
-                        f"Key '{key}' has value '{value}' which is not within the allowed range: {allowed_values[0]} - {allowed_values[1]}.")
+                        f"Key '{key}' has value '{value}' which is not within \
+                        the allowed range:\
+                        {allowed_values[0]} - {allowed_values[1]}.")
                     return False, primary_data, instrument_data
                 else:
                     logger.debug(
-                        f"Key '{key}' has value '{value}' which is within the allowed range: {allowed_values[0]} - {allowed_values[1]}.")
+                        f"Key '{key}' has value '{value}' which is within the \
+                        allowed range:\
+                        {allowed_values[0]} - {allowed_values[1]}.")
             else:
                 if allowed_values and value not in allowed_values:
                     logger.error(
-                        f"Key '{key}' has value '{value}' which is not in the allowed values: {allowed_values}.")
+                        f"Key '{key}' has value '{value}' which is not in the \
+                        allowed values: {allowed_values}.")
                     return False, primary_data, instrument_data
 
             primary_data[key] = value
@@ -210,7 +226,8 @@ def validate_data(
             is_nullable = instrument_model[key].get('nullable', True)
             if not is_nullable:
                 logger.critical(
-                    f"Key '{key}' is not defined in the instrument model and cannot be null.")
+                    f"Key '{key}' is not defined in the instrument model and \
+                    cannot be null.")
                 return False, primary_data, instrument_data
 
             allowed_values, datatype, minmax = get_allowed_values(
@@ -220,40 +237,70 @@ def validate_data(
                 value = datatype(value)
             except ValueError as e:
                 logger.error(
-                    f"Key '{key}' has value '{value}' which cannot be converted to the required datatype '{datatype.__name__}'. Error: {e}")
+                    f"Key '{key}' has value '{value}' which cannot be \
+                    converted to the required datatype \
+                    '{datatype.__name__}'. Error: {e}")
                 return False, primary_data, instrument_data
 
             if minmax:
                 if not (isinstance(value, datatype) and allowed_values[0] <= value <= allowed_values[1]):
                     logger.error(
-                        f"Key '{key}' has value '{value}' which is not within the allowed range: {allowed_values[0]} - {allowed_values[1]}.")
+                        f"Key '{key}' has value '{value}' which is not within \
+                        the allowed range: \
+                        {allowed_values[0]} - {allowed_values[1]}.")
                     return False, primary_data, instrument_data
                 else:
                     logger.debug(
-                        f"Key '{key}' has value '{value}' which is within the allowed range: {allowed_values[0]} - {allowed_values[1]}.")
+                        f"Key '{key}' has value '{value}' which is within the \
+                        allowed range: \
+                        {allowed_values[0]} - {allowed_values[1]}.")
 
             instrument_data[key] = value
         else:
             logger.warning(
-                f"Key '{key}' is not defined in either the primary model or the instrument model and will be ignored.")
+                f"Key '{key}' is not defined in either the primary model or \
+                the instrument model and will be ignored.")
 
-    # NOTE: Loop through the primary model and instrument model to check if there are any required keys that are missing in the header data
+    # NOTE: Loop through the primary model and instrument model to check if
+    # there are any required keys that are missing in the header data
     for key, value in primary_model.items():
         if not value.get('nullable', True) and key not in primary_data:
             logger.critical(
-                f"Key '{key}' is required in the primary model but is missing in the header data.")
+                f"Key '{key}' is required in the primary model but is missing \
+                in the header data.")
             return False, primary_data, instrument_data
     for key, value in instrument_model.items():
         if not value.get('nullable', True) and key not in instrument_data:
             logger.critical(
-                f"Key '{key}' is required in the instrument model but is missing in the header data.")
+                f"Key '{key}' is required in the instrument model but is \
+                missing in the header data.")
             return False, primary_data, instrument_data
 
     logger.info("Header data validation successful.")
     return True, primary_data, instrument_data
 
 
-def insert_data(session, header_data):
+def get_db_credentials():
+    """Get DB credentials from the the credentials config file."""
+    cred_dir = os.path.join(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))), 'credentials')
+
+    with open(os.path.expanduser(f'{cred_dir}/config.json'), 'r') as f:
+        data = load(f)
+    return data['lnapgdatabase']
+
+
+def create_db_session():
+    """Create a database session."""
+    creds = get_db_credentials()
+    engine = create_engine(
+        f"postgresql://{creds['username']}:{creds['password']
+                                            }@{creds['host']}:{creds['port']}/{creds['database']}")
+    Session = sessionmaker(bind=engine)
+    return Session()
+
+
+def insert_data(session, primary_data, instrument_data, primary_model, instrument_model):
     """Insert data into the database based on the header data."""
 
 
@@ -270,20 +317,31 @@ def main(args):
         header_keys, primary_model, instrument_model, logger)
     if not valid:
         logger.critical(
-            f"Data validation failed. Aborting data insertion for file '{fits_file}'.")
+            f"Data validation failed. Aborting data insertion for file \
+            '{fits_file}'.")
         return
     else:
         # Check if the primary_data and instrument data are not empty
         if not primary_data:
             logger.critical(
-                f"No valid data found for the primary model in file '{fits_file}'.")
+                f"No valid data found for the primary model in file \
+                '{fits_file}'.")
             return
         if not instrument_data:
             logger.critical(
-                f"No valid data found for the instrument model in file '{fits_file}'.")
+                f"No valid data found for the instrument model in file \
+                '{fits_file}'.")
             return
-        logger.info(f"Data validation successful. Proceeding with data insertion for file '{
-            fits_file}'.")
+        logger.info(f"Data validation successful. Proceeding with data \
+        insertion for file '{fits_file}'.")
+
+    session = create_db_session()
+    # TODO: Implement the insert_data function to handle the actual insertion
+    # of data into the database based on the primary_data and instrument_data
+    insert_data(session, primary_data, instrument_data,
+                primary_model, instrument_model)
+    # session.commit()
+    logger.info(f"Data insertion successful for file '{fits_file}'.")
 
 
 if __name__ == '__main__':
