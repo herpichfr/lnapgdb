@@ -133,10 +133,16 @@ def get_allowed_values(data_model, key):
                     1].split(',')
                 min_val, max_val = allowed_values
                 # Trasnform min_val and max_val to the correct datatype
-                min_val = datatypes_mapping.get(data_model[key].get(
-                    'datatype', 'string').lower(), str)(min_val)
-                max_val = datatypes_mapping.get(data_model[key].get(
-                    'datatype', 'string').lower(), str)(max_val)
+                if 'inf' in min_val.lower():
+                    min_val = float('-inf')
+                else:
+                    min_val = datatypes_mapping.get(data_model[key].get(
+                        'datatype', 'string').lower(), str)(min_val)
+                if 'inf' in max_val.lower():
+                    max_val = float('inf')
+                else:
+                    max_val = datatypes_mapping.get(data_model[key].get(
+                        'datatype', 'string').lower(), str)(max_val)
                 allowed_values = (min_val, max_val)
                 minmax = True
             elif ',' in allowed_values:
@@ -161,12 +167,17 @@ def validate_data(
 ):
     """Validate the header data against the primary model schema."""
 
+    primary_data = {}
+    instrument_data = {}
+
     for key, value in header_data.items():
         if key in primary_model:
             is_nullable = primary_model[key].get('nullable', True)
 
             if not is_nullable and value is None:
-                raise ValueError(f"Key '{key}' cannot be null.")
+                logger.critical(
+                    f"Key '{key}' is not defined in the primary model and cannot be null.")
+                return False, primary_data, instrument_data
 
             allowed_values, datatype, minmax = get_allowed_values(
                 primary_model, key)
@@ -175,31 +186,71 @@ def validate_data(
             try:
                 value = datatype(value)
             except ValueError as e:
-                import pdb
-                pdb.set_trace()
                 logger.error(
                     f"Key '{key}' has value '{value}' which cannot be converted to the required datatype '{datatype.__name__}'. Error: {e}")
-                raise ValueError(
-                    f"Key '{key}' has value '{value}' which cannot be converted to the required datatype '{datatype.__name__}'.")
+                return False, primary_data, instrument_data
+
             if minmax:
                 if not (isinstance(value, datatype) and allowed_values[0] <= value <= allowed_values[1]):
-                    raise ValueError(
+                    logger.error(
                         f"Key '{key}' has value '{value}' which is not within the allowed range: {allowed_values[0]} - {allowed_values[1]}.")
+                    return False, primary_data, instrument_data
                 else:
                     logger.debug(
                         f"Key '{key}' has value '{value}' which is within the allowed range: {allowed_values[0]} - {allowed_values[1]}.")
             else:
                 if allowed_values and value not in allowed_values:
-                    raise ValueError(
+                    logger.error(
                         f"Key '{key}' has value '{value}' which is not in the allowed values: {allowed_values}.")
+                    return False, primary_data, instrument_data
+
+            primary_data[key] = value
+
         elif key in instrument_model:
             is_nullable = instrument_model[key].get('nullable', True)
             if not is_nullable:
-                raise ValueError(
-                    f"Key '{key}' is not defined in the primary model and cannot be null.")
+                logger.critical(
+                    f"Key '{key}' is not defined in the instrument model and cannot be null.")
+                return False, primary_data, instrument_data
+
+            allowed_values, datatype, minmax = get_allowed_values(
+                instrument_model, key)
+
+            try:
+                value = datatype(value)
+            except ValueError as e:
+                logger.error(
+                    f"Key '{key}' has value '{value}' which cannot be converted to the required datatype '{datatype.__name__}'. Error: {e}")
+                return False, primary_data, instrument_data
+
+            if minmax:
+                if not (isinstance(value, datatype) and allowed_values[0] <= value <= allowed_values[1]):
+                    logger.error(
+                        f"Key '{key}' has value '{value}' which is not within the allowed range: {allowed_values[0]} - {allowed_values[1]}.")
+                    return False, primary_data, instrument_data
+                else:
+                    logger.debug(
+                        f"Key '{key}' has value '{value}' which is within the allowed range: {allowed_values[0]} - {allowed_values[1]}.")
+
+            instrument_data[key] = value
         else:
             logger.warning(
                 f"Key '{key}' is not defined in either the primary model or the instrument model and will be ignored.")
+
+    # NOTE: Loop through the primary model and instrument model to check if there are any required keys that are missing in the header data
+    for key, value in primary_model.items():
+        if not value.get('nullable', True) and key not in primary_data:
+            logger.critical(
+                f"Key '{key}' is required in the primary model but is missing in the header data.")
+            return False, primary_data, instrument_data
+    for key, value in instrument_model.items():
+        if not value.get('nullable', True) and key not in instrument_data:
+            logger.critical(
+                f"Key '{key}' is required in the instrument model but is missing in the header data.")
+            return False, primary_data, instrument_data
+
+    logger.info("Header data validation successful.")
+    return True, primary_data, instrument_data
 
 
 def insert_data(session, header_data):
@@ -215,7 +266,24 @@ def main(args):
     primary_model = get_primary_model()
     instrument = header_keys['INSTRUME'] if 'INSTRUME' in header_keys else None
     instrument_model = get_instrument_model(instrument)
-    validate_data(header_keys, primary_model, instrument_model, logger)
+    valid, primary_data, instrument_data = validate_data(
+        header_keys, primary_model, instrument_model, logger)
+    if not valid:
+        logger.critical(
+            f"Data validation failed. Aborting data insertion for file '{fits_file}'.")
+        return
+    else:
+        # Check if the primary_data and instrument data are not empty
+        if not primary_data:
+            logger.critical(
+                f"No valid data found for the primary model in file '{fits_file}'.")
+            return
+        if not instrument_data:
+            logger.critical(
+                f"No valid data found for the instrument model in file '{fits_file}'.")
+            return
+        logger.info(f"Data validation successful. Proceeding with data insertion for file '{
+            fits_file}'.")
 
 
 if __name__ == '__main__':
