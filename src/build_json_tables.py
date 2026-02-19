@@ -87,18 +87,19 @@ def main(args):
             entry = {
                 "colname": colname,
             }
-            default_value = line.Default
-            if default_value is not None and not pd.isna(default_value):
-                entry["default_value"] = default_value
+            is_nullable = line.Nullable
+            if not is_nullable:
+                entry["nullable"] = False
+            else:
+                default_value = line.Default
+                if default_value is not None and not pd.isna(default_value):
+                    entry["default_value"] = default_value
             datatype = line.Type
             if datatype is None or pd.isna(datatype):
                 raise ValueError(
                     f"Datatype is required for column {colname} but is missing.")
             else:
                 entry["datatype"] = datatype
-            is_nullable = line.Nullable
-            if not is_nullable:
-                entry["nullable"] = False
             allowed_values = line.Allowed_Values
             if allowed_values is not None and not pd.isna(allowed_values):
                 entry["allowed_values"] = allowed_values
