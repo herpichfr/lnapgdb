@@ -18,9 +18,9 @@ model.py module.
 import os
 from astropy.io import fits
 from json import load
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData, Table, insert, text
 from sqlalchemy.orm import sessionmaker
-from model import Base, PrimaryTable, Sparc4, Echarpe
+from model import Base
 import argparse
 import logging
 
@@ -44,6 +44,9 @@ def parse_args():
                         choices=['DEBUG', 'INFO',
                                  'WARNING', 'ERROR', 'CRITICAL'],
                         default='INFO', help='Logging level. Default is INFO.')
+    parser.add_argument('--debug',
+                        action='store_true',
+                        help='Enable debug mode with pdb breakpoints.')
     return parser.parse_args()
 
 
@@ -296,12 +299,76 @@ def create_db_session():
     engine = create_engine(
         f"postgresql://{creds['username']}:{creds['password']
                                             }@{creds['host']}:{creds['port']}/{creds['database']}")
+    Base.metadata.reflect(bind=engine)  # Reflect the existing database schema
     Session = sessionmaker(bind=engine)
     return Session()
 
 
-def insert_data(session, primary_data, instrument_data, primary_model, instrument_model):
+def insert_data(
+        session,
+        primary_data,
+        instrument_data,
+        args,
+        logger=logging.getLogger(__name__)
+):
     """Insert data into the database based on the header data."""
+    metadata = MetaData()
+    engine = session.get_bind()
+    try:
+        primary_t = Table('primary_table', metadata, autoload_with=engine)
+        logger.info("Inserting data into the primary_table...")
+        session.execute(insert(primary_t).values(**primary_data))
+
+        # Get the ID of the newly inserted primary entry to use as a foreign key in the instrument table
+        query = text("SELECT id FROM primary_table ORDER BY id DESC LIMIT 1")
+        primary_id = session.execute(query).scalar()
+        instrument_data['id'] = primary_id
+
+        # Determine the instrument type and insert into the corresponding instrument table
+        if 'INSTRUME' in primary_data:
+            instrument_is = primary_data['INSTRUME'].lower()
+            logger.info(f"Instrument type identified: {instrument_is}")
+            try:
+                logger.info(f"Attempting to load the instrument table for '{
+                            instrument_is}'...")
+                instrument_t = Table(
+                    instrument_is, metadata, autoload_with=engine)
+                logger.info(f"Successfully loaded the instrument table for '{
+                            instrument_is}'.")
+            except Exception as e:
+                logger.error(
+                    f"Keyword INSTRUME does not correspond to a valid instrument table. Error: {e}")
+                return False
+        else:
+            logger.critical(
+                "Keyword INSTRUME is missing from the primary data, which is required to determine the instrument table for insertion.")
+            return False
+        #
+        logger.info("Inserting data into the instrument table...")
+        session.execute(insert(instrument_t).values(**instrument_data))
+
+        logger.info("Committing the transaction to the database...")
+        session.commit()
+        logger.info("Data inserted successfully into the database.")
+    except Exception as e:
+        logger.error(f"An error occurred during data insertion: {e}")
+        logger.info("Rolling back the transaction...")
+        session.rollback()
+        if args.debug:
+            print(
+                'Failed to insert primary data into the database. Rolling back the transaction...')
+            import pdb
+            pdb.set_trace()
+        logger.error(f"Error inserting data into the database: {e}")
+        return False
+    finally:
+        if args.debug:
+            print('Data insertion process completed. Closing the database session...')
+            import pdb
+            pdb.set_trace()
+        session.close()
+
+    return True
 
 
 def main(args):
@@ -310,6 +377,11 @@ def main(args):
                            getattr(logging, args.loglevel))
     fits_file = args.fits_file
     header_keys = collect_header_keys(fits_file)
+    if header_keys is None:
+        logger.critical(
+            f"Failed to collect header keys from FITS file '{fits_file}'. \
+            Aborting data insertion.")
+        return
     primary_model = get_primary_model()
     instrument = header_keys['INSTRUME'] if 'INSTRUME' in header_keys else None
     instrument_model = get_instrument_model(instrument)
@@ -336,12 +408,13 @@ def main(args):
         insertion for file '{fits_file}'.")
 
     session = create_db_session()
-    # TODO: Implement the insert_data function to handle the actual insertion
-    # of data into the database based on the primary_data and instrument_data
-    insert_data(session, primary_data, instrument_data,
-                primary_model, instrument_model)
-    # session.commit()
-    logger.info(f"Data insertion successful for file '{fits_file}'.")
+    is_inserted = insert_data(session, primary_data,
+                              instrument_data, args, logger)
+
+    if is_inserted:
+        logger.info(f"Data insertion successful for file '{fits_file}'.")
+    else:
+        logger.error(f"Data insertion failed for file '{fits_file}'.")
 
 
 if __name__ == '__main__':
