@@ -24,7 +24,6 @@ connection with the code or the use or other dealings in the code.
 import os
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Date, DateTime, Boolean, Numeric
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
 from json import load
 
 Base = declarative_base()
@@ -35,8 +34,8 @@ class PrimaryTable(Base):
     __table_args__ = {'schema': 'public'}  # Optional schema
 
     id = Column(Integer, primary_key=True, nullable=False)
-    instrume = Column(String, nullable=False, info={
-                      'description': 'Instrument used'})
+    instrume = Column('INSTRUME', String, nullable=False,
+                      info={'description': 'Instrument used'})
 
     # Polymorphic identity for inheritance
     __mapper_args__ = {
@@ -150,8 +149,9 @@ def main():
     Base.metadata.drop_all(engine)  # Drop existing tables
     print("Database and tables created successfully!")
     add_columns_from_json(PrimaryTable)
-    add_columns_from_json(Sparc4)
     print("Columns added to PrimaryTable successfully!")
+    add_columns_from_json(Sparc4)
+    print("Columns added to Sparc4 successfully!")
     Base.metadata.create_all(engine)  # Create tables with new columns
 
 
