@@ -15,16 +15,16 @@ OBJECT,OBJECT,OBJECT,n,n,OBJECT,NGC1234,String,TRUE,,Target as given by the user
 ORIGIN,,,n,n,ORIGIN,LNA,String,TRUE,,Who delivers the data
 TELESCOP,TELESCOP,,n,n,TELESCOP,PE160,String,TRUE,,Telescope name
 ,SITEID,,n,n,SITEID,OPD,String,TRUE,,Observatory/Site
-OBSLONG,,OBSLONG,n,n,OBSLONG,,Float,TRUE,"-180,180","Observatory East Longitude (DEG, -180 to 180)"
-OBSLAT,,OBSLAT,n,n,OBSLAT,,Float,TRUE,"-90,90","Observatory North Latitude (DEG, -90 to 90)"
-OBSALT,,OBSALT,n,n,OBSALT,,float,TRUE,"0,inf",Observatory elevation above sea level (m)
+OBSLONG,,OBSLONG,n,n,OBSLONG,,Float,TRUE,Between:-180180,"Observatory East Longitude (DEG, -180 to 180)"
+OBSLAT,,OBSLAT,n,n,OBSLAT,,Float,TRUE,"Between:-90,90","Observatory North Latitude (DEG, -90 to 90)"
+OBSALT,,OBSALT,n,n,OBSALT,,float,TRUE,"Between:0,inf",Observatory elevation above sea level (m)
 INSTRUME,INSTRUME,INSTRUME,y,n,INSTRUME,SPARC4,String,FALSE,,Instrument used
 OBSTECH,,INSTMODE,y,y,INSTMODE,PHOTOMETRY,String,TRUE,,Technique used during the observation
 ,,SYNCMODE,n,y,SYNCMODE,,String,TRUE,"SYNC,ASYNC",Synchronization across channels at start of acq
 ,,INSTROT,n,y,INSTROT,GUIDEANG,float,TRUE,360,Instrument rotator angle in degrees
 FILTER,FILTER_i,FILTER,n,y,FILTER,V,String,TRUE,,Filter name
 OBSTYPE,OBSTYPE,OBSTYPE,y,n,OBSTYPE,OBJECT,string,TRUE,"OBJECT,ZERO,FLAT,DARK,FOCUS","Image type: OBJECT, ZERO, FLAT, DARK, FOCUS"
-,,CHANNEL,n,y,CHANNEL,,integer,TRUE,"1,4","Instrument channel: 1 (g), 2 (r), 3 (i), 4 (z)"
+,,CHANNEL,n,y,CHANNEL,,integer,TRUE,"1,2,3,4","Instrument channel: 1 (g), 2 (r), 3 (i), 4 (z)"
 ,,CHANNEL1,n,y,CHANNEL1,CHANNEL 1,boolean,TRUE,"true,false",Channel 1 is on (T) or off (F)
 ,,CHANNEL2,n,y,CHANNEL2,CHANNEL 2,boolean,TRUE,"true,false",Channel 2 is on (T) or off (F)
 ,,CHANNEL3,n,y,CHANNEL3,CHANNEL 3,boolean,TRUE,"true,false",Channel 3 is on (T) or off (F)
@@ -35,10 +35,10 @@ ORIGFILE,,FILENAME,y,n,FILENAME,20251105_S4C1_00001.fits,String,FALSE,,Original 
 DATE-OBS,DATE-OBS,DATE-OBS,y,n,DATE-OBS,2001-08-19T09:33:11.950,String,FALSE,,Exposure start
 ,UT,UTTIME,n,n,UTTIME,,string,TRUE,,UTC time at start of observation
 UTC,,UTDATE,n,n,UTDATE,34391,Float,TRUE,,UTC at start (s)
-,,NCYCLES,n,y,NCYCLES,,integer,TRUE,"1,inf",Number of cycles
-,,CYCLIND,n,y,CYCLIND,,integer,TRUE,"1,inf",Cycle index
-,,NSEQ,n,y,NSEQ,,integer,TRUE,"1,16",Number of sequences in one cycle
-,,SEQINDEX,n,y,SEQINDEX,,integer,TRUE,"1,16",Sequence index in the cycle
+,,NCYCLES,n,y,NCYCLES,,integer,TRUE,"Between:1,inf",Number of cycles
+,,CYCLIND,n,y,CYCLIND,,integer,TRUE,"Between:1,inf",Cycle index
+,,NSEQ,n,y,NSEQ,,integer,TRUE,"Between:1,16",Number of sequences in one cycle
+,,SEQINDEX,n,y,SEQINDEX,,integer,TRUE,"Between:1,16",Sequence index in the cycle
 ,,NFRAMES,n,y,NFRAMES,,integer,TRUE,"191,500",Number of frames in sequence
 ,,FRAMEIND,n,y,FRAMEIND,,integer,TRUE,"191,500",Frame index in sequence
 EXPTIME,EXPTIME,EXPTIME,n,n,EXPTIME,60,Float,TRUE,,Exposure time (s)
@@ -48,7 +48,7 @@ EXPTIME,EXPTIME,EXPTIME,n,n,EXPTIME,60,Float,TRUE,,Exposure time (s)
 ,,VSHIFT,n,y,VSHIFT,,float,TRUE,"0.6,1.13,2.2,4.33",Vertical shift speed (ms)
 ,,TRIGGER,n,y,TRIGGER,,string,TRUE,"Internal,External",Trigger mode
 ,,EMMODE,n,y,EMMODE,,string,TRUE,"Electron Multiplying,Conventional",Output amplifier mode
-,,EMGAIN,n,y,EMGAIN,,integer,TRUE,"2,300",Electron multiplier gain
+,,EMGAIN,n,y,EMGAIN,,integer,TRUE,Between:2300,Electron multiplier gain
 ,,VBIN,n,y,VBIN,,integer,TRUE,"11,024",Vertical binning (pix)
 ,,HBIN,n,y,HBIN,,integer,TRUE,"11,024",Horizontal binning (pix)
 ,,INITLIN,n,y,INITLIN,,integer,TRUE,"11,024",Initial line (pix)
@@ -57,8 +57,8 @@ EXPTIME,EXPTIME,EXPTIME,n,n,EXPTIME,60,Float,TRUE,,Exposure time (s)
 ,,FINALCOL,n,y,FINALCOL,,integer,TRUE,"11,024",Final column (pix)
 ,,SHUTTER,n,y,SHUTTER,,string,TRUE,"Open,Closed",Shutter mode
 ,,COOLER,n,y,COOLER,,boolean,TRUE,"true,false",CCD cooler on: T or F
-,CAM_TEMP,CCDTEMP,n,y,CCDTEMP,,integer,TRUE,"-80,25",CCD temperature (deg C)
-,,TGTEMP,n,y,TGTEMP,,integer,TRUE,"-80,25",CCD target temperature (deg C)
+,CAM_TEMP,CCDTEMP,n,y,CCDTEMP,,integer,TRUE,"Between:-80,25",CCD temperature (deg C)
+,,TGTEMP,n,y,TGTEMP,,integer,TRUE,"Between:-80,25",CCD target temperature (deg C)
 ,,TEMPST,n,y,TEMPST,,string,TRUE,"TEMPERATURE_OFF,TEMPERATURE_NOT_REACHED,TEMPERATURE_NOT_STABILIZED,TEMPERATURE_STABILIZED",CCD temperature status
 ,,FRAMETRF,n,y,FRAMETRF,,boolean,TRUE,"true,false",Frame transfer on: T or F
 ,,VCLKAMP,n,y,VCLKAMP,,string,TRUE,"Normal,+1,+2,+3,+4","Clock amplitude: Normal, +1, +2, +3, +4"
@@ -68,14 +68,14 @@ EFFRON,,,n,y,EFFRON,1.1,Float,TRUE,,Specifies the median over all pixels of the 
 RA,RA,RA,y,n,RA,21.955217,Float,TRUE,,Pointing (deg) (J2000.0)
 DEC,DEC,DEC,y,n,DEC,-1.8821,Float,TRUE,,Pointing (deg) (J2000.0)
 EQUINOX,EQUINOX,EQUINOX,n,n,EQUINOX,2000,Float,TRUE,,Standard FK5 epoc
-,FOCUS,TELFOCUS,n,n,TELFOCUS,POSITION,integer,TRUE,"0,inf",Telescope focus position (arbitrary units)
+,FOCUS,TELFOCUS,n,n,TELFOCUS,POSITION,integer,TRUE,"Between:0,inf",Telescope focus position (arbitrary units)
 ,,TCSHA,n,n,TCSHA,HOURANGLE,string,TRUE,,TCS hour angle: HH:MM:SS
 ,,TCSDATE,n,n,TCSDATE,,string,TRUE,,TCS local date (isot)
-,,GFOC,n,y,GFOC,,float,TRUE,"0,inf",Guiding focus position (mm)
+,,GFOC,n,y,GFOC,,float,TRUE,"Between:0,inf",Guiding focus position (mm)
 ,,GMIR,n,y,GMIR,,float,TRUE,360,Rotation angle of the guiding mirror (deg)
-,COL_TEMP,EXTTEMP,n,n,EXTTEMP,OUTTEMP,float,TRUE,"-20,30","Temperature (deg C), weather tower"
-AIRMASS,AIRMASS,AIRMASS,n,n,AIRMASS,,float,TRUE,"1,inf",Airmass at start of observation
-,,PRESSURE,n,n,PRESSURE,,float,TRUE,"0,inf","Barometric pressure (mb), weather tower"
+,COL_TEMP,EXTTEMP,n,n,EXTTEMP,OUTTEMP,float,TRUE,"Between:-20,30","Temperature (deg C), weather tower"
+AIRMASS,AIRMASS,AIRMASS,n,n,AIRMASS,,float,TRUE,"Between:1,inf",Airmass at start of observation
+,,PRESSURE,n,n,PRESSURE,,float,TRUE,"Between:0,inf","Barometric pressure (mb), weather tower"
 ,ENVHUM,HUMIDITY,n,n,HUMIDITY,OUTHUMIDITY,float,TRUE,100,"Relative humidity (%), weather tower"
 ,,ACSVRSN,n,y,ACSVRSN,,string,TRUE,,S4ACS software version
 ,,ICSVRSN,n,y,ICSVRSN,,string,TRUE,,S4ICS software version
@@ -96,7 +96,7 @@ AIRMASS,AIRMASS,AIRMASS,n,n,AIRMASS,,float,TRUE,"1,inf",Airmass at start of obse
 ,,GMIRSTAT,n,y,GMIRSTAT,,string,TRUE,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Guiduing mirror status
 ,,GFOCSTAT,n,y,GFOCSTAT,,string,TRUE,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Guiding focuser status
 ,,WPSEL,n,y,WPSEL,,string,TRUE,"None,L2,L4","Waveplate: half-wave (L2), quarter-wave (L4)"
-,,WPSELPO,n,y,WPSELPO,,float,TRUE,"-5,165",Waveplate selector position (mm)
+,,WPSELPO,n,y,WPSELPO,,float,TRUE,Between:-5165,Waveplate selector position (mm)
 ,,WPPOS,n,y,WPPOS,,integer,TRUE,"0,16","Waveplate idx position from 1 to 16, 0 if none"
 ,,WPANG,n,y,WPANG,,float,TRUE,360,Waveplate position angle (deg)
 ,,CALW,n,y,CALW,,string,TRUE,"POLARIZER,DEPOLARIZER,CLEAR,SPARE,CLOSED",Selected element in calibration wheel
