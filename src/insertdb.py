@@ -89,12 +89,11 @@ def get_primary_model():
     # header data. For example, if the header contains a key 'INSTRUME' with
     # value 'SPARC4', then the primary model should be Sparc4. If the header
     # contains a key 'INSTRUME' with value 'ECHARPE', then the primary model
-    # should be Echarpe. If the header does not contain a key 'INSTRUME', then
-    # the primary model should be PrimaryTable.
+    # should be Echarpe.
     # data directory
     data_dir = os.path.join(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))), 'data')
-    # Load the JSON file in the one-derectory-up 'data' folder
+    # Load the JSON file in the one-directory-up 'data' folder
     with open(os.path.expanduser(f'{data_dir}/primary_table.json'), 'r') as f:
         primary_model_mapping = load(f)
 
@@ -320,7 +319,8 @@ def insert_data(
         session.execute(insert(primary_t).values(**primary_data))
 
         # Get the ID of the newly inserted primary entry to use as a foreign key in the instrument table
-        query = text("SELECT id FROM primary_table ORDER BY id DESC LIMIT 1")
+        query = text(
+            "SELECT id FROM public.primary_table ORDER BY id DESC LIMIT 1")
         primary_id = session.execute(query).scalar()
         instrument_data['id'] = primary_id
 
