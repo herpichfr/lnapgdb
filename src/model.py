@@ -22,9 +22,10 @@ connection with the code or the use or other dealings in the code.
 # pg_hba.conf settings.
 
 import os
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Date, DateTime, Boolean, Numeric
+from sqlalchemy import create_engine, func, Column, Integer, String, Float, ForeignKey, Date, DateTime, Boolean, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 from json import load
+from datetime import datetime, timezone
 
 Base = declarative_base()
 
@@ -36,6 +37,13 @@ class PrimaryTable(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     instrume = Column('INSTRUME', String, nullable=False,
                       info={'description': 'Instrument used'})
+    raw_path = Column(String, nullable=False,
+                      info={'description': 'Path to raw file'})
+    date_insert = Column(DateTime(timezone=True),
+                         server_default=func.now(),
+                         default=lambda: datetime.now(timezone.utc),
+                         nullable=False,
+                         info={'description': 'Date of insertion into the DB'})
 
     # Polymorphic identity for inheritance
     __mapper_args__ = {
