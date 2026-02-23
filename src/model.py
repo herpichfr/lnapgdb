@@ -37,6 +37,7 @@ parser.add_argument('--db_schema',
                     )
 args = parser.parse_args()
 
+# Define db_schema to be used globally in the module
 db_schema = args.db_schema
 
 Base = declarative_base()
@@ -69,9 +70,9 @@ class PrimaryTable(Base):
 
 class Sparc4(Base):
     __tablename__ = 'sparc4'
-    __table_args__ = {'schema': 'public'}  # Optional schema
+    __table_args__ = {'schema': db_schema}
 
-    id = Column(Integer, ForeignKey('public.primary_table.id',
+    id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
                 ondelete='CASCADE'), primary_key=True)
 
     __mapper_args__ = {
@@ -81,9 +82,9 @@ class Sparc4(Base):
 
 class Echarpe(Base):
     __tablename__ = 'echarpe'
-    __table_args__ = {'schema': 'public'}  # Optional schema
+    __table_args__ = {'schema': db_schema}
 
-    id = Column(Integer, ForeignKey('public.primary_table.id',
+    id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
                 ondelete='CASCADE'), primary_key=True)
 
     __mapper_args__ = {
