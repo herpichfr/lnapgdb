@@ -26,13 +26,26 @@ from sqlalchemy import create_engine, func, Column, Integer, String, Float, Fore
 from sqlalchemy.ext.declarative import declarative_base
 from json import load
 from datetime import datetime, timezone
+import argparse
+
+parser = argparse.ArgumentParser(
+    description='Create LNA DB tables and add columns from JSON files.')
+parser.add_argument('--db_schema',
+                    default='public',
+                    choices=['public', 'cyc', 'dev', 'prod'],
+                    help='Database schema to use (default: public)'
+                    )
+args = parser.parse_args()
+
+db_schema = args.db_schema
 
 Base = declarative_base()
 
 
 class PrimaryTable(Base):
     __tablename__ = 'primary_table'
-    __table_args__ = {'schema': 'public'}  # Optional schema
+    # Schema for DB. Use public for local testing, and cyc, dev, prod for deployment.
+    __table_args__ = {'schema': db_schema}
 
     id = Column(Integer, primary_key=True, nullable=False)
     instrume = Column('INSTRUME', String, nullable=False,
@@ -44,6 +57,8 @@ class PrimaryTable(Base):
                          default=lambda: datetime.now(timezone.utc),
                          nullable=False,
                          info={'description': 'Date of insertion into the DB'})
+
+    # NOTE: Model columns are added dynamically from the JSON files
 
     # Polymorphic identity for inheritance
     __mapper_args__ = {
