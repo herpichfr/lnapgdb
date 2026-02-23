@@ -32,6 +32,10 @@ def parse_args():
                         type=str,
                         help='Path to the FITS file to be inserted into \
                         the database.')
+    parser.add_argument('--db_schema',
+                        default='public',
+                        choices=['public', 'cyc', 'dev', 'prod'],
+                        help='Database schema to use (default: public)')
     parser.add_argument('--verbose', '-v',
                         action='store_true',
                         help='Enable verbose logging.')
@@ -369,13 +373,14 @@ def insert_data(
         instrument_data.update(additional_instrument)
 
     try:
-        primary_t = Table('primary_table', metadata, autoload_with=engine)
+        primary_t = Table('primary_table', metadata,
+                          autoload_with=engine, schema=args.db_schema)
         logger.info("Inserting data into the primary_table...")
         session.execute(insert(primary_t).values(**primary_data))
 
         # Get the ID of the newly inserted primary entry to use as a foreign key in the instrument table
         query = text(
-            "SELECT id FROM public.primary_table ORDER BY id DESC LIMIT 1")
+            f"SELECT id FROM {args.db_schema}.primary_table ORDER BY id DESC LIMIT 1")
         primary_id = session.execute(query).scalar()
         instrument_data['id'] = primary_id
 
@@ -386,8 +391,8 @@ def insert_data(
             try:
                 logger.info(f"Attempting to load the instrument table for '{
                             instrument_is}'...")
-                instrument_t = Table(
-                    instrument_is, metadata, autoload_with=engine)
+                instrument_t = Table(instrument_is, metadata,
+                                     autoload_with=engine, schema=args.db_schema)
                 logger.info(f"Successfully loaded the instrument table for '{
                             instrument_is}'.")
             except Exception as e:
