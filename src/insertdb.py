@@ -303,6 +303,26 @@ def create_db_session():
     return Session()
 
 
+def add_outofmodel_columns(args):
+    """
+    Here is reserved space to add out-of-model columns to the database tables.
+    This is for columns that are. They need to be defined first in the
+    model.py module and their values must be defined in this function.
+    """
+    # NOTE: Add the full file path to the primary data for reference
+    outofmodel_data = {}
+    full_file_path = os.path.abspath(args.fits_file)
+    outofmodel_data['raw_path'] = full_file_path
+
+    # NOTE: Add instrument-specific out-of-model data based on the INSTRUME
+    # key in the header
+
+    # This is a test. Remove it and add real out-of-model data as needed
+    outofmodel_data['test_key'] = 'test_value'
+
+    return outofmodel_data
+
+
 def insert_data(
         session,
         primary_data,
@@ -310,9 +330,44 @@ def insert_data(
         args,
         logger=logging.getLogger(__name__)
 ):
-    """Insert data into the database based on the header data."""
+    """
+    Insert data into the database based on the header data.
+    """
+
     metadata = MetaData()
     engine = session.get_bind()
+
+    # Gather out-of-model data to be inserted into the database
+    additional_data = add_outofmodel_columns(args)
+    # Get column names from the primary table to filter the additional data
+    primary_cols = Table('primary_table', metadata,
+                         autoload_with=engine).columns.keys()
+    instrument_cols = Table(primary_data['INSTRUME'].lower(), metadata,
+                            autoload_with=engine).columns.keys()
+    # Filter the additional data to include only keys that are valid columns
+    additional_primary = {}
+    additional_instrument = {}
+    for col in additional_data.keys():
+        if col in primary_cols:
+            additional_primary[col] = additional_data[col]
+        elif col in instrument_cols:
+            additional_instrument[col] = additional_data[col]
+        else:
+            logger.warning(
+                f"Out-of-model data key '{col}' is not a valid column in \
+                either the primary table or the instrument table and will be \
+                ignored.")
+
+    # Update the primary and instrument data with the additional out-of-model data
+    if additional_primary:
+        logger.info(
+            f"Adding out-of-model data to primary data: {additional_primary}")
+        primary_data.update(additional_primary)
+    if additional_instrument:
+        logger.info(
+            f"Adding out-of-model data to instrument data: {additional_instrument}")
+        instrument_data.update(additional_instrument)
+
     try:
         primary_t = Table('primary_table', metadata, autoload_with=engine)
         logger.info("Inserting data into the primary_table...")
