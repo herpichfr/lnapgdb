@@ -31,6 +31,8 @@ def parse_arguments():
     parser.add_argument('--config', type=str, default='config.json',
                         help='Path to the configuration file')
     parser.add_argument('--db_schema', type=str,
+                        choices=['public', 'dev', 'cyc', 'prod'],
+                        default='public',
                         help='Database schema to use for insertion')
     parser.add_argument('--nprocs', '-n', type=int, default=1,
                         help='Number of processes to use for parallel processing')
@@ -156,7 +158,17 @@ if __name__ == "__main__":
     observation_manager = ObservationManager(args)
     # '/storage/raw_data/sparc4/channel1/20[2-9][0-9][0-3][0-9]/*.fits'
     # '/storage/raw_data/echarpe/channel1/20[2-9][0-9][0-3][0-9]/*.fits'
+
     new_images = observation_manager.get_new_images()
+
+    instruments = observation_manager.config.get('instruments', [])
+
+    for instrument in instruments:
+        instrument_path_pattern = '/storage/raw_data/sparc4/channel1/20[2-9][0-9][0-3][0-9]/'
+        # TODO: Think in a way to recover thousands of new images without breaking the pipeline.
+        instrument_images = [img for img in new_images if instrument in img]
+        observation_manager.logger.info(
+            f'Found {len(instrument_images)} new images for instrument {instrument}')
 
     data_collector = DataCollector(
         new_images,
@@ -172,6 +184,7 @@ if __name__ == "__main__":
 
     p_df, i_df = data_collector.collect_data()
 
+    # NOTE: This is the end for testing
     db_inserter = InsertDB(
         config=args.config,
         logger=observation_manager.logger
