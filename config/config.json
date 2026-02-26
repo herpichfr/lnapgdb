@@ -1,4 +1,6 @@
 {
+  "db_schema": "dev",
+
   "instruments": {
     "sparc4": {
       "name": "SPARC4",
