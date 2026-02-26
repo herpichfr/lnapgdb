@@ -89,7 +89,7 @@ class DataCollector:
             header, primary_model, instrument_model, logger)
 
         # TODO: Add out-of-model parameters to either primary and instrument data
-        primary_data['raw_filename'] = raw_full_filename
+        primary_data['raw_path'] = raw_full_filename
         if is_valid:
             logger.debug(
                 f"File '{file}' passed validation successfully.")
