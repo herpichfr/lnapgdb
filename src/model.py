@@ -131,7 +131,9 @@ def get_db_credentials():
 def add_columns_from_json(table_class):
     if not hasattr(table_class, '__tablename__'):
         raise ValueError("Provided class must have a __tablename__ attribute.")
-    json_path = f'data/{table_class.__tablename__.lower()}.json'
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    json_path = os.path.join(base_dir, 'models', f'{table_class.__tablename__.lower()}.json')
+
     with open(json_path) as f:
         table_cols = load(f)
     for col in table_cols:
@@ -180,6 +182,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # NOTE: File execution is SUCCESSFULL.
-    # Creating new columns from JSON
     main()
