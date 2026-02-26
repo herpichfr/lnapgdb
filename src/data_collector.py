@@ -9,13 +9,11 @@ a pandas table to be uset for insertion into the database.
 import os
 import pandas as pd
 from astropy.io import fits
-from json import load
 import glob
 import argparse
 from miscellaneous import setup_logging
 import logging
 from concurrent.futures import ProcessPoolExecutor
-from bisect import bisect_right
 from functools import partial
 
 
@@ -23,7 +21,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Collect and validate FITS header data for database insertion.")
     parser.add_argument(
-        '--directory', '-d', required=True, help="Directory containing FITS files.")
+        '--fits_files', '-f', required=True, help="List of FITS files.")
     parser.add_argument(
         '--db_schema', '-s', default='dev', help="Database schema to use (default: dev).")
     parser.add_argument(
@@ -39,94 +37,72 @@ def parse_args():
 
 class DataCollector:
     def __init__(self,
-                 directory,
+                 fits_files,
+                 primary_model=None,
+                 instrument_models_cache=None,
                  db_schema='dev',
                  nprocs=4,
+                 logger=None,
                  verbose=False,
                  logfile='log/data_collection.log',
                  debug=False):
-        self.directory = directory
+        self.fits_files = fits_files
+        self.primary_model = primary_model
+        self.instrument_models_cache = instrument_models_cache or {}
         self.db_schema = db_schema
         self.nprocs = nprocs
-        self.logger = setup_logging(verbose=verbose, logfile=logfile)
+        self.logger = logger if logger else setup_logging(
+            verbose=verbose, logfile=logfile, loglevel=logging.DEBUG if debug else logging.INFO)
         self.debug = debug
-        self.data_dir = os.path.join(os.path.dirname(
-            os.path.dirname(os.path.abspath(__file__))), 'data')
-        self.last_processed_file = None  # To track the last processed file
 
-        # Pre-load primary data model
-        self.primary_model = self.get_primary_model()
-        # Pre-cache instrument models to avoid repeated file reads
-        self.instrument_models_cache = {
-            'sparc4': self.get_instrument_model('sparc4'),
-            'echarpe': self.get_instrument_model('echarpe')
-        }
-
-    def collect_new_files(self):
-        """Collect and validate FITS header data for database insertion."""
-        self.logger.info(
-            f"Starting data collection from directory: {self.directory}")
-
-        # Get list of FITS files in the directory
-        fits_files = sorted(glob.glob(os.path.join(self.directory, "*.fits")))
-        self.logger.info(
-            f"Found {len(fits_files)} FITS files in the directory.")
-
-        # Filter out already processed files
-        if self.last_processed_file:
-            # Binary search to find the index of the last processed file
-            index = bisect_right(fits_files, self.last_processed_file)
-            fits_files = fits_files[index:]
-            self.logger.info(
-                f"{len(fits_files)} new FITS files to process after filtering.")
-
-        if not fits_files:
-            self.logger.info("No new FITS files to process.")
-            return []
-
-        return fits_files
+    def __repr__(self):
+        return f"DataCollector(fits_files='{self.fits_files}', db_schema='{self.db_schema}', nprocs={self.nprocs}, debug={self.debug})"
 
     @staticmethod
     def process_file(file, primary_model=None, instrument_models_cache=None, logger=logging.getLogger(__name__)):
         """Process a single FITS file: extract header, validate, and return data."""
         logger.debug(f"Processing file: {file}")
+        raw_full_filename = os.path.abspath(file)
+
         try:
             with fits.open(file, checksum=True) as hdul:
                 header = hdul[0].header
-
-                # primary_model = DataCollector.get_primary_model()
-                instrument = header.get('INSTRUME', None).lower(
-                ) if header.get('INSTRUME', None) else None
-                if instrument is None:
-                    logger.critical(
-                        f"File '{file}' is missing 'INSTRUME' keyword in header.")
-                    return None
-                instrument_model = instrument_models_cache.get(
-                    instrument, None) if instrument_models_cache else DataCollector.get_instrument_model(instrument)
-                if not instrument_model:
-                    logger.critical(
-                        f"File '{file}' has unknown instrument '{instrument}' in header.")
-                    return None
-
-                is_valid, primary_data, instrument_data = DataCollector.validate_data(
-                    header, primary_model, instrument_model, logger)
-
-                if is_valid:
-                    logger.debug(
-                        f"File '{file}' passed validation successfully.")
-
-                    return {**primary_data, **instrument_data}
-                else:
-                    logger.error(
-                        f"File '{file}' failed validation and will be skipped.")
-                    return None
         except Exception as e:
-            logger.error(f"Error processing file '{file}': {e}")
+            logger.error(f"Error opening file '{file}': {e}")
+            return None
+
+        # primary_model = DataCollector.get_primary_model()
+        instrument = header.get('INSTRUME', None).lower(
+        ) if header.get('INSTRUME', None) else None
+        if instrument is None:
+            logger.critical(
+                f"File '{file}' is missing 'INSTRUME' keyword in header.")
+            return None
+        instrument_model = instrument_models_cache.get(
+            instrument, None) if instrument_models_cache else DataCollector.get_instrument_model(instrument)
+        if not instrument_model:
+            logger.critical(
+                f"File '{file}' has unknown instrument '{instrument}' in header.")
+            return None
+
+        is_valid, primary_data, instrument_data = DataCollector.validate_data(
+            header, primary_model, instrument_model, logger)
+
+        # TODO: Add out-of-model parameters to either primary and instrument data
+        primary_data['raw_filename'] = raw_full_filename
+        if is_valid:
+            logger.debug(
+                f"File '{file}' passed validation successfully.")
+
+            return {'primary': primary_data, 'instrument': instrument_data}
+        else:
+            logger.error(
+                f"File '{file}' failed validation and will be skipped.")
             return None
 
     def collect_data(self):
         """Collect and validate FITS header data for database insertion."""
-        new_fits_files = self.collect_new_files()
+        new_fits_files = self.fits_files
         if not new_fits_files:
             return pd.DataFrame()  # Return empty DataFrame if no new files
 
@@ -150,10 +126,11 @@ class DataCollector:
         valid_data = [d for d in data if d is not None]
         self.logger.info(f"Successfully processed {len(valid_data)} files.")
 
-        self.last_processed_file = new_fits_files[-1] if new_fits_files else self.last_processed_file
-        print(f"Last processed file: {self.last_processed_file}")
+        # Transform the list of dictionaries into two pandas DataFrame, one for primary and other for the instrumebt
+        primary_df = pd.DataFrame([d['primary'] for d in valid_data])
+        instrument_df = pd.DataFrame([d['instrument'] for d in valid_data])
 
-        return pd.DataFrame(valid_data)
+        return primary_df, instrument_df
 
     @staticmethod
     def validate_data(
@@ -317,54 +294,18 @@ class DataCollector:
 
         return allowed_values, datatype, minmax
 
-    @staticmethod
-    def get_primary_model():
-        """Get the primary model class based on the header data."""
-        # This function should determine which primary model to use based on the
-        # header data. For example, if the header contains a key 'INSTRUME' with
-        # value 'SPARC4', then the primary model should be Sparc4. If the header
-        # contains a key 'INSTRUME' with value 'ECHARPE', then the primary model
-        # should be Echarpe.
-        # data directory
-        data_dir = os.path.join(os.path.dirname(
-            os.path.dirname(os.path.abspath(__file__))), 'data')
-        # Load the JSON file in the one-directory-up 'data' folder
-        with open(os.path.expanduser(f'{data_dir}/primary_table.json'), 'r') as f:
-            primary_model_mapping = load(f)
-
-        primary_model = {}
-        for col in primary_model_mapping:
-            colname = col['colname']
-            primary_model[colname] = col
-
-        return primary_model
-
-    @staticmethod
-    def get_instrument_model(instrument):
-        """Get the instrument model class based on the header data."""
-        if instrument is None:
-            raise ValueError("Instrument key is missing in the header data.")
-
-        data_dir = os.path.join(os.path.dirname(
-            os.path.dirname(os.path.abspath(__file__))), 'data')
-        with open(os.path.expanduser(f'{data_dir}/{instrument.lower()}.json'), 'r') as f:
-            instrument_model_mapping = load(f)
-        instrument_model = {}
-        for col in instrument_model_mapping:
-            colname = col['colname']
-            instrument_model[colname] = col
-        return instrument_model
-
 
 if __name__ == "__main__":
     args = parse_args()
+    fits_files = glob.glob(args.fits_files) if not args.debug else glob.glob(
+        args.fits_files)[:10]
     collector = DataCollector(
-        directory=args.directory,
+        fits_files=fits_files,
         db_schema=args.db_schema,
         nprocs=args.nprocs,
         verbose=args.verbose,
         logfile=args.logfile,
         debug=args.debug
     )
-    data_df = collector.collect_data()
-    print(data_df.head())
+
+    df = collector.collect_data()
