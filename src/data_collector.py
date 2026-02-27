@@ -88,8 +88,10 @@ class DataCollector:
         is_valid, primary_data, instrument_data = DataCollector.validate_data(
             header, primary_model, instrument_model, logger)
 
-        # TODO: Add out-of-model parameters to either primary and instrument data
+        # NOTE: Add out-of-model raw_path to the primary data. This needs to
+        # happen here to garantee that the path is associated with the correct file
         primary_data['raw_path'] = raw_full_filename
+
         if is_valid:
             logger.debug(
                 f"File '{file}' passed validation successfully.")
@@ -118,13 +120,19 @@ class DataCollector:
         else:
             self.logger.info(
                 f"Processing {len(new_fits_files)} files using {self.nprocs} parallel processes.")
-            # NOTE: The multiprocessing part is not yet tested
+            # TODO: The multiprocessing part is not yet tested
             with ProcessPoolExecutor(max_workers=self.nprocs) as executor:
                 data = list(executor.map(worker, new_fits_files))
 
-        # Filter out None results (failed validations)
+        # NOTE: Filter out None results (failed validations).
+        # Save the filenames that failed validation for later review
         valid_data = [d for d in data if d is not None]
         self.logger.info(f"Successfully processed {len(valid_data)} files.")
+        failed_files = [self.fits_files[i]
+                        for i, d in enumerate(data) if d is None]
+        if failed_files:
+            self.logger.warning(f"Failed to process {
+                                len(failed_files)} files: {failed_files}")
 
         # Transform the list of dictionaries into two pandas DataFrame, one for primary and other for the instrumebt
         primary_df = pd.DataFrame([d['primary'] for d in valid_data])
