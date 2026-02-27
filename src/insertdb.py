@@ -72,6 +72,7 @@ class InsertDB:
         else:
             self.logger = setup_logging('INFO', None, False)
 
+        self.debug = args.debug if args is not None else False
         # Setup Engine
         creds = self._get_db_credentials()
         self.engine = create_engine(
@@ -92,13 +93,15 @@ class InsertDB:
         with open(cred_path, 'r') as f:
             return load(f)['lnapgdatabase']
 
-    def insert_batch(self, primary_df, instrument_df, db_schema=None):
+    def insert_batch(self, primary_df, instrument_df, db_schema=None, debug=None):
         """
         Inserts dataframes into the database. 
         Handles the Foreign Key relationship automatically.
         """
         if primary_df.empty:
             return False
+
+        self.debug = debug if debug is not None else self.debug
 
         db_schema = self.db_schema if db_schema is None else db_schema
 
@@ -114,26 +117,41 @@ class InsertDB:
         primary_df['id'] = new_primary_ids
         instrument_df['id'] = new_primary_ids
 
-        try:
+        if self.debug:
             primary_df.to_sql('primary_table', self.engine,
                               schema=db_schema, if_exists='append', index=False)
-            self.logger.info(
-                f"Inserted {len(primary_df)} rows into primary_table.")
-        except Exception as e:
-            self.logger.error(f"Error inserting into primary_table: {e}")
-            session.rollback()
-            return False, 1
+            import pdb
+            pdb.set_trace()
 
-        instrument = primary_df['INSTRUME'].iloc[0]
-        try:
+        else:
+
+            try:
+                primary_df.to_sql('primary_table', self.engine,
+                                  schema=db_schema, if_exists='append', index=False)
+                self.logger.info(
+                    f"Inserted {len(primary_df)} rows into primary_table.")
+            except Exception as e:
+                self.logger.error(f"Error inserting into primary_table: {e}")
+                session.rollback()
+                return False, 1
+
+        instrument = primary_df['INSTRUME'].iloc[0].lower()
+        if self.debug:
             instrument_df.to_sql(instrument, self.engine,
                                  schema=db_schema, if_exists='append', index=False)
-            self.logger.info(f"Inserted {len(
-                primary_df)} rows into primary_table for instrument {instrument}.")
-        except Exception as e:
-            self.logger.error(f"Error inserting into {instrument} table: {e}")
-            session.rollback()
-            return False, 2
+            import pdb
+            pdb.set_trace()
+        else:
+            try:
+                instrument_df.to_sql(instrument, self.engine,
+                                     schema=db_schema, if_exists='append', index=False)
+                self.logger.info(f"Inserted {len(
+                    primary_df)} rows into primary_table for instrument {instrument}.")
+            except Exception as e:
+                self.logger.error(f"Error inserting into {
+                                  instrument} table: {e}")
+                session.rollback()
+                return False, 2
 
         self.logger.info(
             f"Successfully inserted {len(primary_df)} rows into the database.")
