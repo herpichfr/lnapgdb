@@ -26,13 +26,13 @@ from insertdb import InsertDB
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Observation Manager')
-    parser.add_argument('storage_dirs', nargs='*', default=[],
+    parser.add_argument('--storage_dirs', nargs='*', default=[],
                         help='Root directories to monitor for new images')
     parser.add_argument('--config', type=str, default='config.json',
                         help='Path to the configuration file')
     parser.add_argument('--db_schema', type=str,
-                        choices=['public', 'dev', 'cyc', 'prod'],
                         default='public',
+                        choices=['public', 'dev', 'cyc', 'prod'],
                         help='Database schema to use for insertion')
     parser.add_argument('--nprocs', '-n', type=int, default=1,
                         help='Number of processes to use for parallel processing')
@@ -156,19 +156,31 @@ class ObservationManager:
 if __name__ == "__main__":
     args = parse_arguments()
     observation_manager = ObservationManager(args)
-    # '/storage/raw_data/sparc4/channel1/20[2-9][0-9][0-3][0-9]/*.fits'
-    # '/storage/raw_data/echarpe/channel1/20[2-9][0-9][0-3][0-9]/*.fits'
+
+    # If no storage directories are provided, search for them in the config file
+    # Each instrument should have their own storage directory
+    if not observation_manager.storage_dirs:
+        for instrument in observation_manager.config.get('instruments', []):
+            storage_dir = observation_manager.config.get(
+                'instruments', [])[instrument].get('raw_data_directory')
+            if storage_dir:
+                observation_manager.storage_dirs.append(storage_dir)
+        if not observation_manager.storage_dirs:
+            observation_manager.logger.critical(
+                'No storage directories provided in arguments or config file')
+            raise ValueError(
+                'No storage directories provided in arguments or config file')
 
     new_images = observation_manager.get_new_images()
 
     instruments = observation_manager.config.get('instruments', [])
 
-    for instrument in instruments:
-        instrument_path_pattern = '/storage/raw_data/sparc4/channel1/20[2-9][0-9][0-3][0-9]/'
-        # TODO: Think in a way to recover thousands of new images without breaking the pipeline.
-        instrument_images = [img for img in new_images if instrument in img]
-        observation_manager.logger.info(
-            f'Found {len(instrument_images)} new images for instrument {instrument}')
+    # for instrument in instruments:
+    #     instrument_path_pattern = '/storage/raw_data/sparc4/channel1/20[2-9][0-9][0-3][0-9]/'
+    #     # TODO: Think in a way to recover thousands of new images without breaking the pipeline.
+    #     instrument_images = [img for img in new_images if instrument in img]
+    #     observation_manager.logger.info(
+    #         f'Found {len(instrument_images)} new images for instrument {instrument}')
 
     data_collector = DataCollector(
         new_images,
@@ -184,12 +196,21 @@ if __name__ == "__main__":
 
     p_df, i_df = data_collector.collect_data()
 
+    config = observation_manager.config
     # NOTE: This is the end for testing
     db_inserter = InsertDB(
-        config=args.config,
+        config=config,
         logger=observation_manager.logger
     )
-    db_inserter.insert_batch(p_df, i_df, db_schema=args.db_schema)
+
+    inserted, error_code = db_inserter.insert_batch(
+        p_df, i_df, db_schema=args.db_schema)
+    if inserted:
+        observation_manager.logger.info(
+            f'Data inserted successfully into the database with code {error_code}')
+    else:
+        observation_manager.logger.error(
+            f'Failed to insert data into the database with code {error_code}')
 
     import pdb
     pdb.set_trace()
