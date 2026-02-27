@@ -51,6 +51,8 @@ class PrimaryTable(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     instrume = Column('INSTRUME', String, nullable=False,
                       info={'description': 'Instrument used'})
+
+    # NOTE: Out-of-model columns
     raw_path = Column(String, nullable=False,
                       info={'description': 'Path to raw file'})
     date_insert = Column(DateTime(timezone=True),
@@ -58,6 +60,10 @@ class PrimaryTable(Base):
                          default=lambda: datetime.now(timezone.utc),
                          nullable=False,
                          info={'description': 'Date of insertion into the DB'})
+    status_code = Column(Integer, nullable=False, default=0,
+                         info={'description': 'Status code of ingestion'})
+    user_comment = Column(String, nullable=True,
+                          info={'description': 'User comment on the ingestion process'})
 
     # NOTE: Model columns are added dynamically from the JSON files
 
