@@ -16,50 +16,61 @@ model.py module.
 """
 
 import os
-from sqlalchemy import create_engine, MetaData, Table, insert, text
+from sqlalchemy import create_engine, MetaData, text
 from sqlalchemy.orm import sessionmaker
-# from model import Base
 from miscellaneous import setup_logging
+from json import load
+import argparse
 
-# def parse_args():
-#     parser = argparse.ArgumentParser(
-#         description='Insert data into the LNA DB.')
-#     parser.add_argument('--dataframes', '-d',
-#                         nargs=2,
-#                         required=True,
-#                         help='Paths to the primary and instrument pandas dataframes.')
-#     # parser.add_argument('--config', '-c',
-#     #                     type=str,
-#     #                     default='config.json',
-#     #                     help='Path to the configuration file (default: config.json)')
-#     # parser.add_argument('--verbose', '-v',
-#     #                     action='store_true',
-#     #                     help='Enable verbose logging.')
-#     # parser.add_argument('--logfile', '-l',
-#     #                     type=str,
-#     #                     help='Path to the log file. If not provided, logs \
-#     #                     will be printed to the console.')
-#     # parser.add_argument('--loglevel',
-#     #                     type=str,
-#     #                     choices=['DEBUG', 'INFO',
-#     #                              'WARNING', 'ERROR', 'CRITICAL'],
-#     #                     default='INFO', help='Logging level. Default is INFO.')
-#     # parser.add_argument('--debug',
-#     #                     action='store_true',
-#     #                     help='Enable debug mode with pdb breakpoints.')
-#     return parser
 
-# The class will receive two dataframes as parameters, one for primary data and another for instrument data
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Insert data into the LNA DB.')
+    parser.add_argument('--dataframes', '-d',
+                        nargs=2,
+                        required=True,
+                        help='Paths to the primary and instrument pandas dataframes.')
+    parser.add_argument('--config', '-c',
+                        type=str,
+                        default='config.json',
+                        help='Path to the configuration file (default: config.json)')
+    parser.add_argument('--verbose', '-v',
+                        action='store_true',
+                        help='Enable verbose logging.')
+    parser.add_argument('--logfile', '-l',
+                        type=str,
+                        help='Path to the log file. If not provided, logs \
+                        will be printed to the console.')
+    parser.add_argument('--loglevel',
+                        type=str,
+                        choices=['DEBUG', 'INFO',
+                                 'WARNING', 'ERROR', 'CRITICAL'],
+                        default='INFO', help='Logging level. Default is INFO.')
+    parser.add_argument('--debug',
+                        action='store_true',
+                        help='Enable debug mode with pdb breakpoints.')
+    return parser
 
 
 class InsertDB:
-    def __init__(self, config, logger=None):
+    def __init__(self, config, args=None, logger=None):
         self.root_dir = os.path.dirname(
             os.path.dirname(os.path.abspath(__file__)))
-        config = config
-        self.logger = logger or setup_logging(self.config.get(
-            'log_level', 'INFO'), self.config.get('log_file'), self.config.get('verbose', False))
-        self.db_schema = config.get('db_schema', 'public')
+        if type(config) is str:
+            self.config = self._load_config(os.path.join(
+                self.root_dir, 'config', config))
+        else:
+            self.config = config
+
+        self.db_schema = self.config.get('db_schema', 'public')
+
+        if logger is not None:
+            self.logger = logger
+        elif args is not None:
+            self.logger = logger if logger is not None else setup_logging(
+                args.loglevel, args.logfile, args.verbose)
+        else:
+            self.logger = setup_logging('INFO', None, False)
 
         # Setup Engine
         creds = self._get_db_credentials()
@@ -69,6 +80,10 @@ class InsertDB:
         )
         self.Session = sessionmaker(bind=self.engine)
         self.metadata = MetaData()
+
+    def _load_config(self, config_path):
+        with open(config_path, 'r') as f:
+            return load(f)
 
     def _get_db_credentials(self):
         # Access your credentials config as before
@@ -129,16 +144,20 @@ class InsertDB:
 
 
 if __name__ == "__main__":
-    pass
-    # parser = parse_args()
-    # args = parser.parse_args()
-    #
-    # logger = setup_logging(args.loglevel, args.logfile, args.verbose)
-    # insert_db = InsertDB(args.config, logger)
-    #
-    # # Load dataframes
-    # primary_df = pd.read_csv(args.dataframes[0])
-    # instrument_df = pd.read_csv(args.dataframes[1])
-    #
-    # # Insert data into the database
-    # insert_db.insert_batch(primary_df, instrument_df, args.db_schema)
+    parser = parse_args()
+    args = parser.parse_args()
+
+    logger = setup_logging(args.loglevel, args.logfile, args.verbose)
+    insert_db = InsertDB(
+        config=args.config,
+        args=args,
+        logger=logger
+    )
+
+    # Load dataframes
+    import pandas as pd
+    primary_df = pd.read_csv(args.dataframes[0])
+    instrument_df = pd.read_csv(args.dataframes[1])
+
+    # Insert data into the database
+    insert_db.insert_batch(primary_df, instrument_df, args.db_schema)
