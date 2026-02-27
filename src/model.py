@@ -60,7 +60,7 @@ class PrimaryTable(Base):
                          default=lambda: datetime.now(timezone.utc),
                          nullable=False,
                          info={'description': 'Date of insertion into the DB'})
-    status_code = Column(Integer, nullable=False, default=0,
+    status_code = Column(Integer, nullable=True, default=0,
                          info={'description': 'Status code of ingestion'})
     user_comment = Column(String, nullable=True,
                           info={'description': 'User comment on the ingestion process'})
@@ -138,7 +138,8 @@ def add_columns_from_json(table_class):
     if not hasattr(table_class, '__tablename__'):
         raise ValueError("Provided class must have a __tablename__ attribute.")
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    json_path = os.path.join(base_dir, 'models', f'{table_class.__tablename__.lower()}.json')
+    json_path = os.path.join(base_dir, 'models', f'{
+                             table_class.__tablename__.lower()}.json')
 
     with open(json_path) as f:
         table_cols = load(f)
