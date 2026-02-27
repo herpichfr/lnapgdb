@@ -23,7 +23,8 @@ def parse_args():
     parser.add_argument(
         '--fits_files', '-f', required=True, help="List of FITS files.")
     parser.add_argument(
-        '--db_schema', '-s', default='dev', help="Database schema to use (default: dev).")
+        '--db_schema', '-s', default=None,
+        help="Database schema to use (default: dev).")
     parser.add_argument(
         '--nprocs', '-n', type=int, default=4, help="Number of parallel processes to use (default: 4).")
     parser.add_argument(
