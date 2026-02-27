@@ -99,7 +99,9 @@ class InsertDB:
         Handles the Foreign Key relationship automatically.
         """
         if primary_df.empty:
-            return False
+            self.logger.warning(
+                "Primary dataframe is empty. No data to insert.")
+            return False, 0
 
         self.debug = debug if debug is not None else self.debug
 
