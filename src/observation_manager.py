@@ -59,6 +59,8 @@ class ObservationManager:
             os.path.dirname(os.path.abspath(__file__)))
         self.config = self.load_config(os.path.join(
             self.root_dir, 'config', args.config))
+        self.db_schema = self.config.get('db_schema') if self.config.get(
+            'db_schema') else args.db_schema
         self.logger = setup_logging(
             args.log_level, args.log_file, args.verbose)
         self.debug = args.debug
@@ -156,6 +158,7 @@ class ObservationManager:
 if __name__ == "__main__":
     args = parse_arguments()
     observation_manager = ObservationManager(args)
+    db_schema = observation_manager.db_schema
 
     # If no storage directories are provided, search for them in the config file
     # Each instrument should have their own storage directory
@@ -163,54 +166,54 @@ if __name__ == "__main__":
         for instrument in observation_manager.config.get('instruments', []):
             storage_dir = observation_manager.config.get(
                 'instruments', [])[instrument].get('raw_data_directory')
-            if storage_dir:
+            if storage_dir and os.path.exists(storage_dir):
                 observation_manager.storage_dirs.append(storage_dir)
+
+            new_images = observation_manager.get_new_images()
+
+            if not new_images:
+                observation_manager.logger.info(
+                    'No new images found in the storage directories')
+                continue
+
+            data_collector = DataCollector(
+                new_images,
+                primary_model=observation_manager.primary_model,
+                instrument_models_cache=observation_manager.instrument_models,
+                db_schema=db_schema,
+                nprocs=args.nprocs,
+                logger=observation_manager.logger,
+                verbose=args.verbose,
+                logfile=args.log_file,
+                debug=args.debug,
+            )
+
+            p_df, i_df = data_collector.collect_data()
+
+            config = observation_manager.config
+            # NOTE: This is the end for testing
+            db_inserter = InsertDB(
+                config=config,
+                logger=observation_manager.logger
+            )
+
+            inserted, error_code = db_inserter.insert_batch(
+                p_df, i_df, db_schema=db_schema, debug=args.debug)
+            if inserted:
+                observation_manager.logger.info(
+                    f'Data inserted successfully into the database with code {error_code}')
+            else:
+                observation_manager.logger.error(
+                    f'Failed to insert data into the database with code {error_code}')
+
+            if args.debug:
+                observation_manager.logger.debug(
+                    'Debug mode enabled: entering interactive debugging session')
+                import pdb
+                pdb.set_trace()
+
         if not observation_manager.storage_dirs:
             observation_manager.logger.critical(
-                'No storage directories provided in arguments or config file')
+                'No valid storage directories provided in arguments or config file')
             raise ValueError(
-                'No storage directories provided in arguments or config file')
-
-    new_images = observation_manager.get_new_images()
-
-    instruments = observation_manager.config.get('instruments', [])
-
-    # for instrument in instruments:
-    #     instrument_path_pattern = '/storage/raw_data/sparc4/channel1/20[2-9][0-9][0-3][0-9]/'
-    #     # TODO: Think in a way to recover thousands of new images without breaking the pipeline.
-    #     instrument_images = [img for img in new_images if instrument in img]
-    #     observation_manager.logger.info(
-    #         f'Found {len(instrument_images)} new images for instrument {instrument}')
-
-    data_collector = DataCollector(
-        new_images,
-        primary_model=observation_manager.primary_model,
-        instrument_models_cache=observation_manager.instrument_models,
-        db_schema=args.db_schema,
-        nprocs=args.nprocs,
-        logger=observation_manager.logger,
-        verbose=args.verbose,
-        logfile=args.log_file,
-        debug=args.debug,
-    )
-
-    p_df, i_df = data_collector.collect_data()
-
-    config = observation_manager.config
-    # NOTE: This is the end for testing
-    db_inserter = InsertDB(
-        config=config,
-        logger=observation_manager.logger
-    )
-
-    inserted, error_code = db_inserter.insert_batch(
-        p_df, i_df, db_schema=args.db_schema)
-    if inserted:
-        observation_manager.logger.info(
-            f'Data inserted successfully into the database with code {error_code}')
-    else:
-        observation_manager.logger.error(
-            f'Failed to insert data into the database with code {error_code}')
-
-    import pdb
-    pdb.set_trace()
+                'No valid storage directories provided in arguments or config file')
