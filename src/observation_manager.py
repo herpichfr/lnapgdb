@@ -22,6 +22,7 @@ import logging
 from miscellaneous import setup_logging
 from data_collector import DataCollector
 from insertdb import InsertDB
+import subprocess
 
 
 def parse_arguments():
@@ -50,6 +51,32 @@ def parse_arguments():
                         help='Enable verbose logging')
 
     return parser.parse_args()
+
+
+def get_git_branch():
+    try:
+        # Returns the name of the current branch
+        branch = subprocess.check_output(
+            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+            stderr=subprocess.DEVNULL
+        ).decode('utf-8').strip()
+        return branch
+    except Exception:
+        # Fallback if git is not initialized or not installed
+        return "dev"
+
+
+def get_schema_from_branch(branch):
+    if branch == 'main':
+        return 'prod'
+    elif branch == 'cyc':
+        return 'cyc'
+    elif branch == 'dev':
+        return 'dev'
+    elif '_dev' in branch:
+        return 'public'  # or 'test'
+    else:
+        return 'public'  # Default fallback
 
 
 class ObservationManager:
@@ -159,6 +186,17 @@ if __name__ == "__main__":
     args = parse_arguments()
     observation_manager = ObservationManager(args)
     db_schema = observation_manager.db_schema
+
+    # Get schema from git branch
+    git_branch = get_git_branch()
+    db_schema_from_branch = get_schema_from_branch(git_branch)
+    if db_schema_from_branch != db_schema:
+        observation_manager.logger.warning(
+            f"Git branch '{git_branch}' suggests using database schema '{db_schema_from_branch}', but config specifies '{db_schema}'. Using '{db_schema}' as specified in config.")
+        user_input = input("Do you want to continue? (Y/n): ")
+        if user_input.lower() == 'n':
+            observation_manager.logger.info("Exiting as per user request.")
+            exit(0)
 
     # If no storage directories are provided, search for them in the config file
     # Each instrument should have their own storage directory
