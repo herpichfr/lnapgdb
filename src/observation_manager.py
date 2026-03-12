@@ -168,7 +168,7 @@ class ObservationManager:
 
         if self.test:
             self.logger.info(
-                'Running in test mode: scanning for all images in the storage directories'
+                'Running in test mode: using images from data directory'
             )
 
         for root_dir in self.storage_dirs:
