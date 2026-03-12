@@ -15,14 +15,16 @@ Copyright (c) 2026, LNA - Laboratório Nacional de Astrofísica, Brazil. All rig
 
 import os
 from json import load
+from pathlib import Path
 import glob
 import time
 import argparse
 import logging
+import subprocess
 from miscellaneous import setup_logging
 from data_collector import DataCollector
 from insertdb import InsertDB
-import subprocess
+
 
 
 def parse_arguments():
@@ -118,10 +120,10 @@ class ObservationManager:
             with open(primary_model_file, 'r') as f:
                 primary_model_mapping = load(f)
         else:
-            logger.critical(f'Primary model file not found: {
-                            primary_model_file}')
-            raise FileNotFoundError(f'Primary model file not found: {
-                                    primary_model_file}')
+            logger.critical(
+                f'Primary model file not found: {primary_model_file}')
+            raise FileNotFoundError(
+                f'Primary model file not found: {primary_model_file}')
 
         primary_model = {}
         for col in primary_model_mapping:
@@ -139,15 +141,12 @@ class ObservationManager:
             instrument_models[instrument] = {}
             model_file = os.path.join(models_dir, f'{instrument}.json')
             if os.path.exists(model_file):
-                logger.info(f'Loading model for {
-                            instrument} from {model_file}')
+                logger.info(f'Loading model for {instrument} from {model_file}')
                 with open(model_file, 'r') as f:
                     instrument_models_mapping = load(f)
             else:
-                logger.critical(f'Model file for {
-                    instrument} not found: {model_file}')
-                raise FileNotFoundError(f'Model file for {
-                                        instrument} not found: {model_file}')
+                logger.critical(f'Model file for {instrument} not found: {model_file}')
+                raise FileNotFoundError(f'Model file for {instrument} not found: {model_file}')
 
             for col in instrument_models_mapping:
                 colname = col['colname']
@@ -161,25 +160,59 @@ class ObservationManager:
         """
 
         new_images = []
+        extensions = {'.fits', '.fit', '.fts'}
 
-        # NOTE: For testing purposes
-        if self.test:  # Get images from the root_dirs independently from the date
+        if not self.storage_dirs:
+            self.logger.warning('No storage directories defined.')
+            return new_images
+
+        if self.test:
             self.logger.info(
-                'Running in test mode: scanning for all images in the storage directories')
-            new_images = glob.glob(os.path.join(
-                self.storage_dirs[0], '*.fits'), recursive=True)
-        else:
-            # TODO: Implement a more efficient way to track new images
-            for root_dir in self.storage_dirs:
-                for dirpath, _, filenames in os.walk(root_dir):
-                    for filename in filenames:
-                        if filename.lower().endswith(('.fits', '.fit', '.fts')):
-                            image_path = os.path.join(dirpath, filename)
-                            if image_path not in self.processed_images:
-                                new_images.append(image_path)
-                                self.processed_images.add(image_path)
+                'Running in test mode: scanning for all images in the storage directories'
+            )
+
+        for root_dir in self.storage_dirs:
+            root_path = Path(root_dir)
+
+            if not root_path.exists():
+                self.logger.warning(f'Storage directory does not exist: {root_dir}')
+                continue
+
+            for image_path in root_path.rglob('*'):
+                if image_path.suffix.lower() in extensions:
+                    image_path_str = str(image_path)
+
+                    # In test mode, process everything
+                    if self.test:
+                        new_images.append(image_path_str)
+
+                    # In normal mode, process only new images
+                    elif image_path_str not in self.processed_images:
+                        new_images.append(image_path_str)
+                        self.processed_images.add(image_path_str)
 
         return new_images
+
+        # NOTE: For testing purposes
+        # if self.test:  # Get images from the root_dirs independently from the date
+        #     self.logger.info(
+        #         'Running in test mode: scanning for all images in the storage directories')
+        #     new_images = glob.glob(os.path.join(
+        #         self.storage_dirs[0], '*.fits'), recursive=True)
+        # else:
+        #     # TODO: Implement a more efficient way to track new images
+        #     for root_dir in self.storage_dirs:
+        #         for dirpath, _, filenames in os.walk(root_dir):
+        #             for filename in filenames:
+        #                 if filename.lower().endswith(('.fits', '.fit', '.fts')):
+        #                     image_path = os.path.join(dirpath, filename)
+        #                     if image_path not in self.processed_images:
+        #                         new_images.append(image_path)
+        #                         self.processed_images.add(image_path)
+
+        # return new_images
+
+        
 
 
 if __name__ == "__main__":
@@ -201,19 +234,34 @@ if __name__ == "__main__":
     # If no storage directories are provided, search for them in the config file
     # Each instrument should have their own storage directory
     if not observation_manager.storage_dirs:
-        for instrument in observation_manager.config.get('instruments', []):
-            storage_dir = observation_manager.config.get(
-                'instruments', [])[instrument].get('raw_data_directory')
-            if storage_dir and os.path.exists(storage_dir):
-                observation_manager.storage_dirs.append(storage_dir)
 
-            new_images = observation_manager.get_new_images()
+        instruments = observation_manager.config.get('instruments', {})
 
-            if not new_images:
-                observation_manager.logger.info(
-                    'No new images found in the storage directories')
-                continue
+    for instrument in instruments:
+        storage_dir = instruments[instrument].get('raw_data_directory')
 
+        if storage_dir and os.path.exists(storage_dir):
+            observation_manager.storage_dirs.append(storage_dir)
+
+    # After collecting storage directories, validate
+    if not observation_manager.storage_dirs:
+        observation_manager.logger.critical(
+            'No valid storage directories provided in arguments or config file'
+        )
+        raise ValueError(
+            'No valid storage directories provided in arguments or config file'
+        )
+
+    # Now scan for new images
+    new_images = observation_manager.get_new_images()
+
+    if not new_images:
+        observation_manager.logger.info(
+            'No new images found in the storage directories'
+        )
+    else:
+
+        try:
             data_collector = DataCollector(
                 new_images,
                 primary_model=observation_manager.primary_model,
@@ -228,30 +276,32 @@ if __name__ == "__main__":
 
             p_df, i_df = data_collector.collect_data()
 
-            config = observation_manager.config
-            # NOTE: This is the end for testing
+        except Exception as e:
+            observation_manager.logger.error(
+                f'Error collecting data from images: {e}'
+            )
+            exit(1)
+
+        try:
             db_inserter = InsertDB(
-                config=config,
+                config=observation_manager.config,
                 logger=observation_manager.logger
             )
 
             inserted, error_code = db_inserter.insert_batch(
-                p_df, i_df, db_schema=db_schema, debug=args.debug)
+                p_df, i_df, db_schema=db_schema, debug=args.debug
+            )
+
             if inserted:
                 observation_manager.logger.info(
-                    f'Data inserted successfully into the database with code {error_code}')
+                    f'Data inserted successfully into the database with code {error_code}'
+                )
             else:
                 observation_manager.logger.error(
-                    f'Failed to insert data into the database with code {error_code}')
+                    f'Failed to insert data into the database with code {error_code}'
+                )
 
-            if args.debug:
-                observation_manager.logger.debug(
-                    'Debug mode enabled: entering interactive debugging session')
-                import pdb
-                pdb.set_trace()
-
-        if not observation_manager.storage_dirs:
-            observation_manager.logger.critical(
-                'No valid storage directories provided in arguments or config file')
-            raise ValueError(
-                'No valid storage directories provided in arguments or config file')
+        except Exception as e:
+            observation_manager.logger.error(
+                f'Error inserting data into database: {e}'
+            )

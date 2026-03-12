@@ -64,6 +64,6 @@
         "default": "20251105_S4C1_00001",
         "datatype": "String",
         "description": "Processing provenance in terms of the list of science files originating this\ndata product"
-    },
+    }
 
 ]
