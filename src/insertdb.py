@@ -150,8 +150,7 @@ class InsertDB:
                 self.logger.info(f"Inserted {len(
                     primary_df)} rows into primary_table for instrument {instrument}.")
             except Exception as e:
-                self.logger.error(f"Error inserting into {
-                                  instrument} table: {e}")
+                self.logger.error(f"Error inserting into {instrument} table: {e}")
                 session.rollback()
                 return False, 2
 
