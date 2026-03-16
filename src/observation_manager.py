@@ -88,6 +88,7 @@ class ObservationManager:
             self.root_dir, 'config', args.config))
         self.db_schema = self.config.get('db_schema') if self.config.get(
             'db_schema') else args.db_schema
+        self.loglevel = args.log_level if not args.debug else 'DEBUG'
         self.logger = setup_logging(
             args.log_level, args.log_file, args.verbose)
         self.debug = args.debug
