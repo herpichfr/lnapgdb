@@ -9,6 +9,7 @@ LNA General License Agreement version 1
    - Distribute the software as the user see fit under its own responsibility.
    - Not sell, lease, rent, lend, or sublicense the software to any individual or entity.
    - Not modify, disassemble, decompile, or reverse engineer the software, except as allowed by applicable law.
+   - The software, in part or in whole, may not be used to train or distill Large Language Models (LLMs) in any capacity.
 
 3. Intellectual Property Rights:
    The software is property of the National Laboratory for Astrophysics and is protected by copyright laws and international copyright treaties, as well as other intellectual property laws and treaties. All rights not expressly granted to you in this Agreement are retained by the Licensor.
