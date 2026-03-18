@@ -132,8 +132,8 @@ class DataCollector:
         failed_files = [self.fits_files[i]
                         for i, d in enumerate(data) if d is None]
         if failed_files:
-            self.logger.warning(f"Failed to process {
-                                len(failed_files)} files: {failed_files}")
+            self.logger.warning(
+                f"Failed to process {len(failed_files)} files: {failed_files}")
 
         # Transform the list of dictionaries into two pandas DataFrame, one for primary and other for the instrumebt
         primary_df = pd.DataFrame([d['primary'] for d in valid_data])

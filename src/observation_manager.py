@@ -24,6 +24,7 @@ import subprocess
 from miscellaneous import setup_logging
 from data_collector import DataCollector
 from insertdb import InsertDB
+from file_watcher import FileWatcher
 
 
 
@@ -51,6 +52,7 @@ def parse_arguments():
                         help='Run in test mode (processes a predefined set of test images)')
     parser.add_argument('--verbose', '-v', action='store_true',
                         help='Enable verbose logging')
+    parser.add_argument('--watch-dir', nargs='+', help='Directories to watch for new images')
 
     return parser.parse_args()
 
@@ -86,10 +88,16 @@ class ObservationManager:
         self.storage_dirs = args.storage_dirs
         self.root_dir = os.path.dirname(
             os.path.dirname(os.path.abspath(__file__)))
-        self.config = self.load_config(os.path.join(
-            self.root_dir, 'config', args.config))
+        try:
+            self.config = self.load_config(os.path.join(
+                self.root_dir, 'config', args.config))
+        except Exception as e:
+            raise RuntimeError(f'Error loading config file: {e}')
+        
+        self.db_config = self.load_db_config(self.root_dir)
         self.db_schema = self.config.get('db_schema') if self.config.get(
             'db_schema') else args.db_schema
+        
         self.logger = setup_logging(
             args.log_level, args.log_file, args.verbose)
         self.debug = args.debug
@@ -109,6 +117,18 @@ class ObservationManager:
     @staticmethod
     def load_config(config_path):
         with open(config_path, 'r') as f:
+            return load(f)
+    
+    @staticmethod
+    def load_db_config(root_dir):
+        credentials_path = os.path.join(root_dir, 'credentials', 'db_config.json')
+
+        if not os.path.exists(credentials_path):
+            raise FileNotFoundError(
+                f'Database credentials file not found: {credentials_path}'
+            )
+
+        with open(credentials_path, 'r') as f:
             return load(f)
 
     @staticmethod
@@ -137,7 +157,7 @@ class ObservationManager:
         """Load instrument models from the configuration file."""
 
         instrument_models = {}
-        for instrument in config.get('instruments'):
+        for instrument in config.get('instruments', {}):
             instrument_models[instrument] = {}
             model_file = os.path.join(models_dir, f'{instrument}.json')
             if os.path.exists(model_file):
@@ -162,14 +182,26 @@ class ObservationManager:
         new_images = []
         extensions = {'.fits', '.fit', '.fts'}
 
+        # TEST MODE
+        if self.test:
+            data_dir = os.path.join(self.root_dir, 'data')
+            self.logger.info(f'Running in test mode: using {data_dir}')
+
+            if not os.path.exists(data_dir):
+                self.logger.error(f'Data directory not found: {data_dir}')
+                return []
+
+            for dirpath, _, filenames in os.walk(data_dir):
+                for file in filenames:
+                    if file.lower().endswith(tuple(extensions)):
+                        new_images.append(os.path.join(dirpath, file))
+            
+            return new_images
+
+        # NORMAL MODE
         if not self.storage_dirs:
             self.logger.warning('No storage directories defined.')
             return new_images
-
-        if self.test:
-            self.logger.info(
-                'Running in test mode: using images from data directory'
-            )
 
         for root_dir in self.storage_dirs:
             root_path = Path(root_dir)
@@ -182,43 +214,31 @@ class ObservationManager:
                 if image_path.suffix.lower() in extensions:
                     image_path_str = str(image_path)
 
-                    # In test mode, process everything
-                    if self.test:
-                        new_images.append(image_path_str)
-
-                    # In normal mode, process only new images
-                    elif image_path_str not in self.processed_images:
+                    if image_path_str not in self.processed_images:
                         new_images.append(image_path_str)
                         self.processed_images.add(image_path_str)
 
-        return new_images
-
-        # NOTE: For testing purposes
-        # if self.test:  # Get images from the root_dirs independently from the date
-        #     self.logger.info(
-        #         'Running in test mode: scanning for all images in the storage directories')
-        #     new_images = glob.glob(os.path.join(
-        #         self.storage_dirs[0], '*.fits'), recursive=True)
-        # else:
-        #     # TODO: Implement a more efficient way to track new images
-        #     for root_dir in self.storage_dirs:
-        #         for dirpath, _, filenames in os.walk(root_dir):
-        #             for filename in filenames:
-        #                 if filename.lower().endswith(('.fits', '.fit', '.fts')):
-        #                     image_path = os.path.join(dirpath, filename)
-        #                     if image_path not in self.processed_images:
-        #                         new_images.append(image_path)
-        #                         self.processed_images.add(image_path)
-
-        # return new_images
-
-        
+        return new_images      
 
 
 if __name__ == "__main__":
     args = parse_arguments()
     observation_manager = ObservationManager(args)
     db_schema = observation_manager.db_schema
+
+    if args.watch_dir:
+        watch_dirs = args.watch_dir
+    else:
+        watch_dirs = (
+            observation_manager.storage_dirs
+            if not observation_manager.test
+            else [os.path.join(observation_manager.root_dir, 'data')]
+            
+        )
+        print(f"DEBUG: Watching directories: {watch_dirs}")
+
+    watcher = FileWatcher(directories=watch_dirs)
+    
 
     # Get schema from git branch
     git_branch = get_git_branch()
@@ -237,14 +257,14 @@ if __name__ == "__main__":
 
         instruments = observation_manager.config.get('instruments', {})
 
-    for instrument in instruments:
-        storage_dir = instruments[instrument].get('raw_data_directory')
+        for instrument in instruments:
+            storage_dir = instruments[instrument].get('raw_data_directory')
 
-        if storage_dir and os.path.exists(storage_dir):
-            observation_manager.storage_dirs.append(storage_dir)
+            if storage_dir and os.path.exists(storage_dir):
+                observation_manager.storage_dirs.append(storage_dir)
 
     # After collecting storage directories, validate
-    if not observation_manager.storage_dirs:
+    if not observation_manager.storage_dirs and not observation_manager.test:
         observation_manager.logger.critical(
             'No valid storage directories provided in arguments or config file'
         )
@@ -253,14 +273,18 @@ if __name__ == "__main__":
         )
 
     # Now scan for new images
-    new_images = observation_manager.get_new_images()
+    # new_images = observation_manager.get_new_images()
+        #print(f"DEBUG: {len(new_images)} images found [observation_manager-261]")
+    for new_images in watcher.watch():    
+        print(f"DEBUG: Processing {len(new_images)} new images")
+        print("DEBUG: Starting data collection process...[observation_manager-270]")
 
-    if not new_images:
-        observation_manager.logger.info(
-            'No new images found in the storage directories'
-        )
-    else:
-
+    # if not new_images:
+    #     observation_manager.logger.info(
+    #         'No new images found in the storage directories'
+    #     )
+    # else:
+    #     print("DEBUG: Starting data collection process...[observation_manager-268]")
         try:
             data_collector = DataCollector(
                 new_images,
@@ -275,16 +299,21 @@ if __name__ == "__main__":
             )
 
             p_df, i_df = data_collector.collect_data()
+            print("DEBUG: Data collection process finished.[observation_manager-283]")
+            print(f"DEBUG: Primary data (p_df): {p_df}")
+            print(f"DEBUG: Instrument data (i_df): {i_df}")
 
         except Exception as e:
             observation_manager.logger.error(
                 f'Error collecting data from images: {e}'
             )
-            exit(1)
+            # exit(1)
+            continue
 
         try:
             db_inserter = InsertDB(
                 config=observation_manager.config,
+                db_config=observation_manager.db_config,
                 logger=observation_manager.logger
             )
 

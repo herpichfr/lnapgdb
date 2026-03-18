@@ -147,8 +147,9 @@ class InsertDB:
             try:
                 instrument_df.to_sql(instrument, self.engine,
                                      schema=db_schema, if_exists='append', index=False)
-                self.logger.info(f"Inserted {len(
-                    primary_df)} rows into primary_table for instrument {instrument}.")
+                self.logger.info(
+                    f"Inserted {len(primary_df)} rows into primary_table for instrument {instrument}."
+                )
             except Exception as e:
                 self.logger.error(f"Error inserting into {instrument} table: {e}")
                 session.rollback()
