@@ -1,0 +1,134 @@
+NoirLab,SOAR,SPARC4,2026A,Example,Type,Allowed_Values,Comment
+SIMPLE,SIMPLE,SIMPLE,,T,Boolean,,Standard FITS (NOST-100-2.0)
+BSCALE,BSCALE,BSCALE,,1,Integer,,Linear factor in scaling equation
+BZERO,BZERO,BZERO,,32768,Float,,value = fits-value*BSCALE+BZERO
+BUNIT,,,,‘adu’,String,,Physical unit of array values
+BITPIX,BITPIX,BITPIX,,16,Integer,,# bits storing pix values
+NAXIS,NAXIS,NAXIS,,2,Integer,,# of axes in frame
+NAXIS1,NAXIS1,NAXIS1,,2080,Integer,,# of pixels/row
+NAXIS2,NAXIS2,NAXIS2,,2048,Integer,,# of rows (also # of scan lines)
+EXTEND,,,,T,Boolean,,Extensions may be present
+PROG_ID,PROPID,PROJID,PROPID,‘OP2025B-001’,String,,The identification code assigned to each observing run by the Science Committee
+,PROPOSAL,,,SOAR,String,,
+OBSERVER,OBSERVER,OBSERVER,,"""CHIMERA""",String,,Name of the observer
+OBJECT,OBJECT,OBJECT,,NGC1234',String,,Target as given by the user
+ORIGIN,,,,‘LNA’,String,,Who delivers the data
+TELESCOP,TELESCOP,,TELESCOP,‘PE160’,String,,Telescope name
+,SITEID,,SITEID,OPD,String,,Observatory/Site
+OBSLONG,,OBSLONG,,,Float,"-180,180","Observatory East Longitude (DEG, -180 to 180)"
+OBSLAT,,OBSLAT,,,Float,"-90,90","Observatory North Latitude (DEG, -90 to 90)"
+OBSALT,,OBSALT,,,float,"0,inf",Observatory elevation above sea level (m)
+INSTRUME,INSTRUME,INSTRUME,,‘SPARC4’,String,,Instrument used
+OBSTECH,,INSTMODE,,‘PHOTOMETRY’,String,,Technique used during the observation
+,,SYNCMODE,,,String,"SYNC,ASYNC",Synchronization across channels at start of acq
+,,INSTROT,,GUIDEANG,float,360,Instrument rotator angle in degrees
+FILTER,FILTER_i,FILTER,,‘V’,String,,Filter name
+OBSTYPE,OBSTYPE,OBSTYPE,,OBJECT',string,"OBJECT,ZERO,FLAT,DARK,FOCUS","Image type: OBJECT, ZERO, FLAT, DARK, FOCUS"
+,,CHANNEL,,,integer,"1,4","Instrument channel: 1 (g), 2 (r), 3 (i), 4 (z)"
+,,CHANNEL1,,CHANNEL 1,boolean,"true,false",Channel 1 is on (T) or off (F)
+,,CHANNEL2,,CHANNEL 2,boolean,"true,false",Channel 2 is on (T) or off (F)
+,,CHANNEL3,,CHANNEL 3,boolean,"true,false",Channel 3 is on (T) or off (F)
+,,CHANNEL4,,CHANNEL 4,boolean,"true,false",Channel 4 is on (T) or off (F)
+,,CCDSERN,,,integer,"99,149,917",CCD serial number
+ORIGFILE,,FILENAME,,20251105_S4C1_00001.fits',String,,Original file name
+,,,DATEFILE,2001-08-19T09:33:11.950',String,,File creation date
+DATE-OBS,DATE-OBS,DATE-OBS,,2001-08-19T09:33:11.950',String,,Exposure start
+,UT,UTTIME,,,string,,UTC time at start of observation
+UTC,,UTDATE,,34391,Float,,UTC at start (s)
+,,NCYCLES,,,integer,"1,inf",Number of cycles
+,,CYCLIND,,,integer,"1,inf",Cycle index
+,,NSEQ,,,integer,"1,16",Number of sequences in one cycle
+,,SEQINDEX,,,integer,"1,16",Sequence index in the cycle
+,,NFRAMES,,,integer,"191,500",Number of frames in sequence
+,,FRAMEIND,,,integer,"191,500",Frame index in sequence
+EXPTIME,EXPTIME,EXPTIME,,60,Float,,Exposure time (s)
+,,ACQMODE,,,string,"Single Scan,Kinetics",Acquisition mode
+,,PREAMP,,,string,"Gain 1,Gain 2",Pre-amplifier gain
+,,READRATE,,,float,"0.1,1,10,20,30",Readout rate (MHz)
+,,VSHIFT,,,float,"0.6,1.13,2.2,4.33",Vertical shift speed (ms)
+,,TRIGGER,,,string,"Internal,External",Trigger mode
+,,EMMODE,,,string,"Electron Multiplying,Conventional",Output amplifier mode
+,,EMGAIN,,,integer,"2,300",Electron multiplier gain
+,,VBIN,,,integer,"11,024",Vertical binning (pix)
+,,HBIN,,,integer,"11,024",Horizontal binning (pix)
+,,INITLIN,,,integer,"11,024",Initial line (pix)
+,,INITCOL,,,integer,"11,024",Initial column (pix)
+,,FINALLIN,,,integer,"11,024",Final line (pix)
+,,FINALCOL,,,integer,"11,024",Final column (pix)
+,,SHUTTER,,,string,"Open,Closed",Shutter mode
+,,COOLER,,,boolean,"true,false",CCD cooler on: T or F
+,CAM_TEMP,CCDTEMP,,,integer,"-80,25",CCD temperature (deg C)
+,,TGTEMP,,,integer,"-80,25",CCD target temperature (deg C)
+,,TEMPST,,,string,"TEMPERATURE_OFF,TEMPERATURE_NOT_REACHED,TEMPERATURE_NOT_STABILIZED,TEMPERATURE_STABILIZED",CCD temperature status
+,,FRAMETRF,,,boolean,"true,false",Frame transfer on: T or F
+,,VCLKAMP,,,string,"Normal,+1,+2,+3,+4","Clock amplitude: Normal, +1, +2, +3, +4"
+GAIN,GAIN,GAIN,,2,Float,,Specifies the detector sensitivity in number of electrons per data
+DETRON,RDNOISE,RDNOISE,,10.1,Float,,Specifies the detector readout noise in electrons
+EFFRON,,,,1.1,Float,,Specifies the median over all pixels of the effective readout noise
+RA,RA,RA,,21.955217,Float,,Pointing (deg) (J2000.0)
+DEC,DEC,DEC,,-1.8821,Float,,Pointing (deg) (J2000.0)
+EQUINOX,EQUINOX,EQUINOX,,2000,Float,,Standard FK5 epoc
+,FOCUS,TELFOCUS,,POSITION,integer,"0,inf",Telescope focus position (arbitrary units)
+,,TCSHA,,HOURANGLE,string,,TCS hour angle: HH:MM:SS
+,,TCSDATE,,,string,,TCS local date (isot)
+,,GFOC,,,float,"0,inf",Guiding focus position (mm)
+,,GMIR,,,float,360,Rotation angle of the guiding mirror (deg)
+,COL_TEMP,EXTTEMP,,OUTTEMP,float,"-20,30","Temperature (deg C), weather tower"
+AIRMASS,AIRMASS,AIRMASS,,,float,"1,inf",Airmass at start of observation
+,,PRESSURE,,,float,"0,inf","Barometric pressure (mb), weather tower"
+,ENVHUM,HUMIDITY,,OUTHUMIDITY,float,100,"Relative humidity (%), weather tower"
+,,ACSVRSN,,,string,,S4ACS software version
+,,ICSVRSN,,,string,,S4ICS software version
+,,GUIVRSN,,,string,,S4GUI software version
+,,CTRLINTE,,,string,"S4GUI,S4GEI",Graphical control interface of ACS
+,,ACSMODE,,,boolean,"true,false",ACS: real (T) or simulated (F)
+,,WPROMODE,,,boolean,"true,false",Waveplate rotator: real (T) or simulated (F)
+,,WPSEMODE,,,boolean,"true,false",Waveplate selector: real (T) or simulated (F)
+,,ANMODE,,,boolean,"true,false",Analyzer: real (T) or simulated (F)
+,,CALWMODE,,,boolean,"true,false",Calibration wheel: real (T) or simulated (F)
+,,GMIRMODE,,,boolean,"true,false",Guiding mirror: real (T) or simulated (F)
+,,GFOCMODE,,,boolean,"true,false",Guiding focuser: real (T) or simulated (F)
+,,TCSMODE,,,boolean,"true,false",TCS: real (T) or simulated (F)
+,,WPROSTAT,,,string,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Waveplate rotator status
+,,WPSESTAT,,,string,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Waveplate selector status
+,,ANSTAT,,,string,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Analyzer status
+,,CALWSTAT,,,string,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Calibration wheel status
+,,GMIRSTAT,,,string,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Guiduing mirror status
+,,GFOCSTAT,,,string,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Guiding focuser status
+,,WPSEL,,,string,"None,L2,L4","Waveplate: half-wave (L2), quarter-wave (L4)"
+,,WPSELPO,,,float,"-5,165",Waveplate selector position (mm)
+,,WPPOS,,,integer,"0,16","Waveplate idx position from 1 to 16, 0 if none"
+,,WPANG,,,float,360,Waveplate position angle (deg)
+,,CALW,,,string,"POLARIZER,DEPOLARIZER,CLEAR,SPARE,CLOSED",Selected element in calibration wheel
+,,CALWANG,,,float,360,Calibration wheel position angle (deg)
+,,ASEL,,,boolean,"true,false",Savart prism analyzer selected
+,,ANALANG,,,float,360,Analyzer position angle (deg)
+,,ACQERROR,,,boolean,"true,false",Acquisition error - see comments
+WEIGHT,,,,0.8,Float,,This is the median over all pixels of the weight map
+BLANK,,,,0,Integer,,Value used for NULL pixels
+DATE,DATE,,,2001-08-19T09:34:52.676',String,,Date the file was written
+DATAMAX,,,,43212,Float,,Maximal pixel value
+DATAMIN,,,,323,Float,,Minimal pixel value
+RADESYS,,,,FK5',String,,Reference system
+TEXPTIME,,,,240,Float,,"The arithmetic sum of the integration time of all exposures included in this
+product (s)."
+NCOMBINE,,,,1,Integer,,"Number of raw science data files that were combined to generate this data
+product"
+MJD-OBS,,,,52140.39805,Float,,MJD at exposure start (d)
+MJD-END,,,,52140.39875,Float,,MJD at exposure end (d)
+DATE-END,,,,2001-08-19T09:34:51.950',String,,Exposure end
+TIMESYS,,,,‘UTC’,String,,Time system used
+LST,LST,,,19:51:15.380,String,,LST at start (s)
+PI-COI,,,,‘SCIENTIST’,String,,Name of the PI/Co-I
+OBID,,,,311,Integer,,Observation Block ID run number
+DISPELEM,,,,‘LR_blue’,String,,Dispersion element name
+ARCFILE,,,,20251105_S4C1_00001.fits',String,,Archive file name
+PRODCATG,,,,‘SCIENCE.IMAGE’,String,,Data product category
+PROCSOFT,,,,‘Chimera v1.99’,String,,Version of the software used to produce this data product
+REFERENC,,,,1924MNRAS..84..308E',String,,"Primary scientific publication associated with this data
+product"
+PROVi,,,,‘20251105_S4C1_00001’,String,,"Processing provenance in terms of the list of science files originating this
+data product"
+CHECKSUM,,,CHECKSUM,B5445389D6586A3E',String,,HDU checksum
+DATASUM,,,DATASUM,0265279410’,String,,Data unit checksum
+COMMENT,,,,‘Any comment’,String,,

@@ -1,259 +1,302 @@
 [
     {
-        "colname": "id",
-        "default": 0,
-        "datatype": "Integer",
-        "primary_key": true,
+        "colname": "SIMPLE",
         "nullable": false,
-        "description": "Primary key"
+        "datatype": "Boolean",
+        "description": "Standard FITS (NOST-100-2.0)"
     },
     {
         "colname": "BSCALE",
-        "default": "1",
+        "default_value": "1",
         "datatype": "Integer",
         "description": "Linear factor in scaling equation"
     },
     {
         "colname": "BZERO",
-        "default": "32768",
+        "default_value": "32768",
         "datatype": "Float",
         "description": "value = fits-value*BSCALE+BZERO"
     },
     {
+        "colname": "BUNIT",
+        "default_value": "adu",
+        "datatype": "String",
+        "description": "Physical unit of array values"
+    },
+    {
         "colname": "BITPIX",
-        "default": "16",
+        "default_value": "16",
         "datatype": "Integer",
         "description": "# bits storing pix values"
     },
     {
+        "colname": "NAXIS",
+        "nullable": false,
+        "datatype": "Integer",
+        "description": "# of axes in frame"
+    },
+    {
         "colname": "NAXIS1",
-        "default": "2080",
+        "nullable": false,
         "datatype": "Integer",
         "description": "# of pixels/row"
     },
     {
         "colname": "NAXIS2",
-        "default": "2048",
+        "nullable": false,
         "datatype": "Integer",
         "description": "# of rows (also # of scan lines)"
     },
     {
         "colname": "EXTEND",
-        "default": "T",
+        "default_value": "T",
         "datatype": "Boolean",
-        "allowed_values": {"T", "F"},
+        "allowed_values": "T,F",
         "description": "Extensions may be present"
     },
     {
         "colname": "PROPID",
-        "default": "OP2025B-001",
+        "nullable": false,
         "datatype": "String",
         "description": "The identification code assigned to each observing run by the Science Committee"
     },
     {
+        "colname": "PROPOSAL",
+        "default_value": "SOAR",
+        "datatype": "String"
+    },
+    {
         "colname": "OBSERVER",
-        "default": "CHIMERA",
+        "default_value": "CHIMERA",
         "datatype": "String",
         "description": "Name of the observer"
     },
     {
         "colname": "OBJECT",
-        "default": "NGC1234'",
+        "default_value": "NGC1234",
         "datatype": "String",
         "description": "Target as given by the user"
     },
     {
         "colname": "ORIGIN",
-        "default": "LNA",
+        "default_value": "LNA",
         "datatype": "String",
         "description": "Who delivers the data"
     },
     {
         "colname": "TELESCOP",
-        "default": "PE160",
+        "default_value": "PE160",
         "datatype": "String",
         "description": "Telescope name"
     },
     {
+        "colname": "SITEID",
+        "default_value": "OPD",
+        "datatype": "String",
+        "description": "Observatory/Site"
+    },
+    {
         "colname": "OBSLONG",
-        "default": 45,
         "datatype": "Float",
+        "allowed_values": "Between:-180,180",
         "description": "Observatory East Longitude (DEG, -180 to 180)"
     },
     {
         "colname": "OBSLAT",
-        "default": -22,
         "datatype": "Float",
-        "allowed_values": "-90,90",
+        "allowed_values": "Between:-90,90",
         "description": "Observatory North Latitude (DEG, -90 to 90)"
     },
     {
         "colname": "OBSALT",
-        "default": 1864,
         "datatype": "float",
+        "allowed_values": "Between:0,inf",
         "description": "Observatory elevation above sea level (m)"
     },
     {
         "colname": "INSTRUME",
-        "default": "SPARC4",
+        "nullable": false,
         "datatype": "String",
         "description": "Instrument used"
     },
     {
-        "colname": "OBSTECH",
-        "default": "PHOTOMETRY",
-        "datatype": "String",
-        "description": "Technique used during the observation"
-    },
-    {
-        "colname": "FILTER",
-        "default": "V",
-        "datatype": "String",
-        "description": "Filter name"
-    },
-    {
         "colname": "OBSTYPE",
-        "default": "OBJECT'",
+        "default_value": "OBJECT",
         "datatype": "string",
-        "allowed_values": {"OBJECT", "ZERO", "FLAT", "DARK", "FOCUS"},
+        "allowed_values": "OBJECT,ZERO,FLAT,DARK,FOCUS",
         "description": "Image type: OBJECT, ZERO, FLAT, DARK, FOCUS"
     },
     {
-        "colname": "ORIGFILE",
-        "default": "20251105_S4C1_00001.fits'",
+        "colname": "FILENAME",
+        "nullable": false,
         "datatype": "String",
         "description": "Original file name"
     },
     {
+        "colname": "DATEFILE",
+        "default_value": "2001-08-19T09:33:11.950",
+        "datatype": "String",
+        "description": "File creation date"
+    },
+    {
         "colname": "DATE-OBS",
-        "default": "2001-08-19T09:33:11.950'",
+        "nullable": false,
         "datatype": "String",
         "description": "Exposure start"
     },
     {
-        "colname": "UTC",
-        "default": "34391",
-        "datatype": "Float",
+        "colname": "UTTIME",
+        "datatype": "string",
+        "description": "UTC time at start of observation"
+    },
+    {
+        "colname": "UTDATE",
+        "datatype": "string",
         "description": "UTC at start (s)"
     },
     {
         "colname": "EXPTIME",
-        "default": "60",
+        "default_value": "60",
         "datatype": "Float",
         "description": "Exposure time (s)"
     },
     {
-        "colname": "GAIN",
-        "default": "2",
-        "datatype": "Float",
-        "description": "Specifies the detector sensitivity in number of electrons per data"
-    },
-    {
-        "colname": "DETRON",
-        "default": "10.1",
-        "datatype": "Float",
-        "description": "Specifies the detector readout noise in electrons"
-    },
-    {
-        "colname": "EFFRON",
-        "default": "1.1",
-        "datatype": "Float",
-        "description": "Specifies the median over all pixels of the effective readout noise"
-    },
-    {
         "colname": "RA",
-        "default": "21.955217",
-        "datatype": "Float",
+        "default_value": "21.955217",
+        "datatype": "string",
         "description": "Pointing (deg) (J2000.0)"
     },
     {
         "colname": "DEC",
-        "default": "-1.8821",
-        "datatype": "Float",
+        "default_value": "-1.8821",
+        "datatype": "string",
         "description": "Pointing (deg) (J2000.0)"
     },
     {
         "colname": "EQUINOX",
-        "default": "2000",
-        "datatype": "Float",
+        "default_value": "2000",
+        "datatype": "string",
         "description": "Standard FK5 epoc"
     },
     {
-        "colname": "AIRMASS",
-        "default": 1,
+        "colname": "TELFOCUS",
+        "default_value": "POSITION",
+        "datatype": "integer",
+        "allowed_values": "Between:0,inf",
+        "description": "Telescope focus position (arbitrary units)"
+    },
+    {
+        "colname": "TCSHA",
+        "default_value": "HOURANGLE",
+        "datatype": "string",
+        "description": "TCS hour angle: HH:MM:SS"
+    },
+    {
+        "colname": "TCSDATE",
+        "datatype": "string",
+        "description": "TCS local date (isot)"
+    },
+    {
+        "colname": "EXTTEMP",
+        "default_value": "OUTTEMP",
         "datatype": "float",
+        "allowed_values": "Between:-20,30",
+        "description": "Temperature (deg C), weather tower"
+    },
+    {
+        "colname": "AIRMASS",
+        "datatype": "float",
+        "allowed_values": "Between:1,inf",
         "description": "Airmass at start of observation"
     },
     {
+        "colname": "PRESSURE",
+        "datatype": "float",
+        "allowed_values": "Between:0,inf",
+        "description": "Barometric pressure (mb), weather tower"
+    },
+    {
+        "colname": "HUMIDITY",
+        "default_value": "90",
+        "datatype": "float",
+        "allowed_values": "between:0,100",
+        "description": "Relative humidity (%), weather tower"
+    },
+    {
         "colname": "DATE",
-        "default": "2001-08-19T09:34:52.676'",
+        "default_value": "2001-08-19T09:34:52.676",
         "datatype": "String",
         "description": "Date the file was written"
     },
     {
+        "colname": "TEXPTIME",
+        "default_value": "240",
+        "datatype": "Float",
+        "description": "The arithmetic sum of the integration time of all exposures included in this\nproduct (s)."
+    },
+    {
         "colname": "MJD-OBS",
-        "default": "52140.39805",
+        "default_value": "52140.39805",
         "datatype": "Float",
         "description": "MJD at exposure start (d)"
     },
     {
         "colname": "MJD-END",
-        "default": "52140.39875",
+        "default_value": "52140.39875",
         "datatype": "Float",
         "description": "MJD at exposure end (d)"
     },
     {
         "colname": "DATE-END",
-        "default": "2001-08-19T09:34:51.950'",
+        "default_value": "2001-08-19T09:34:51.950",
         "datatype": "String",
         "description": "Exposure end"
     },
     {
         "colname": "TIMESYS",
-        "default": "UTC",
+        "default_value": "UTC",
         "datatype": "String",
         "description": "Time system used"
     },
     {
         "colname": "LST",
-        "default": "19:51:15.380",
+        "default_value": "19:51:15.380",
         "datatype": "String",
         "description": "LST at start (s)"
     },
     {
         "colname": "PI-COI",
-        "default": "SCIENTIST",
+        "default_value": "SCIENTIST",
         "datatype": "String",
         "description": "Name of the PI/Co-I"
     },
     {
         "colname": "OBID",
-        "default": "311",
+        "default_value": "311",
         "datatype": "Integer",
         "description": "Observation Block ID run number"
     },
     {
         "colname": "PRODCATG",
-        "default": "SCIENCE.IMAGE",
+        "default_value": "SCIENCE.IMAGE",
         "datatype": "String",
         "description": "Data product category"
     },
     {
         "colname": "CHECKSUM",
-        "default": "B5445389D6586A3E",
+        "nullable": false,
         "datatype": "String",
         "description": "HDU checksum"
     },
     {
         "colname": "DATASUM",
-        "default": "0265279410",
+        "nullable": false,
         "datatype": "String",
         "description": "Data unit checksum"
     },
     {
         "colname": "COMMENT",
-        "default": "Any comment",
-        "datatype": "String",
-        "description": ""
+        "default_value": "Any comment",
+        "datatype": "String"
     }
 ]

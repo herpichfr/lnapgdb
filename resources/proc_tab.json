@@ -1,0 +1,69 @@
+[
+    {
+        "colname": "WEIGHT",
+        "default": "0.8",
+        "datatype": "Float",
+        "description": "This is the median over all pixels of the weight map"
+    },
+    {
+        "colname": "BLANK",
+        "default": "0",
+        "datatype": "Integer",
+        "description": "Value used for NULL pixels"
+    },
+    {
+        "colname": "DATAMAX",
+        "default": "43212",
+        "datatype": "Float",
+        "description": "Maximal pixel value"
+    },
+    {
+        "colname": "DATAMIN",
+        "default": "323",
+        "datatype": "Float",
+        "description": "Minimal pixel value"
+    },
+    {
+        "colname": "TEXPTIME",
+        "default": "240",
+        "datatype": "Float",
+        "description": "The arithmetic sum of the integration time of all exposures included in this\nproduct (s)."
+    },
+    {
+        "colname": "NCOMBINE",
+        "default": "1",
+        "datatype": "Integer",
+        "description": "Number of raw science data files that were combined to generate this data\nproduct"
+    },
+    {
+        "colname": "DISPELEM",
+        "default": "LR_blue",
+        "datatype": "String",
+        "description": "Dispersion element name"
+    },
+    {
+        "colname": "ARCFILE",
+        "default": "20251105_S4C1_00001.fits'",
+        "datatype": "String",
+        "description": "Archive file name"
+    },
+    {
+        "colname": "PROCSOFT",
+        "default": "Chimera v1.99",
+        "datatype": "String",
+        "description": "Version of the software used to produce this data product"
+    },
+    {
+        "colname": "REFERENC",
+        "default": "1924MNRAS..84..308E",
+        "datatype": "String",
+        "description": "Primary scientific publication associated with this data product"
+    },
+    {
+        "colname": "PROVi",
+        "default": "20251105_S4C1_00001",
+        "datatype": "String",
+        "description": "Processing provenance in terms of the list of science files originating this\ndata product"
+    }
+
+]

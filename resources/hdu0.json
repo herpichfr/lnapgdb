@@ -1,0 +1,350 @@
+[
+    {
+        "colname": "id",
+        "default": 0,
+        "datatype": "Integer",
+        "primary_key": true,
+        "nullable": false,
+        "description": "Primary key"
+    },
+    {
+        "colname": "SIMPLE",
+        "default": "T",
+        "datatype": "Boolean",
+        "allowed_values": {"T", "F"},
+        "description": "Standard FITS (NOST-100-2.0)"
+    },
+    {
+        "colname": "BSCALE",
+        "default": "1",
+        "datatype": "Integer",
+        "description": "Linear factor in scaling equation"
+    },
+    {
+        "colname": "BZERO",
+        "default": "32768",
+        "datatype": "Float",
+        "description": "value = fits-value*BSCALE+BZERO"
+    },
+    {
+        "colname": "BUNIT",
+        "default": "adu",
+        "datatype": "String",
+        "description": "Physical unit of array values"
+    },
+    {
+        "colname": "BITPIX",
+        "default": "16",
+        "datatype": "Integer",
+        "description": "# bits storing pix values"
+    },
+    {
+        "colname": "NAXIS",
+        "default": "2",
+        "datatype": "Integer",
+        "description": "# of axes in frame"
+    },
+    {
+        "colname": "NAXIS1",
+        "default": "2080",
+        "datatype": "Integer",
+        "description": "# of pixels/row"
+    },
+    {
+        "colname": "NAXIS2",
+        "default": "2048",
+        "datatype": "Integer",
+        "description": "# of rows (also # of scan lines)"
+    },
+    {
+        "colname": "EXTEND",
+        "default": "T",
+        "datatype": "Boolean",
+        "allowed_values": {"T", "F"},
+        "description": "Extensions may be present"
+    },
+    {
+        "colname": "PROPID",
+        "default": "OP2025B-001",
+        "datatype": "String",
+        "description": "The identification code assigned to each observing run by the Science Committee"
+    },
+    {
+        "colname": "OBSERVER",
+        "default": "CHIMERA",
+        "datatype": "String",
+        "description": "Name of the observer"
+    },
+    {
+        "colname": "OBJECT",
+        "default": "NGC1234'",
+        "datatype": "String",
+        "description": "Target as given by the user"
+    },
+    {
+        "colname": "ORIGIN",
+        "default": "LNA",
+        "datatype": "String",
+        "description": "Who delivers the data"
+    },
+    {
+        "colname": "TELESCOP",
+        "default": "PE160",
+        "datatype": "String",
+        "description": "Telescope name"
+    },
+    {
+        "colname": "OBSLONG",
+        "default": 45,
+        "datatype": "Float",
+        "description": "Observatory East Longitude (DEG, -180 to 180)"
+    },
+    {
+        "colname": "OBSLAT",
+        "default": -22,
+        "datatype": "Float",
+        "allowed_values": "-90,90",
+        "description": "Observatory North Latitude (DEG, -90 to 90)"
+    },
+    {
+        "colname": "OBSALT",
+        "default": 1864,
+        "datatype": "float",
+        "description": "Observatory elevation above sea level (m)"
+    },
+    {
+        "colname": "INSTRUME",
+        "default": "SPARC4",
+        "datatype": "String",
+        "description": "Instrument used"
+    },
+    {
+        "colname": "OBSTECH",
+        "default": "PHOTOMETRY",
+        "datatype": "String",
+        "description": "Technique used during the observation"
+    },
+    {
+        "colname": "FILTER",
+        "default": "V",
+        "datatype": "String",
+        "description": "Filter name"
+    },
+    {
+        "colname": "OBSTYPE",
+        "default": "OBJECT'",
+        "datatype": "string",
+        "allowed_values": {"OBJECT", "ZERO", "FLAT", "DARK", "FOCUS"},
+        "description": "Image type: OBJECT, ZERO, FLAT, DARK, FOCUS"
+    },
+    {
+        "colname": "ORIGFILE",
+        "default": "20251105_S4C1_00001.fits'",
+        "datatype": "String",
+        "description": "Original file name"
+    },
+    {
+        "colname": "DATE-OBS",
+        "default": "2001-08-19T09:33:11.950'",
+        "datatype": "String",
+        "description": "Exposure start"
+    },
+    {
+        "colname": "UTC",
+        "default": "34391",
+        "datatype": "Float",
+        "description": "UTC at start (s)"
+    },
+    {
+        "colname": "EXPTIME",
+        "default": "60",
+        "datatype": "Float",
+        "description": "Exposure time (s)"
+    },
+    {
+        "colname": "GAIN",
+        "default": "2",
+        "datatype": "Float",
+        "description": "Specifies the detector sensitivity in number of electrons per data"
+    },
+    {
+        "colname": "DETRON",
+        "default": "10.1",
+        "datatype": "Float",
+        "description": "Specifies the detector readout noise in electrons"
+    },
+    {
+        "colname": "EFFRON",
+        "default": "1.1",
+        "datatype": "Float",
+        "description": "Specifies the median over all pixels of the effective readout noise"
+    },
+    {
+        "colname": "RA",
+        "default": "21.955217",
+        "datatype": "Float",
+        "description": "Pointing (deg) (J2000.0)"
+    },
+    {
+        "colname": "DEC",
+        "default": "-1.8821",
+        "datatype": "Float",
+        "description": "Pointing (deg) (J2000.0)"
+    },
+    {
+        "colname": "EQUINOX",
+        "default": "2000",
+        "datatype": "Float",
+        "description": "Standard FK5 epoc"
+    },
+    {
+        "colname": "AIRMASS",
+        "default": 1,
+        "datatype": "float",
+        "description": "Airmass at start of observation"
+    },
+    {
+        "colname": "WEIGHT",
+        "default": "0.8",
+        "datatype": "Float",
+        "description": "This is the median over all pixels of the weight map"
+    },
+    {
+        "colname": "BLANK",
+        "default": "0",
+        "datatype": "Integer",
+        "description": "Value used for NULL pixels"
+    },
+    {
+        "colname": "DATE",
+        "default": "2001-08-19T09:34:52.676'",
+        "datatype": "String",
+        "description": "Date the file was written"
+    },
+    {
+        "colname": "DATAMAX",
+        "default": "43212",
+        "datatype": "Float",
+        "description": "Maximal pixel value"
+    },
+    {
+        "colname": "DATAMIN",
+        "default": "323",
+        "datatype": "Float",
+        "description": "Minimal pixel value"
+    },
+    {
+        "colname": "RADESYS",
+        "default": "FK5'",
+        "datatype": "String",
+        "description": "Reference system"
+    },
+    {
+        "colname": "TEXPTIME",
+        "default": "240",
+        "datatype": "Float",
+        "description": "The arithmetic sum of the integration time of all exposures included in this\nproduct (s)."
+    },
+    {
+        "colname": "NCOMBINE",
+        "default": "1",
+        "datatype": "Integer",
+        "description": "Number of raw science data files that were combined to generate this data\nproduct"
+    },
+    {
+        "colname": "MJD-OBS",
+        "default": "52140.39805",
+        "datatype": "Float",
+        "description": "MJD at exposure start (d)"
+    },
+    {
+        "colname": "MJD-END",
+        "default": "52140.39875",
+        "datatype": "Float",
+        "description": "MJD at exposure end (d)"
+    },
+    {
+        "colname": "DATE-END",
+        "default": "2001-08-19T09:34:51.950'",
+        "datatype": "String",
+        "description": "Exposure end"
+    },
+    {
+        "colname": "TIMESYS",
+        "default": "UTC",
+        "datatype": "String",
+        "description": "Time system used"
+    },
+    {
+        "colname": "LST",
+        "default": "19:51:15.380",
+        "datatype": "String",
+        "description": "LST at start (s)"
+    },
+    {
+        "colname": "PI-COI",
+        "default": "SCIENTIST",
+        "datatype": "String",
+        "description": "Name of the PI/Co-I"
+    },
+    {
+        "colname": "OBID",
+        "default": "311",
+        "datatype": "Integer",
+        "description": "Observation Block ID run number"
+    },
+    {
+        "colname": "DISPELEM",
+        "default": "LR_blue",
+        "datatype": "String",
+        "description": "Dispersion element name"
+    },
+    {
+        "colname": "ARCFILE",
+        "default": "20251105_S4C1_00001.fits'",
+        "datatype": "String",
+        "description": "Archive file name"
+    },
+    {
+        "colname": "PRODCATG",
+        "default": "SCIENCE.IMAGE",
+        "datatype": "String",
+        "description": "Data product category"
+    },
+    {
+        "colname": "PROCSOFT",
+        "default": "Chimera v1.99",
+        "datatype": "String",
+        "description": "Version of the software used to produce this data product"
+    },
+    {
+        "colname": "REFERENC",
+        "default": "1924MNRAS..84..308E",
+        "datatype": "String",
+        "description": "Primary scientific publication associated with this data product"
+    },
+    {
+        "colname": "PROVi",
+        "default": "20251105_S4C1_00001",
+        "datatype": "String",
+        "description": "Processing provenance in terms of the list of science files originating this\ndata product"
+    },
+    {
+        "colname": "CHECKSUM",
+        "default": "B5445389D6586A3E",
+        "datatype": "String",
+        "description": "HDU checksum"
+    },
+    {
+        "colname": "DATASUM",
+        "default": "0265279410",
+        "datatype": "String",
+        "description": "Data unit checksum"
+    },
+    {
+        "colname": "COMMENT",
+        "default": "Any comment",
+        "datatype": "String",
+        "description": ""
+    }
+]

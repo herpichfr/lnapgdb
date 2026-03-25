@@ -1,5 +1,7 @@
 # local credentials
 credentials/
+tmp/
+*.bak
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
