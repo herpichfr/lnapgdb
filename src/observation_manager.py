@@ -40,8 +40,6 @@ def parse_arguments():
                         help='Database schema to use for insertion')
     parser.add_argument('--nprocs', '-n', type=int, default=1,
                         help='Number of processes to use for parallel processing')
-    parser.add_argument('--cadence', type=int, default=10,
-                        help='Time interval (in seconds) to check for new images')
     parser.add_argument('--log-level', type=str, default='WARNING',
                         help='Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
     parser.add_argument('--log-file', type=str, default='observation_manager.log',
@@ -52,7 +50,10 @@ def parse_arguments():
                         help='Run in test mode (processes a predefined set of test images)')
     parser.add_argument('--verbose', '-v', action='store_true',
                         help='Enable verbose logging')
-    parser.add_argument('--watch-dir', nargs='+', help='Directories to watch for new images')
+    parser.add_argument('--watch-dir', nargs='+', 
+                        help='Directories to watch for new images')
+    parser.add_argument('--cadence', type=int, default=10,
+                        help='Time interval (in seconds) to check for new images')
 
     return parser.parse_args()
 
@@ -157,69 +158,35 @@ class ObservationManager:
         """Load instrument models from the configuration file."""
 
         instrument_models = {}
-        for instrument in config.get('instruments', {}):
-            instrument_models[instrument] = {}
-            model_file = os.path.join(models_dir, f'{instrument}.json')
+
+        for instrument_name, instrument_data in config.get('instruments', {}).items():
+            instrument_models[instrument_name] = {}
+
+            model_name = instrument_data.get('model_name')
+            if not model_name:
+                logger.critical(f'Model name not defined for {instrument_name}')
+                raise ValueError(f'Model name not defined for {instrument_name}')
+
+            model_file = os.path.join(models_dir, model_name)
+
             if os.path.exists(model_file):
-                logger.info(f'Loading model for {instrument} from {model_file}')
+                logger.info(f'Loading model for {instrument_name} from {model_file}')
                 with open(model_file, 'r') as f:
                     instrument_models_mapping = load(f)
             else:
-                logger.critical(f'Model file for {instrument} not found: {model_file}')
-                raise FileNotFoundError(f'Model file for {instrument} not found: {model_file}')
+                logger.critical(f'Model file for instrument {instrument_name} not found: {model_file}')
+                raise FileNotFoundError(
+                    f'Model file for {instrument_name} not found: {model_file}'
+                )
+            
+            if not isinstance(instrument_models_mapping, list):
+                raise ValueError(f'Invalid model format for {instrument_name}')
 
             for col in instrument_models_mapping:
                 colname = col['colname']
-                instrument_models[instrument][colname] = col
+                instrument_models[instrument_name][colname] = col
 
         return instrument_models
-
-    def get_new_images(self):
-        """
-        Scan the root directories for new images and return a list of new image paths.
-        """
-
-        new_images = []
-        extensions = {'.fits', '.fit', '.fts'}
-
-        # TEST MODE
-        if self.test:
-            data_dir = os.path.join(self.root_dir, 'data')
-            self.logger.info(f'Running in test mode: using {data_dir}')
-
-            if not os.path.exists(data_dir):
-                self.logger.error(f'Data directory not found: {data_dir}')
-                return []
-
-            for dirpath, _, filenames in os.walk(data_dir):
-                for file in filenames:
-                    if file.lower().endswith(tuple(extensions)):
-                        new_images.append(os.path.join(dirpath, file))
-            
-            return new_images
-
-        # NORMAL MODE
-        if not self.storage_dirs:
-            self.logger.warning('No storage directories defined.')
-            return new_images
-
-        for root_dir in self.storage_dirs:
-            root_path = Path(root_dir)
-
-            if not root_path.exists():
-                self.logger.warning(f'Storage directory does not exist: {root_dir}')
-                continue
-
-            for image_path in root_path.rglob('*'):
-                if image_path.suffix.lower() in extensions:
-                    image_path_str = str(image_path)
-
-                    if image_path_str not in self.processed_images:
-                        new_images.append(image_path_str)
-                        self.processed_images.add(image_path_str)
-
-        return new_images      
-
 
 if __name__ == "__main__":
     args = parse_arguments()
@@ -227,17 +194,15 @@ if __name__ == "__main__":
     db_schema = observation_manager.db_schema
 
     if args.watch_dir:
-        watch_dirs = args.watch_dir
-    else:
-        watch_dirs = (
-            observation_manager.storage_dirs
-            if not observation_manager.test
-            else [os.path.join(observation_manager.root_dir, 'data')]
-            
+        watcher = FileWatcher(
+            directories=args.watch_dir,
+            poll_interval=args.cadence
         )
-        print(f"DEBUG: Watching directories: {watch_dirs}")
-
-    watcher = FileWatcher(directories=watch_dirs)
+    else:
+        watcher = FileWatcher(
+            config=observation_manager.config,
+            poll_interval=args.cadence
+        )
     
 
     # Get schema from git branch
@@ -251,40 +216,29 @@ if __name__ == "__main__":
             observation_manager.logger.info("Exiting as per user request.")
             exit(0)
 
-    # If no storage directories are provided, search for them in the config file
-    # Each instrument should have their own storage directory
-    if not observation_manager.storage_dirs:
-
-        instruments = observation_manager.config.get('instruments', {})
-
-        for instrument in instruments:
-            storage_dir = instruments[instrument].get('raw_data_directory')
-
-            if storage_dir and os.path.exists(storage_dir):
-                observation_manager.storage_dirs.append(storage_dir)
 
     # After collecting storage directories, validate
-    if not observation_manager.storage_dirs and not observation_manager.test:
+    if not watcher.directories:
         observation_manager.logger.critical(
-            'No valid storage directories provided in arguments or config file'
+            'No valid directories found to monitor'
         )
-        raise ValueError(
-            'No valid storage directories provided in arguments or config file'
+        raise ValueError('No valid directories found to monitor')
+    
+    if args.watch_dir:
+        watcher = FileWatcher(
+            directories=args.watch_dir,
+            poll_interval=args.cadence
+        )
+    else:
+        watcher = FileWatcher(
+            config=observation_manager.config,
+            poll_interval=args.cadence
         )
 
-    # Now scan for new images
-    # new_images = observation_manager.get_new_images()
-        #print(f"DEBUG: {len(new_images)} images found [observation_manager-261]")
     for new_images in watcher.watch():    
         print(f"DEBUG: Processing {len(new_images)} new images")
         print("DEBUG: Starting data collection process...[observation_manager-270]")
 
-    # if not new_images:
-    #     observation_manager.logger.info(
-    #         'No new images found in the storage directories'
-    #     )
-    # else:
-    #     print("DEBUG: Starting data collection process...[observation_manager-268]")
         try:
             data_collector = DataCollector(
                 new_images,
@@ -307,7 +261,6 @@ if __name__ == "__main__":
             observation_manager.logger.error(
                 f'Error collecting data from images: {e}'
             )
-            # exit(1)
             continue
 
         try:
