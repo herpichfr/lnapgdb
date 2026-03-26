@@ -196,12 +196,14 @@ if __name__ == "__main__":
     if args.watch_dir:
         watcher = FileWatcher(
             directories=args.watch_dir,
-            poll_interval=args.cadence
+            poll_interval=args.cadence,
+            process_existing=True   # usado para teste
         )
     else:
         watcher = FileWatcher(
             config=observation_manager.config,
-            poll_interval=args.cadence
+            poll_interval=args.cadence,
+            process_existing=True  # usado para teste
         )
     
 
@@ -223,21 +225,10 @@ if __name__ == "__main__":
             'No valid directories found to monitor'
         )
         raise ValueError('No valid directories found to monitor')
-    
-    if args.watch_dir:
-        watcher = FileWatcher(
-            directories=args.watch_dir,
-            poll_interval=args.cadence
-        )
-    else:
-        watcher = FileWatcher(
-            config=observation_manager.config,
-            poll_interval=args.cadence
-        )
 
     for new_images in watcher.watch():    
         print(f"DEBUG: Processing {len(new_images)} new images")
-        print("DEBUG: Starting data collection process...[observation_manager-270]")
+        print("DEBUG: Starting data collection process...[observation_manager]")
 
         try:
             data_collector = DataCollector(

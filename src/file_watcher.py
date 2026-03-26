@@ -10,10 +10,14 @@ class FileWatcher:
             directories: List[str] = None,
             config: dict = None,
             poll_interval=1,
-            extensions=None
+            extensions=None,
+            process_existing=False # para teste
         ):
         self.extensions = extensions or {'.fits', '.fit', '.fts'}
         self.poll_interval = poll_interval
+
+        # para teste
+        self.process_existing = process_existing
 
         # Controle de estado
         self.last_seen_files = set()
@@ -33,20 +37,27 @@ class FileWatcher:
                 continue
 
             for path in directory.rglob('*'):
-                if path.suffix.lower() in self.extensions:
+                if path.is_file() and any(str(path).lower().endswith(ext) for ext in self.extensions):
                     files.append(path)
+            print(f"DEBUG: Scanning directory: {directory}[file_watcher/_scan_all_files/42]")
 
+        print(f"DEBUG: Scanning directory: {directory}[file_watcher/_scan_all_files/44]")
         return files
 
     def initialize(self):
         """
-        Initialize watcher ignoring pre-existing files.
+        Initialize watcher, optionally processing existing files.
         """
         existing_files = self._scan_all_files()
-        self.last_seen_files = set(existing_files)
-        self.initialized = True
 
-        print(f"Watcher initialized. Ignoring {len(existing_files)} existing files.")
+        if self.process_existing:
+            self.last_seen_files = set()
+            print(f"Watcher initialized. Processing {len(existing_files)} existing files.")
+        else:
+            self.last_seen_files = set(existing_files)
+            print(f"Watcher initialized. Ignoring {len(existing_files)} existing files.")
+
+        self.initialized = True
 
     def get_new_files(self):
         """
