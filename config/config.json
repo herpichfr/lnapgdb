@@ -1,6 +1,6 @@
 {
   "db_schema": "public",
-  "data_root": "/data/",
+  "data_root": "/home/thaianec/projetos/lnapgdb/data",
   "instruments": {
     "sparc4": {
       "name": "SPARC4",
