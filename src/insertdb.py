@@ -92,6 +92,8 @@ class InsertDB:
             os.path.dirname(os.path.abspath(__file__))), 'credentials/config.json')
         with open(cred_path, 'r') as f:
             return load(f)['lnapgdatabase']
+        
+    
 
     def insert_batch(self, primary_df, instrument_df, db_schema=None, debug=None):
         """
@@ -161,6 +163,7 @@ class InsertDB:
         session.close()
 
         return True, 0
+    
 
 
 if __name__ == "__main__":

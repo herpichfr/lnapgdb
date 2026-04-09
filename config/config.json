@@ -1,7 +1,8 @@
 {
   "db_schema": "public",
-  "data_root": "/home/thaianec/projetos/lnapgdb/data",
+  "data_root": "__DATA_ROOT__",
   "instruments": {
+
     "sparc4": {
       "name": "SPARC4",
       "description": "Simultaneous Polarimeter and Rapid Camera for Surveys (SPARC4) is a multi-channel imager and polarimeter designed for the 1.6m telescope at the Pico dos Dias Observatory in Brazil. It allows for simultaneous observations in four different wavelength bands, making it ideal for studying variable stars, exoplanets, and other transient phenomena.",

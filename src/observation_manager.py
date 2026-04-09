@@ -54,6 +54,8 @@ def parse_arguments():
                         help='Directories to watch for new images')
     parser.add_argument('--cadence', type=int, default=10,
                         help='Time interval (in seconds) to check for new images')
+    parser.add_argument('--drop-tables', action='store_true',
+                        help='Deleta todas as tabelas antes de iniciar o processamento')
 
     return parser.parse_args()
 
@@ -96,6 +98,19 @@ class ObservationManager:
             raise RuntimeError(f'Error loading config file: {e}')
         
         self.db_config = self.load_db_config(self.root_dir)
+        
+        # data_root config.json -> db_config.json
+        if self.config.get("data_root") == "__DATA_ROOT__":
+            db_section = self.db_config.get("lnapgdatabase", {})
+
+            if not db_section:
+                raise ValueError("Seção 'lnapgdatabase' não encontrada no db_config.json")
+
+            if "data_root" not in db_section:
+                raise ValueError("data_root não encontrado em lnapgdatabase no db_config.json")
+            
+            self.config["data_root"] = db_section["data_root"]
+
         self.db_schema = self.config.get('db_schema') if self.config.get(
             'db_schema') else args.db_schema
         
@@ -226,55 +241,58 @@ if __name__ == "__main__":
         )
         raise ValueError('No valid directories found to monitor')
 
-    for new_images in watcher.watch():    
-        print(f"DEBUG: Processing {len(new_images)} new images")
-        print("DEBUG: Starting data collection process...[observation_manager]")
+    try:
+        for new_images in watcher.watch():    
+            print(f"DEBUG: Processing {len(new_images)} new images")
+            print("DEBUG: Starting data collection process...[observation_manager]")
 
-        try:
-            data_collector = DataCollector(
-                new_images,
-                primary_model=observation_manager.primary_model,
-                instrument_models_cache=observation_manager.instrument_models,
-                db_schema=db_schema,
-                nprocs=args.nprocs,
-                logger=observation_manager.logger,
-                verbose=args.verbose,
-                logfile=args.log_file,
-                debug=args.debug,
-            )
-
-            p_df, i_df = data_collector.collect_data()
-            print("DEBUG: Data collection process finished.[observation_manager-283]")
-            print(f"DEBUG: Primary data (p_df): {p_df}")
-            print(f"DEBUG: Instrument data (i_df): {i_df}")
-
-        except Exception as e:
-            observation_manager.logger.error(
-                f'Error collecting data from images: {e}'
-            )
-            continue
-
-        try:
-            db_inserter = InsertDB(
-                config=observation_manager.config,
-                db_config=observation_manager.db_config,
-                logger=observation_manager.logger
-            )
-
-            inserted, error_code = db_inserter.insert_batch(
-                p_df, i_df, db_schema=db_schema, debug=args.debug
-            )
-
-            if inserted:
-                observation_manager.logger.info(
-                    f'Data inserted successfully into the database with code {error_code}'
+            try:
+                data_collector = DataCollector(
+                    new_images,
+                    primary_model=observation_manager.primary_model,
+                    instrument_models_cache=observation_manager.instrument_models,
+                    db_schema=db_schema,
+                    nprocs=args.nprocs,
+                    logger=observation_manager.logger,
+                    verbose=args.verbose,
+                    logfile=args.log_file,
+                    debug=args.debug,
                 )
-            else:
+
+                p_df, i_df = data_collector.collect_data()
+                print("DEBUG: Data collection process finished.[observation_manager-283]")
+                print(f"DEBUG: Primary data (p_df): {p_df}")
+                print(f"DEBUG: Instrument data (i_df): {i_df}")
+
+            except Exception as e:
                 observation_manager.logger.error(
-                    f'Failed to insert data into the database with code {error_code}'
+                    f'Error collecting data from images: {e}'
+                )
+                continue
+
+            try:
+                db_inserter = InsertDB(
+                    config=observation_manager.config,
+                    db_config=observation_manager.db_config,
+                    logger=observation_manager.logger
                 )
 
-        except Exception as e:
-            observation_manager.logger.error(
-                f'Error inserting data into database: {e}'
-            )
+                inserted, error_code = db_inserter.insert_batch(
+                    p_df, i_df, db_schema=db_schema, debug=args.debug
+                )
+
+                if inserted:
+                    observation_manager.logger.info(
+                        f'Data inserted successfully into the database with code {error_code}'
+                    )
+                else:
+                    observation_manager.logger.error(
+                        f'Failed to insert data into the database with code {error_code}'
+                    )
+
+            except Exception as e:
+                observation_manager.logger.error(
+                    f'Error inserting data into database: {e}'
+                )
+    except KeyboardInterrupt:
+        print("\n Program interrupted by the user.")
