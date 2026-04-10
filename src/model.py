@@ -27,6 +27,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from json import load
 from datetime import datetime, timezone
 import argparse
+from urllib.parse import quote_plus
 
 parser = argparse.ArgumentParser(
     description='Create LNA DB tables and add columns from JSON files.')
@@ -35,6 +36,12 @@ parser.add_argument('--db_schema',
                     choices=['public', 'cyc', 'dev', 'prod'],
                     help='Database schema to use (default: public)'
                     )
+parser.add_argument(
+    '--reset-db',
+    action='store_true',
+    help='Drop all tables before creating (DANGEROUS)'
+)
+
 args = parser.parse_args()
 
 # Define db_schema to be used globally in the module
@@ -129,17 +136,22 @@ def get_db_credentials():
     cred_dir = os.path.join(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))), 'credentials')
 
-    with open(os.path.expanduser(f'{cred_dir}/config.json'), 'r') as f:
+    #with open(os.path.expanduser(f'{cred_dir}/config.json'), 'r') as f:
+    with open(os.path.join(f'{cred_dir}/db_config.json'), 'r') as f:
         data = load(f)
-    return data['lnapgdatabase']
+    # return data['lnapgdatabase']
+    return data['db']
 
 
 def add_columns_from_json(table_class):
     if not hasattr(table_class, '__tablename__'):
         raise ValueError("Provided class must have a __tablename__ attribute.")
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    json_path = os.path.join(base_dir, 'models', f'{
-                             table_class.__tablename__.lower()}.json')
+    json_path = os.path.join(
+        base_dir, 
+        'models', 
+        f'{table_class.__tablename__.lower()}.json'
+    )
 
     with open(json_path) as f:
         table_cols = load(f)
@@ -175,16 +187,28 @@ def add_columns_from_json(table_class):
 
 def main():
     creds = get_db_credentials()
+
+     # Compatibilidade com diferentes formatos
+    user = creds.get('user') or creds.get('username')
+    password = quote_plus(creds['password'])
+    driver = creds.get('driver', 'postgresql')
+     
     engine = create_engine(
-        f"postgresql://{creds['username']}:{creds['password']
-                                            }@{creds['host']}:{creds['port']}/{creds['database']}"
+        f"{driver}://{user}:{password}@{creds['host']}:{creds['port']}/{creds['database']}"
     )
-    Base.metadata.drop_all(engine)  # Drop existing tables
-    print("Database and tables created successfully!")
+     
+    # Base.metadata.drop_all(engine)  
+    # print("Database and tables created successfully!")
+    if args.reset_db:
+        print("Dropping all tables")# Drop existing tables
+        Base.metadata.drop_all(engine)
+
     add_columns_from_json(PrimaryTable)
     print("Columns added to PrimaryTable successfully!")
+
     add_columns_from_json(Sparc4)
     print("Columns added to Sparc4 successfully!")
+
     Base.metadata.create_all(engine)  # Create tables with new columns
 
 
