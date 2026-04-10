@@ -1,16 +1,20 @@
 {
   "db_schema": "public",
+  "data_root": "__DATA_ROOT__",
   "instruments": {
+
     "sparc4": {
       "name": "SPARC4",
       "description": "Simultaneous Polarimeter and Rapid Camera for Surveys (SPARC4) is a multi-channel imager and polarimeter designed for the 1.6m telescope at the Pico dos Dias Observatory in Brazil. It allows for simultaneous observations in four different wavelength bands, making it ideal for studying variable stars, exoplanets, and other transient phenomena.",
-      "raw_data_directory": "/ssdsto1/data/sparc4/",
+      "raw_data_directory": "sparc4/raw",
+      "failed_directory": "sparc4/failed",
       "model_name": "sparc4.json"
     },
     "echarpe": {
       "name": "ECHARPE",
       "description": "ECHARPE (Enhanced Camera for High Angular Resolution Polarimetry and Exoplanetary studies) is a high-contrast imaging instrument designed for the 3.6m telescope at the European Southern Observatory (ESO). It is optimized for direct imaging of exoplanets and circumstellar disks, utilizing advanced adaptive optics and coronagraphy techniques to achieve high contrast and angular resolution.",
-      "raw_data_directory": "/data/echarpe/raw",
+      "raw_data_directory": "echarpe/raw",
+      "failed_directory": "echarpe/failed",
       "model_name": "echarpe.json"
     }
   }

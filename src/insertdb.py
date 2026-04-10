@@ -92,6 +92,8 @@ class InsertDB:
             os.path.dirname(os.path.abspath(__file__))), 'credentials/config.json')
         with open(cred_path, 'r') as f:
             return load(f)['lnapgdatabase']
+        
+    
 
     def insert_batch(self, primary_df, instrument_df, db_schema=None, debug=None):
         """
@@ -147,8 +149,9 @@ class InsertDB:
             try:
                 instrument_df.to_sql(instrument, self.engine,
                                      schema=db_schema, if_exists='append', index=False)
-                self.logger.info(f"Inserted {len(
-                    primary_df)} rows into primary_table for instrument {instrument}.")
+                self.logger.info(
+                    f"Inserted {len(primary_df)} rows into primary_table for instrument {instrument}."
+                )
             except Exception as e:
                 self.logger.error(f"Error inserting into {instrument} table: {e}")
                 session.rollback()
@@ -160,6 +163,7 @@ class InsertDB:
         session.close()
 
         return True, 0
+    
 
 
 if __name__ == "__main__":
