@@ -15,8 +15,6 @@ Copyright (c) 2026, LNA - Laboratório Nacional de Astrofísica, Brazil. All rig
 
 import os
 from json import load
-from pathlib import Path
-import glob
 import time
 import argparse
 import logging
