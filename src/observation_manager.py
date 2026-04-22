@@ -94,7 +94,6 @@ class ObservationManager:
         except Exception as e:
             raise RuntimeError(f'Error loading config file: {e}')
 
-        # self.db_config = self.load_db_config(self.root_dir)
         self.db_schema = self.config.get('db_schema') if self.config.get(
             'db_schema') else args.db_schema
 
