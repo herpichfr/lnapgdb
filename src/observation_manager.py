@@ -255,22 +255,24 @@ if __name__ == "__main__":
                 p_df, i_df, db_schema=db_schema, debug=args.debug
             )
 
-            if inserted:
-                observation_manager.logger.info(
-                    f'Data inserted successfully into the database with code {
-                        error_code}'
-                )
-
-                p_df, i_df = data_collector.collect_data()
-                print("DEBUG: Data collection process finished.[observation_manager-283]")
-                print(f"DEBUG: Primary data (p_df): {p_df}")
-                print(f"DEBUG: Instrument data (i_df): {i_df}")
-
-            except Exception as e:
-                observation_manager.logger.error(
-                    f'Failed to insert data into the database with code {
-                        error_code}'
-                )
+            # NOTE:: The next batch is unreachable if the insertion fails
+            # if inserted:
+            #     observation_manager.logger.info(
+            #         f'Data inserted successfully into the database with code {
+            #             error_code}'
+            #     )
+            #
+            #     p_df, i_df = data_collector.collect_data()
+            #     print(
+            #         "DEBUG: Data collection process finished.[observation_manager-283]")
+            #     print(f"DEBUG: Primary data (p_df): {p_df}")
+            #     print(f"DEBUG: Instrument data (i_df): {i_df}")
+            #
+            # else:
+            #     observation_manager.logger.error(
+            #         f'Failed to insert data into the database with code {
+            #             error_code}'
+            #     )
 
         except Exception as e:
             observation_manager.logger.error(
