@@ -3,6 +3,9 @@ credentials/
 tmp/
 *.bak
 
+# ignore symbolic links to avoid accidentally committing them
+*.lnk
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
