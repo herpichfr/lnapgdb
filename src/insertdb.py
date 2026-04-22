@@ -169,6 +169,7 @@ class InsertDB:
         session.close()
 
         return True, 0
+    
 
 
 if __name__ == "__main__":

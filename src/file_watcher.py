@@ -19,8 +19,8 @@ class FileWatcher:
         # para teste
         self.process_existing = process_existing
 
-        # Controle de estado
-        self.last_seen_files = set()
+        # State tracking -> highest timestamp seen
+        self.last_checkpoint = 0.0 #self.last_seen_files = set()
         self.initialized = False
 
         if config:
@@ -28,7 +28,7 @@ class FileWatcher:
         else:
             self.directories = [Path(d) for d in (directories or [])]
 
-    def _scan_all_files(self):
+    def _scan_all_files(self):  #ver se tira essa parte, para n ler todos os arquivos
         """Scan all directories and return matching files."""
         files = []
 
@@ -46,35 +46,52 @@ class FileWatcher:
 
     def initialize(self):
         """
-        Initialize watcher, optionally processing existing files.
+        Define the starting point (timestamp)
         """
-        existing_files = self._scan_all_files()
 
         if self.process_existing:
-            self.last_seen_files = set()
-            print(f"Watcher initialized. Processing {len(existing_files)} existing files.")
+            self.last_checkpoint = 0.0
+            print(f"Watcher initialized.")
         else:
-            self.last_seen_files = set(existing_files)
-            print(f"Watcher initialized. Ignoring {len(existing_files)} existing files.")
+            self.last_checkpoint = time.time()
+            print(f"Watcher initialized => time.time")
 
         self.initialized = True
+        print(f"Watcher inicializado. Ponto de partida: {self.last_checkpoint}")
 
     def get_new_files(self):
         """
         Return only new files since last iteration.
+        Retorna apenas arquivos cujo mtime seja maior que o último checkpoint.
         """
-        current_files = set(self._scan_all_files())
-        new_files = current_files - self.last_seen_files
-        # Updates state (even if it fails later)
-        self.last_seen_files = current_files
+        new_files = []
+        max_mtime_found = self.last_checkpoint
 
-        def safe_mtime(path):
-            try:
-                return path.stat().st_mtime
-            except:
-                return 0
+        for directory in self.directories:
+            if not directory.exists():
+                continue
+            
+            # Use an iterator to avoid loading everything into memory at once
+            for path in directory.rglob('*'):
+                if path.is_file() and path.suffix.lower() in self.extensions:
+                    try:
+                        mtime = path.stat().st_mtime
+                        if mtime > self.last_checkpoint:
+                            new_files.append(path) # Track the newest file in this batch
+                            if mtime > max_mtime_found:
+                                max_mtime_found = mtime
+                    except OSError:
+                        continue # File may have been deleted or locked
 
-        return sorted(new_files, key=safe_mtime)
+            new_files.sort(key=lambda p: p.stat().st_mtime)
+            
+        # Update the global checkpoint with the latest processed file timestamp
+        if new_files:
+            new_files.sort(key=lambda p: p.stat().st_mtime)
+            self.last_checkpoint = max_mtime_found
+            return [str(p) for p in new_files]
+        
+        return [] # Return an empty list if nothing is found
 
     def watch(self):
         """
@@ -90,8 +107,9 @@ class FileWatcher:
                 print(f"DEBUG: Found {len(new_files)} new files.")
                 yield new_files
 
-            print(f"DEBUG: Waiting {self.poll_interval} seconds... [file_watcher-82]")
             time.sleep(self.poll_interval)
+
+            print(f"DEBUG: Waiting {self.poll_interval} seconds... [file_watcher-82]")
 
     def _load_directories_from_config(self, config):
         """

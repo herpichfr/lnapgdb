@@ -51,6 +51,8 @@ def parse_arguments():
                         help='Directories to watch for new images')
     parser.add_argument('--cadence', type=int, default=10,
                         help='Time interval (in seconds) to check for new images')
+    parser.add_argument('--drop-tables', action='store_true',
+                        help='Deleta todas as tabelas antes de iniciar o processamento')
 
     return parser.parse_args()
 
@@ -258,7 +260,13 @@ if __name__ == "__main__":
                     f'Data inserted successfully into the database with code {
                         error_code}'
                 )
-            else:
+
+                p_df, i_df = data_collector.collect_data()
+                print("DEBUG: Data collection process finished.[observation_manager-283]")
+                print(f"DEBUG: Primary data (p_df): {p_df}")
+                print(f"DEBUG: Instrument data (i_df): {i_df}")
+
+            except Exception as e:
                 observation_manager.logger.error(
                     f'Failed to insert data into the database with code {
                         error_code}'
