@@ -55,7 +55,7 @@ def parse_arguments():
     parser.add_argument('--cadence', type=int, default=10,
                         help='Time interval (in seconds) to check for new images')
     parser.add_argument('--drop-tables', action='store_true',
-                        help='Deleta todas as tabelas antes de iniciar o processamento')
+                        help='Clean the database before starting')
 
     return parser.parse_args()
 
@@ -215,14 +215,12 @@ if __name__ == "__main__":
     if args.watch_dir:
         watcher = FileWatcher(
             directories=args.watch_dir,
-            poll_interval=args.cadence,
-            process_existing=True   # usado para teste
+            poll_interval=args.cadence
         )
     else:
         watcher = FileWatcher(
             config=observation_manager.config,
-            poll_interval=args.cadence,
-            process_existing=True  # usado para teste
+            poll_interval=args.cadence
         )
     
 
@@ -248,7 +246,7 @@ if __name__ == "__main__":
     try:
         for new_images in watcher.watch():    
             print(f"DEBUG: Processing {len(new_images)} new images")
-            print("DEBUG: Starting data collection process...[observation_manager]")
+            print("DEBUG: Starting data collection process...")
 
             try:
                 data_collector = DataCollector(
@@ -261,12 +259,13 @@ if __name__ == "__main__":
                     verbose=args.verbose,
                     logfile=args.log_file,
                     debug=args.debug,
+                    config=observation_manager.config,
                 )
 
                 p_df, i_df = data_collector.collect_data()
-                print("DEBUG: Data collection process finished.[observation_manager-283]")
-                print(f"DEBUG: Primary data (p_df): {p_df}")
-                print(f"DEBUG: Instrument data (i_df): {i_df}")
+                print("DEBUG: Data collection process finished.")
+                # print(f"DEBUG: Primary data (p_df): {p_df}")
+                # print(f"DEBUG: Instrument data (i_df): {i_df}")
 
             except Exception as e:
                 observation_manager.logger.error(
@@ -286,6 +285,8 @@ if __name__ == "__main__":
                 )
 
                 if inserted:
+                    print(f"✅ {len(p_df)} records inserted into the database.")
+
                     observation_manager.logger.info(
                         f'Data inserted successfully into the database with code {error_code}'
                     )
