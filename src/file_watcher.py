@@ -4,19 +4,17 @@ from pathlib import Path
 from typing import List
 
 
-class FileWatcher:
+class FileWatcher: #roda os diretorios 
     def __init__(
             self, 
             directories: List[str] = None,
             config: dict = None,
             poll_interval=1,
             extensions=None,
-            process_existing=False # para teste
+            process_existing = False 
         ):
         self.extensions = extensions or {'.fits', '.fit', '.fts'}
         self.poll_interval = poll_interval
-
-        # para teste
         self.process_existing = process_existing
 
         # State tracking -> highest timestamp seen
@@ -27,22 +25,6 @@ class FileWatcher:
             self.directories = self._load_directories_from_config(config)
         else:
             self.directories = [Path(d) for d in (directories or [])]
-
-    def _scan_all_files(self):  #ver se tira essa parte, para n ler todos os arquivos
-        """Scan all directories and return matching files."""
-        files = []
-
-        for directory in self.directories:
-            if not directory.exists():
-                continue
-
-            for path in directory.rglob('*'):
-                if path.is_file() and any(str(path).lower().endswith(ext) for ext in self.extensions):
-                    files.append(path)
-            print(f"DEBUG: Scanning directory: {directory}[file_watcher/_scan_all_files/42]")
-
-        print(f"DEBUG: Scanning directory: {directory}[file_watcher/_scan_all_files/44]")
-        return files
 
     def initialize(self):
         """
@@ -57,12 +39,12 @@ class FileWatcher:
             print(f"Watcher initialized => time.time")
 
         self.initialized = True
-        print(f"Watcher inicializado. Ponto de partida: {self.last_checkpoint}")
+        print(f"Watcher initialized. Starting point: {self.last_checkpoint}")
 
     def get_new_files(self):
         """
         Return only new files since last iteration.
-        Retorna apenas arquivos cujo mtime seja maior que o último checkpoint.
+        mtime files > last checkpoint
         """
         new_files = []
         max_mtime_found = self.last_checkpoint
@@ -109,7 +91,7 @@ class FileWatcher:
 
             time.sleep(self.poll_interval)
 
-            print(f"DEBUG: Waiting {self.poll_interval} seconds... [file_watcher-82]")
+            print(f"DEBUG: Waiting {self.poll_interval} seconds... ")
 
     def _load_directories_from_config(self, config):
         """
@@ -133,3 +115,5 @@ class FileWatcher:
                     print(f"WARNING: Directory does not exist: {full_path}")
 
         return directories
+    
+
