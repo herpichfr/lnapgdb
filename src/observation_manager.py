@@ -235,36 +235,46 @@ if __name__ == "__main__":
                 # print(f"DEBUG: Primary data (p_df): {p_df}")
                 # print(f"DEBUG: Instrument data (i_df): {i_df}")
 
-        except Exception as e:
+            except Exception as e:
+                observation_manager.logger.error(
+                    f'Error collecting data from images: {e}'
+                )
+                continue
+    except Exception as e:
+        observation_manager.logger.error(
+            f'Error watching directories for new images: {e}'
+        )
+
+    try:
+        import pdb
+        pdb.set_trace()
+        db_inserter = InsertDB(
+            config=observation_manager.config,
+            logger=observation_manager.logger
+        )
+
+        inserted, error_code = db_inserter.insert_batch(
+            p_df, i_df, db_schema=db_schema, debug=args.debug
+        )
+
+        if inserted:
+            print(f"✅ {len(p_df)} records inserted into the database.")
+
+            observation_manager.logger.info(
+                f'Data inserted successfully into the database with code {
+                    error_code}'
+            )
+        else:
             observation_manager.logger.error(
-                f'Error collecting data from images: {e}'
-            )
-            continue
-
-        try:
-            db_inserter = InsertDB(
-                config=observation_manager.config,
-                logger=observation_manager.logger
+                f'Failed to insert data into the database with code {
+                    error_code}'
             )
 
-            inserted, error_code = db_inserter.insert_batch(
-                p_df, i_df, db_schema=db_schema, debug=args.debug
-            )
+    except Exception as e:
+        observation_manager.logger.error(
+            f'Error inserting data into database: {e}'
+        )
 
-               if inserted:
-                    print(f"✅ {len(p_df)} records inserted into the database.")
-
-                    observation_manager.logger.info(
-                        f'Data inserted successfully into the database with code {
-                            error_code}'
-                    )
-                else:
-                    observation_manager.logger.error(
-                        f'Failed to insert data into the database with code {
-                            error_code}'
-                    )
-
-        except Exception as e:
-            observation_manager.logger.error(
-                f'Error inserting data into database: {e}'
-            )
+# except KeyboardInterrupt:
+#     observation_manager.logger.info('Observation Manager stopped by user.')
+#     print("Observation Manager stopped by user.")
