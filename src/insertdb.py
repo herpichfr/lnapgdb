@@ -93,7 +93,6 @@ class InsertDB:
         with open(cred_path, 'r') as f:
             return load(f)['lnapgdatabase']
         
-    
 
     def insert_batch(self, primary_df, instrument_df, db_schema=None, debug=None):
         """

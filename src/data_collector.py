@@ -15,6 +15,7 @@ from miscellaneous import setup_logging
 import logging
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+import datetime
 
 
 def parse_args():
@@ -46,6 +47,7 @@ class DataCollector:
                  logger=None,
                  verbose=False,
                  logfile='log/data_collection.log',
+                 config=None,
                  debug=False):
         self.fits_files = fits_files
         self.primary_model = primary_model
@@ -55,6 +57,8 @@ class DataCollector:
         self.logger = logger if logger else setup_logging(
             verbose=verbose, logfile=logfile, loglevel=logging.DEBUG if debug else logging.INFO)
         self.debug = debug
+        self.error_log_file = "failed_fits.log"
+        self.config = config
 
     def __repr__(self):
         return f"DataCollector(fits_files='{self.fits_files}', db_schema='{self.db_schema}', nprocs={self.nprocs}, debug={self.debug})"
@@ -70,21 +74,35 @@ class DataCollector:
                 header = hdul[0].header
         except Exception as e:
             logger.error(f"Error opening file '{file}': {e}")
-            return None
+            return {
+                'error': True,
+                'file': file,
+                'instrument_name': None
+            }
 
         # primary_model = DataCollector.get_primary_model()
         instrument = header.get('INSTRUME', None).lower(
         ) if header.get('INSTRUME', None) else None
+
         if instrument is None:
             logger.critical(
                 f"File '{file}' is missing 'INSTRUME' keyword in header.")
-            return None
+            return {
+                'error': True,
+                'file': file,
+                'instrument_name': None
+            }
         instrument_model = instrument_models_cache.get(
             instrument, None) if instrument_models_cache else DataCollector.get_instrument_model(instrument)
+        
         if not instrument_model:
             logger.critical(
                 f"File '{file}' has unknown instrument '{instrument}' in header.")
-            return None
+            return {
+                'error': True,
+                'file': file,
+                'instrument_name': instrument
+            }
 
         is_valid, primary_data, instrument_data = DataCollector.validate_data(
             header, primary_model, instrument_model, logger)
@@ -97,11 +115,20 @@ class DataCollector:
             logger.debug(
                 f"File '{file}' passed validation successfully.")
 
-            return {'primary': primary_data, 'instrument': instrument_data}
+            return {
+                'primary': primary_data,
+                'instrument': instrument_data,
+                'instrument_name': instrument,
+                'file': file
+            }
         else:
             logger.error(
                 f"File '{file}' failed validation and will be skipped.")
-            return None
+            return {
+                'error': True,
+                'file': file,
+                'instrument_name': instrument if 'instrument' in locals() else None
+            }
 
     def collect_data(self):
         """Collect and validate FITS header data for database insertion."""
@@ -121,21 +148,55 @@ class DataCollector:
         else:
             self.logger.info(
                 f"Processing {len(new_fits_files)} files using {self.nprocs} parallel processes.")
-            # TODO: The multiprocessing part is not yet tested
             with ProcessPoolExecutor(max_workers=self.nprocs) as executor:
                 data = list(executor.map(worker, new_fits_files))
 
-        # NOTE: Filter out None results (failed validations).
-        # Save the filenames that failed validation for later review
-        valid_data = [d for d in data if d is not None]
+        # NOTE: Save the filenames that failed validation for later review
+        valid_data = [d for d in data if d and not d.get('error')]
+        failed_data = [d for d in data if d and d.get('error')]
         self.logger.info(f"Successfully processed {len(valid_data)} files.")
-        failed_files = [self.fits_files[i]
-                        for i, d in enumerate(data) if d is None]
-        if failed_files:
-            self.logger.warning(
-                f"Failed to process {len(failed_files)} files: {failed_files}")
+        
+        failed_dirs = {}
+        if self.config:
+            data_root = self.config.get("data_root", "")
+            instruments = self.config.get("instruments", {})
+
+            for name, data in instruments.items():
+                failed_dir = data.get("failed_directory")
+                if failed_dir:
+                    full_path = os.path.join(data_root, failed_dir)
+                    failed_dirs[name.lower()] = full_path
+
+        #  Categorize errors by instrument
+        failed_by_instrument = {}
+
+        for item in failed_data:
+            inst = item.get('instrument_name') or 'unknown'
+            failed_by_instrument.setdefault(inst, []).append(item['file'])
+
+        # Save in the correct directory
+        for inst, files in failed_by_instrument.items():
+            failed_dir = failed_dirs.get(inst)
+            if not failed_dir:
+                if self.config:
+                    failed_dir = os.path.join(self.config.get("data_root", ""), "unknown/failed")
+                else:
+                    failed_dir = "log/unknown_failed"
+
+            os.makedirs(failed_dir, exist_ok=True)
+
+            log_path = os.path.join(failed_dir, "failed_fits.log")
+
+            with open(log_path, "a") as f:
+                for file in files:
+                    f.write(f"{datetime.datetime.now()} - {file}\n")
+            self.logger.info(f"Saved failed files log to: {log_path}")
+
 
         # Transform the list of dictionaries into two pandas DataFrame, one for primary and other for the instrumebt
+        if not valid_data:
+            return pd.DataFrame(), pd.DataFrame()
+        
         primary_df = pd.DataFrame([d['primary'] for d in valid_data])
         instrument_df = pd.DataFrame([d['instrument'] for d in valid_data])
 
