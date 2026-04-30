@@ -29,6 +29,9 @@ def parse_args():
                         type=str,
                         default=None,
                         help='Night of observation in YYYYMMDD format.')
+    parser.add_argument('--clobber', action='store_true',
+                        help='Overwrite existing files in the output directory.')
+
     return parser.parse_args()
 
 
@@ -40,15 +43,46 @@ def keys_to_modify():
 
 def keys_to_add():
     return {
-        'TELESCOP': 'PE160',
-        'SITEID': 'OPD',
+        'TELESCOP': ('PE160', "Telescope name"),
+        'SITEID': ('OPD', "Observatory/Site"),
         # NOTE: This will be set based on the file creation date in isot format.
-        'DATEFILE': None,
+        'DATEFILE': (None, "File creation date"),
         # NOTE: This will be calculated and added to the header.
-        'CHECKSUM': None,
+        'CHECKSUM': (None, "HDU checksum"),
         # NOTE: This will be calculated and added to the header.
-        'DATASUM': None,
+        'DATASUM': (None, "Data checksum"),
     }
+
+
+def mofity_and_copy_file(input_file, output_file, clobber=False):
+    with fits.open(input_file) as hdul:
+        header = hdul[0].header
+
+        # Modify keys. Get old value and description, and set them to the new key.
+        for old_key, new_key in keys_to_modify().items():
+            if old_key in header:
+                old_value = header[old_key]
+                old_comment = header.comments[old_key]
+                header[new_key] = (old_value, old_comment)
+                del header[old_key]
+
+        # Add new keys
+        for key, value in keys_to_add().items():
+            if key in header:
+                continue
+            if value is not None:
+                header[key] = value
+
+        # Update DATEFILE based on file creation date
+        header['DATEFILE'] = os.path.getctime(input_file)
+
+        # Calculate CHECKSUM and DATASUM
+        hdul.verify('fix')
+        hdul.flush()  # Ensure changes are written to the file before calculating checksums
+        hdul[0].add_checksum()
+
+        print(f"Copying {input_file} to {output_file} with modified headers.")
+        hdul.writeto(output_file, overwrite=clobber)
 
 
 def main(args):
@@ -62,7 +96,7 @@ def main(args):
     # Inside each NIGHT dir, there are the FITS files.
     night_dirs = []
     latest_copied_files = {'win_sparc4acs1': None, 'win_sparc4acs2': None,
-                           'win_sparc4acs3': None, 'win_sparc4acs}4': None}
+                           'win_sparc4acs3': None, 'win_sparc4acs4': None}
     for acs_dir in acs_dirs:
         acs_path = os.path.join(root_dir, acs_dir)
         if not os.path.isdir(acs_path):
@@ -82,19 +116,32 @@ def main(args):
         if not os.path.isdir(output_acs_dir):
             os.makedirs(output_acs_dir)
         # If night_dir is not present in output_acs_dir, create it
-        output_night_dir = os.path.join(output_acs_dir, night_dir)
+        output_night_dir = os.path.join(
+            output_acs_dir, os.path.basename(night_dir))
         if not os.path.isdir(output_night_dir):
             os.makedirs(output_night_dir)
 
         # Compare files in night_dir from both input and output dirs
-        # Get only one files each time, always starting from the first non existing file in output dir
+        # Get only one file each time, always starting from the first non existing file in output dir
         input_files = sorted(
             [f for f in os.listdir(night_dir) if f.endswith('.fits')])
         output_files = sorted([f for f in os.listdir(
             output_night_dir) if f.endswith('.fits')])
+        if len(output_files) > 0 and not args.clobber:
+            latest_copied_file = output_files[-1]
+            latest_copied_files[acs_dir] = latest_copied_file
+            next_file_to_copy = [
+                f for f in input_files if f > latest_copied_file][0]
+        else:
+            next_file_to_copy = input_files[0]
 
-    import pdb
-    pdb.set_trace()
+        mofity_and_copy_file(os.path.join(night_dir, next_file_to_copy),
+                             os.path.join(output_night_dir, next_file_to_copy),
+                             clobber=args.clobber)
+
+    print("Images copied with modified headers. Latest copied files:")
+    for acs_dir, latest_file in latest_copied_files.items():
+        print(f"{acs_dir}: {latest_file}")
 
 
 if __name__ == "__main__":
