@@ -11,6 +11,8 @@ Date of creation: 2026-04-30
 
 import os
 from astropy.io import fits
+from astropy.time import Time
+from astropy import units as u
 import argparse
 
 
@@ -27,8 +29,11 @@ def parse_args():
                         help='Directory to save the modified FITS files.')
     parser.add_argument('--night',
                         type=str,
-                        default=None,
+                        default='lastnight',
                         help='Night of observation in YYYYMMDD format.')
+    parser.add_argument('--copy_all',
+                        action='store_true',
+                        help='Copy all files from input directory.')
     parser.add_argument('--clobber', action='store_true',
                         help='Overwrite existing files in the output directory.')
 
@@ -85,7 +90,7 @@ def mofity_and_copy_file(input_file, output_file, clobber=False):
         hdul.writeto(output_file, overwrite=clobber)
 
 
-def main(args):
+def main(args, night_dirs=None):
     root_dir = args.input_dir
     output_dir = args.output_dir
 
@@ -97,51 +102,70 @@ def main(args):
     night_dirs = []
     latest_copied_files = {'win_sparc4acs1': None, 'win_sparc4acs2': None,
                            'win_sparc4acs3': None, 'win_sparc4acs4': None}
-    for acs_dir in acs_dirs:
-        acs_path = os.path.join(root_dir, acs_dir)
-        if not os.path.isdir(acs_path):
-            continue
-        if args.night is None:
-            # Select latest night dir in sparc4acs1
-            night_dir = sorted([d for d in os.listdir(
-                acs_path) if os.path.isdir(os.path.join(acs_path, d))])[-1]
-            night_dirs.append(os.path.join(acs_path, night_dir))
+
+    continue_copying = True
+
+    while continue_copying:
+        for acs_dir in acs_dirs:
+            acs_path = os.path.join(root_dir, acs_dir)
+            if not os.path.isdir(acs_path):
+                continue
+            if args.night == 'lastnight':
+
+                last_night = Time.now() - 1 * u.day
+                night_dir = os.path.join(
+                    acs_path, last_night.strftime('%Y%m%d'))
+                # Select latest night dir in sparc4acs1
+                # night_dir = sorted([d for d in os.listdir(
+                #     acs_path) if os.path.isdir(os.path.join(acs_path, d))])[-1]
+                if os.path.isdir(os.path.join(acs_path, night_dir)):
+                    night_dirs.append(os.path.join(acs_path, night_dir))
+                else:
+                    print(
+                        f"Night directory {night_dir} not found in {acs_path}. Skipping.")
+                    continue
+            else:
+                night_dir = os.path.join(acs_path, args.night)
+                if os.path.isdir(night_dir):
+                    night_dirs.append(night_dir)
+
+            # If acs_dir is not present in output_dir, create it
+            output_acs_dir = os.path.join(output_dir, acs_dir)
+            if not os.path.isdir(output_acs_dir):
+                os.makedirs(output_acs_dir)
+            # If night_dir is not present in output_acs_dir, create it
+            output_night_dir = os.path.join(
+                output_acs_dir, os.path.basename(night_dir))
+            if not os.path.isdir(output_night_dir):
+                os.makedirs(output_night_dir)
+
+            # Compare files in night_dir from both input and output dirs
+            # Get only one file each time, always starting from the first non existing file in output dir
+            input_files = sorted(
+                [f for f in os.listdir(night_dir) if f.endswith('.fits')])
+            output_files = sorted([f for f in os.listdir(
+                output_night_dir) if f.endswith('.fits')])
+            if len(output_files) > 0 and not args.clobber:
+                latest_copied_file = output_files[-1]
+                latest_copied_files[acs_dir] = latest_copied_file
+                next_file_to_copy = [
+                    f for f in input_files if f > latest_copied_file][0]
+            else:
+                next_file_to_copy = input_files[0]
+
+            mofity_and_copy_file(os.path.join(night_dir, next_file_to_copy),
+                                 os.path.join(output_night_dir,
+                                              next_file_to_copy),
+                                 clobber=args.clobber)
+
+        print("Images copied with modified headers. Latest copied files:")
+        for acs_dir, latest_file in latest_copied_files.items():
+            print(f"{acs_dir}: {latest_file}")
+
+        if args.copy_all:
+            continue_copying = True
         else:
-            night_dir = os.path.join(acs_path, args.night)
-            if os.path.isdir(night_dir):
-                night_dirs.append(night_dir)
-
-        # If acs_dir is not present in output_dir, create it
-        output_acs_dir = os.path.join(output_dir, acs_dir)
-        if not os.path.isdir(output_acs_dir):
-            os.makedirs(output_acs_dir)
-        # If night_dir is not present in output_acs_dir, create it
-        output_night_dir = os.path.join(
-            output_acs_dir, os.path.basename(night_dir))
-        if not os.path.isdir(output_night_dir):
-            os.makedirs(output_night_dir)
-
-        # Compare files in night_dir from both input and output dirs
-        # Get only one file each time, always starting from the first non existing file in output dir
-        input_files = sorted(
-            [f for f in os.listdir(night_dir) if f.endswith('.fits')])
-        output_files = sorted([f for f in os.listdir(
-            output_night_dir) if f.endswith('.fits')])
-        if len(output_files) > 0 and not args.clobber:
-            latest_copied_file = output_files[-1]
-            latest_copied_files[acs_dir] = latest_copied_file
-            next_file_to_copy = [
-                f for f in input_files if f > latest_copied_file][0]
-        else:
-            next_file_to_copy = input_files[0]
-
-        mofity_and_copy_file(os.path.join(night_dir, next_file_to_copy),
-                             os.path.join(output_night_dir, next_file_to_copy),
-                             clobber=args.clobber)
-
-    print("Images copied with modified headers. Latest copied files:")
-    for acs_dir, latest_file in latest_copied_files.items():
-        print(f"{acs_dir}: {latest_file}")
+            continue_copying = False
 
 
 if __name__ == "__main__":
