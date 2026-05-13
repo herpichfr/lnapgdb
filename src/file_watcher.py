@@ -1,24 +1,34 @@
+#!/bin/python
+
+"""
+This module defines the FileWatcher class, which is responsible for monitoring
+directories for new FITS files. The new files are handed to the
+observation_manager module for processing and insertion into the database.
+
+Author: Thaiane Cassetari
+"""
+
 import time
 import os
 from pathlib import Path
 from typing import List
 
 
-class FileWatcher: #roda os diretorios 
+class FileWatcher:
     def __init__(
-            self, 
-            directories: List[str] = None,
-            config: dict = None,
-            poll_interval=1,
-            extensions=None,
-            process_existing = False 
-        ):
+        self,
+        directories: List[str] = None,
+        config: dict = None,
+        poll_interval=1,
+        extensions=None,
+        process_existing=False
+    ):
         self.extensions = extensions or {'.fits', '.fit', '.fts'}
         self.poll_interval = poll_interval
         self.process_existing = process_existing
 
         # State tracking -> highest timestamp seen
-        self.last_checkpoint = 0.0 #self.last_seen_files = set()
+        self.last_checkpoint = 0.0  # self.last_seen_files = set()
         self.initialized = False
 
         if config:
@@ -33,10 +43,10 @@ class FileWatcher: #roda os diretorios
 
         if self.process_existing:
             self.last_checkpoint = 0.0
-            print(f"Watcher initialized.")
+            print("Watcher initialized.")
         else:
             self.last_checkpoint = time.time()
-            print(f"Watcher initialized => time.time")
+            print("Watcher initialized => time.time")
 
         self.initialized = True
         print(f"Watcher initialized. Starting point: {self.last_checkpoint}")
@@ -52,28 +62,29 @@ class FileWatcher: #roda os diretorios
         for directory in self.directories:
             if not directory.exists():
                 continue
-            
+
             # Use an iterator to avoid loading everything into memory at once
             for path in directory.rglob('*'):
                 if path.is_file() and path.suffix.lower() in self.extensions:
                     try:
                         mtime = path.stat().st_mtime
                         if mtime > self.last_checkpoint:
-                            new_files.append(path) # Track the newest file in this batch
+                            # Track the newest file in this batch
+                            new_files.append(path)
                             if mtime > max_mtime_found:
                                 max_mtime_found = mtime
                     except OSError:
-                        continue # File may have been deleted or locked
+                        continue  # File may have been deleted or locked
 
             new_files.sort(key=lambda p: p.stat().st_mtime)
-            
+
         # Update the global checkpoint with the latest processed file timestamp
         if new_files:
             new_files.sort(key=lambda p: p.stat().st_mtime)
             self.last_checkpoint = max_mtime_found
             return [str(p) for p in new_files]
-        
-        return [] # Return an empty list if nothing is found
+
+        return []  # Return an empty list if nothing is found
 
     def watch(self):
         """
@@ -103,7 +114,8 @@ class FileWatcher: #roda os diretorios
         instruments = config.get("instruments", {})
 
         for instrument_name, instrument_data in instruments.items():
-            raw_dir = instrument_data.get("raw_data_directory")
+            raw_dir = os.path.expandvars(
+                instrument_data.get("raw_data_directory"))
 
             if raw_dir:
                 full_path = Path(data_root) / raw_dir
@@ -115,5 +127,3 @@ class FileWatcher: #roda os diretorios
                     print(f"WARNING: Directory does not exist: {full_path}")
 
         return directories
-    
-
