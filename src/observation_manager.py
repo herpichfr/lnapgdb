@@ -231,8 +231,6 @@ if __name__ == "__main__":
 
             p_df, i_df = data_collector.collect_data()
             print("DEBUG: Data collection process finished.")
-            # print(f"DEBUG: Primary data (p_df): {p_df}")
-            # print(f"DEBUG: Instrument data (i_df): {i_df}")
 
         except Exception as e:
             observation_manager.logger.error(
