@@ -89,10 +89,15 @@ class InsertDB:
     def _get_db_credentials(self):
         # Access your credentials config as before
         cred_path = os.path.join(os.path.dirname(
-            os.path.dirname(os.path.abspath(__file__))), 'credentials/config.json')
+            os.path.dirname(os.path.abspath(__file__))), 'credentials/db_config.json')
         with open(cred_path, 'r') as f:
-            return load(f)['lnapgdatabase']
-        
+            db_loaded = load(f)['db']
+            if self.debug:
+                print(f"Loaded DB credentials: {
+                    db_loaded['username']}@{db_loaded['host']}:{db_loaded['port']}/{db_loaded['database']}")
+                import pdb
+                pdb.set_trace()
+            return db_loaded
 
     def insert_batch(self, primary_df, instrument_df, db_schema=None, debug=None):
         """
@@ -149,10 +154,12 @@ class InsertDB:
                 instrument_df.to_sql(instrument, self.engine,
                                      schema=db_schema, if_exists='append', index=False)
                 self.logger.info(
-                    f"Inserted {len(primary_df)} rows into primary_table for instrument {instrument}."
+                    f"Inserted {len(primary_df)} rows into primary_table for instrument {
+                        instrument}."
                 )
             except Exception as e:
-                self.logger.error(f"Error inserting into {instrument} table: {e}")
+                self.logger.error(f"Error inserting into {
+                                  instrument} table: {e}")
                 session.rollback()
                 return False, 2
 

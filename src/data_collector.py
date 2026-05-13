@@ -94,7 +94,7 @@ class DataCollector:
             }
         instrument_model = instrument_models_cache.get(
             instrument, None) if instrument_models_cache else DataCollector.get_instrument_model(instrument)
-        
+
         if not instrument_model:
             logger.critical(
                 f"File '{file}' has unknown instrument '{instrument}' in header.")
@@ -155,7 +155,7 @@ class DataCollector:
         valid_data = [d for d in data if d and not d.get('error')]
         failed_data = [d for d in data if d and d.get('error')]
         self.logger.info(f"Successfully processed {len(valid_data)} files.")
-        
+
         failed_dirs = {}
         if self.config:
             data_root = self.config.get("data_root", "")
@@ -179,7 +179,8 @@ class DataCollector:
             failed_dir = failed_dirs.get(inst)
             if not failed_dir:
                 if self.config:
-                    failed_dir = os.path.join(self.config.get("data_root", ""), "unknown/failed")
+                    failed_dir = os.path.join(self.config.get(
+                        "data_root", ""), "unknown/failed")
                 else:
                     failed_dir = "log/unknown_failed"
 
@@ -192,11 +193,10 @@ class DataCollector:
                     f.write(f"{datetime.datetime.now()} - {file}\n")
             self.logger.info(f"Saved failed files log to: {log_path}")
 
-
         # Transform the list of dictionaries into two pandas DataFrame, one for primary and other for the instrumebt
         if not valid_data:
             return pd.DataFrame(), pd.DataFrame()
-        
+
         primary_df = pd.DataFrame([d['primary'] for d in valid_data])
         instrument_df = pd.DataFrame([d['instrument'] for d in valid_data])
 
@@ -257,7 +257,6 @@ class DataCollector:
                         return False, primary_data, instrument_data
 
                 primary_data[key] = value
-
             elif key in instrument_model:
                 is_nullable = instrument_model[key].get('nullable', True)
                 if not is_nullable:
