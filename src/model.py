@@ -56,6 +56,15 @@ class PrimaryTable(Base):
     __table_args__ = {'schema': db_schema}
 
     id = Column(Integer, primary_key=True, nullable=False)
+
+    # NOTE: Add columns that needs special handling here
+
+    # NOTE: Define FILENAME column with a unique constraint
+    # This definition is also included in the datamodel for documentation
+    # purposes, but added here to ensure it is always present in the table.
+    filename = Column('FILENAME', String, nullable=False, unique=True,
+                      info={'description': 'Original filename'})
+    # Add column instrume for polymorphic identity
     instrume = Column('INSTRUME', String, nullable=False,
                       info={'description': 'Instrument used'})
 
@@ -136,7 +145,7 @@ def get_db_credentials():
     cred_dir = os.path.join(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))), 'credentials')
 
-    #with open(os.path.expanduser(f'{cred_dir}/config.json'), 'r') as f:
+    # with open(os.path.expanduser(f'{cred_dir}/config.json'), 'r') as f:
     with open(os.path.join(f'{cred_dir}/db_config.json'), 'r') as f:
         data = load(f)
     # return data['lnapgdatabase']
@@ -148,8 +157,8 @@ def add_columns_from_json(table_class):
         raise ValueError("Provided class must have a __tablename__ attribute.")
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     json_path = os.path.join(
-        base_dir, 
-        'models', 
+        base_dir,
+        'models',
         f'{table_class.__tablename__.lower()}.json'
     )
 
@@ -160,27 +169,26 @@ def add_columns_from_json(table_class):
         # NOTE: Colname INSTRUME is reserved for the polymorphic identity, but
         # it needs to be defined in the JSON files either way. However, if it
         # is defined in the JSON file, it will be ignored and not added as a
-        # column to the table.
-        if colname.upper() == 'INSTRUME':
+        # column to the table. Same happens with FILENAME, which is defined
+        # with a unique constraint in the PrimaryTable, but is also included in
+        # the JSON files for documentation purposes.
+        if colname.upper() in ['INSTRUME', 'FILENAME']:
             continue
         default_value = col.get('default', None)
         # Map SQLAlchemy type
         type_class = map_type_to_sqlalchemy(col['datatype'])
         is_nullable = col.get('nullable', True)
+        is_unique = col.get('unique', False)
         description = col.get('description', '')
-        if 'allowed_values' in col.keys():
-            allowed_values = col['allowed_values'].split(',')
-            # Add a check constraint for allowed values
-            new_column = Column(type_class,
-                                nullable=is_nullable,
-                                default=default_value,
-                                info={'allowed_values': allowed_values,
-                                      'description': description})
-        else:
-            new_column = Column(type_class,
-                                nullable=is_nullable,
-                                default=default_value,
-                                info={'description': description})
+        allowed_values = col['allowed_values'] if 'allowed_values' in col.keys(
+        ) else None
+        new_column = Column(type_class,
+                            nullable=is_nullable,
+                            default=default_value,
+                            unique=is_unique,
+                            info={'allowed_values': allowed_values,
+                                  'description': description})
+
         setattr(table_class, colname, new_column)
         table_class.__table__.append_column(new_column)
 
@@ -188,19 +196,18 @@ def add_columns_from_json(table_class):
 def main():
     creds = get_db_credentials()
 
-     # Compatibilidade com diferentes formatos
+    # Compatibilidade com diferentes formatos
     user = creds.get('user') or creds.get('username')
     password = quote_plus(creds['password'])
     driver = creds.get('driver', 'postgresql')
-     
+
     engine = create_engine(
-        f"{driver}://{user}:{password}@{creds['host']}:{creds['port']}/{creds['database']}"
+        f"{driver}://{user}:{password}@{creds['host']
+                                        }:{creds['port']}/{creds['database']}"
     )
-     
-    # Base.metadata.drop_all(engine)  
-    # print("Database and tables created successfully!")
+
     if args.reset_db:
-        print("Dropping all tables")# Drop existing tables
+        print("Dropping all tables")  # Drop existing tables
         Base.metadata.drop_all(engine)
 
     add_columns_from_json(PrimaryTable)
