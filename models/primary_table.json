@@ -130,6 +130,7 @@
         "colname": "FILENAME",
         "nullable": false,
         "datatype": "String",
+        "unique": true,
         "description": "Original file name"
     },
     {
