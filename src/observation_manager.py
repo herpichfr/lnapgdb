@@ -23,6 +23,7 @@ from miscellaneous import setup_logging
 from data_collector import DataCollector
 from insertdb import InsertDB
 from file_watcher import FileWatcher
+from database_checker import DatabaseChecker
 
 
 def parse_arguments():
@@ -51,6 +52,11 @@ def parse_arguments():
                         help='Directories to watch for new images')
     parser.add_argument('--cadence', type=int, default=10,
                         help='Time interval (in seconds) to check for new images')
+    parser.add_argument('--drop-tables', action='store_true',
+                        help='Clean the database before starting')
+    parser.add_argument("--check-db", action="store_true",
+                        help="Check if FITS files are already inserted in the database.")
+    parser.add_argument("--date", type=str, help="Data no formato YYYYMMDD")
 
     return parser.parse_args()
 
@@ -182,6 +188,7 @@ if __name__ == "__main__":
     observation_manager = ObservationManager(args)
     db_schema = observation_manager.db_schema
 
+
     if args.watch_dir:
         watcher = FileWatcher(
             directories=args.watch_dir,
@@ -192,6 +199,8 @@ if __name__ == "__main__":
             config=observation_manager.config,
             poll_interval=args.cadence
         )
+    
+    
 
     # Get schema from git branch
     git_branch = get_git_branch()
@@ -210,6 +219,22 @@ if __name__ == "__main__":
             'No valid directories found to monitor'
         )
         raise ValueError('No valid directories found to monitor')
+    
+    if args.check_db:
+
+        db = InsertDB(
+        config=observation_manager.config,
+        logger=observation_manager.logger
+        )
+
+        checker = DatabaseChecker(
+            directories=watcher.directories,
+            db=db,
+            date=args.date
+        )
+
+        checker.run()
+        exit()
 
     for new_images in watcher.watch():
         print(f"DEBUG: Processing {len(new_images)} new images")
@@ -260,9 +285,9 @@ if __name__ == "__main__":
                     f'Failed to insert data into the database with code {
                         error_code}'
                 )
+        except KeyboardInterrupt:
+            print("\n Program interrupted by the user.")
 
-        except Exception as e:
-            observation_manager.logger.error(
-                f'Error inserting data into database: {e}'
-            )
-        # TODO: Add a graceful shutdown mechanism to allow the user to stop the observation manager with Ctrl+C
+    
+
+    
