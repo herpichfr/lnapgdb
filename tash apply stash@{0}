@@ -1,0 +1,266 @@
+[1mdiff --git a/src/data_collector.py b/src/data_collector.py[m
+[1mindex 3808c91..7e59e33 100644[m
+[1m--- a/src/data_collector.py[m
+[1m+++ b/src/data_collector.py[m
+[36m@@ -121,7 +121,7 @@[m [mclass DataCollector:[m
+                 'instrument_name': instrument,[m
+                 'file': file[m
+             }[m
+[31m-        else:[m
+[32m+[m[32m        else: # NOTE:[m
+             logger.error([m
+                 f"File '{file}' failed validation and will be skipped.")[m
+             return {[m
+[36m@@ -236,6 +236,7 @@[m [mclass DataCollector:[m
+                         converted to the required datatype '{datatype.__name__}'. \[m
+                         Error: {e}")[m
+                     return False, primary_data, instrument_data[m
+[32m+[m[41m                [m
+ [m
+                 if minmax:[m
+                     if not (isinstance(value, datatype) and allowed_values[0] <= value <= allowed_values[1]):[m
+[1mdiff --git a/src/file_watcher.py b/src/file_watcher.py[m
+[1mindex e9dd298..c69fecf 100644[m
+[1m--- a/src/file_watcher.py[m
+[1m+++ b/src/file_watcher.py[m
+[36m@@ -1,6 +1,6 @@[m
+ import time[m
+[31m-import os[m
+[31m-from pathlib import Path[m
+[32m+[m[32mimport os #mtime[m
+[32m+[m[32mfrom pathlib import Path #mtime[m
+ from typing import List[m
+ [m
+ [m
+[36m@@ -18,62 +18,161 @@[m [mclass FileWatcher: #roda os diretorios[m
+         self.process_existing = process_existing[m
+ [m
+         # State tracking -> highest timestamp seen[m
+[31m-        self.last_checkpoint = 0.0 #self.last_seen_files = set()[m
+[32m+[m[32m        self.last_checkpoint = 0.0[m[41m [m
+         self.initialized = False[m
+ [m
+[32m+[m[32m        # Directories currently being monitored[m
+[32m+[m[32m        self.active_directories = [][m
+[32m+[m
+         if config:[m
+             self.directories = self._load_directories_from_config(config)[m
+         else:[m
+             self.directories = [Path(d) for d in (directories or [])][m
+ [m
+[32m+[m[32m    # def initialize(self):[m
+[32m+[m[32m    #     """[m
+[32m+[m[32m    #     Define the starting point (timestamp)[m
+[32m+[m[32m    #     """[m
+[32m+[m[32m    #     if self.process_existing:[m
+[32m+[m[32m    #         self.last_checkpoint = 0.0[m
+[32m+[m[32m    #         print(f"Watcher initialized.")[m
+[32m+[m[32m    #     else:[m
+[32m+[m[32m    #         self.last_checkpoint = time.time()[m
+[32m+[m[32m    #         print(f"Watcher initialized => time.time")[m
+[32m+[m[32m    #     self.initialized = True[m
+[32m+[m[32m    #     print(f"Watcher initialized. Starting point: {self.last_checkpoint}")[m
+[32m+[m
+     def initialize(self):[m
+         """[m
+         Define the starting point (timestamp)[m
+[32m+[m[32m        and discover latest active directories.[m
+         """[m
+ [m
+         if self.process_existing:[m
+             self.last_checkpoint = 0.0[m
+[31m-            print(f"Watcher initialized.")[m
+[32m+[m[32m            print("Watcher initialized.")[m
+         else:[m
+             self.last_checkpoint = time.time()[m
+[31m-            print(f"Watcher initialized => time.time")[m
+[32m+[m[32m            print("Watcher initialized => time.time")[m
+[32m+[m
+[32m+[m[32m        # Find latest directory for each root[m
+[32m+[m[32m        self.active_directories = [][m
+[32m+[m
+[32m+[m[32m        for root_dir in self.directories:[m
+[32m+[m[32m            latest_dir = self._find_latest_directory(root_dir)[m
+[32m+[m[32m            if latest_dir:[m
+[32m+[m[32m                self.active_directories.append(latest_dir)[m
+ [m
+[32m+[m[32m                print(f"DEBUG: Active directory => {latest_dir}")[m
+         self.initialized = True[m
+[32m+[m
+         print(f"Watcher initialized. Starting point: {self.last_checkpoint}")[m
+ [m
+[32m+[m
+[32m+[m[32m    def _find_latest_directory(self, root_directory):[m
+[32m+[m[32m        """[m
+[32m+[m[32m        Find the most recently modified subdirectory.[m
+[32m+[m[32m        """[m
+[32m+[m[32m        latest_dir = None[m
+[32m+[m[32m        latest_mtime = 0[m
+[32m+[m
+[32m+[m[32m        try:[m
+[32m+[m[32m            with os.scandir(root_directory) as entries:[m
+[32m+[m
+[32m+[m[32m                for entry in entries:[m
+[32m+[m
+[32m+[m[32m                    if entry.is_dir():[m
+[32m+[m
+[32m+[m[32m                        try:[m
+[32m+[m[32m                            mtime = entry.stat().st_mtime[m
+[32m+[m
+[32m+[m[32m                            if mtime > latest_mtime:[m
+[32m+[m[32m                                latest_mtime = mtime[m
+[32m+[m[32m                                latest_dir = Path(entry.path)[m
+[32m+[m
+[32m+[m[32m                        except OSError:[m
+[32m+[m[32m                            continue[m
+[32m+[m
+[32m+[m[32m        except OSError:[m
+[32m+[m[32m            return None[m
+[32m+[m[32m        return latest_dir[m
+[32m+[m
+[32m+[m[32m    # def get_new_files(self):[m
+[32m+[m[32m    #     """[m
+[32m+[m[32m    #     Return only new files since last iteration.[m
+[32m+[m[32m    #     mtime files > last checkpoint[m
+[32m+[m[32m    #     """[m
+[32m+[m[32m    #     new_files = [][m
+[32m+[m[32m    #     max_mtime_found = self.last_checkpoint[m
+[32m+[m
+[32m+[m[32m    #     for directory in self.directories:[m
+[32m+[m[32m    #         if not directory.exists():[m
+[32m+[m[32m    #             continue[m
+[32m+[m[41m            [m
+[32m+[m[32m    #         # Use an iterator to avoid loading everything into memory at once[m
+[32m+[m[32m    #         for path in directory.rglob('*'):[m
+[32m+[m[32m    #             if path.is_file() and path.suffix.lower() in self.extensions:[m
+[32m+[m[32m    #                 try:[m
+[32m+[m[32m    #                     mtime = path.stat().st_mtime[m
+[32m+[m[32m    #                     if mtime > self.last_checkpoint:[m
+[32m+[m[32m    #                         new_files.append(path) # Track the newest file in this batch[m
+[32m+[m[32m    #                         if mtime > max_mtime_found:[m
+[32m+[m[32m    #                             max_mtime_found = mtime[m
+[32m+[m[32m    #                 except OSError:[m
+[32m+[m[32m    #                     continue # File may have been deleted or locked[m
+[32m+[m
+[32m+[m[32m    #         new_files.sort(key=lambda p: p.stat().st_mtime)[m
+[32m+[m[41m            [m
+[32m+[m[32m    #     # Update the global checkpoint with the latest processed file timestamp[m
+[32m+[m[32m    #     if new_files:[m
+[32m+[m[32m    #         new_files.sort(key=lambda p: p.stat().st_mtime)[m
+[32m+[m[32m    #         self.last_checkpoint = max_mtime_found[m
+[32m+[m[32m    #         return [str(p) for p in new_files][m
+[32m+[m[41m        [m
+[32m+[m[32m    #     return [] # Return an empty list if nothing is found[m
+[32m+[m
+     def get_new_files(self):[m
+         """[m
+         Return only new files since last iteration.[m
+[31m-        mtime files > last checkpoint[m
+[32m+[m[32m        Scan only the latest modified directories.[m
+         """[m
+         new_files = [][m
+         max_mtime_found = self.last_checkpoint[m
+ [m
+[31m-        for directory in self.directories:[m
+[32m+[m[32m        # Refresh active directories[m
+[32m+[m[32m        updated_active_dirs = [][m
+[32m+[m
+[32m+[m[32m        for root_dir in self.directories:[m
+[32m+[m[32m            latest_dir = self._find_latest_directory(root_dir)[m
+[32m+[m[32m            if latest_dir:[m
+[32m+[m[32m                updated_active_dirs.append(latest_dir)[m
+[32m+[m[32m        self.active_directories = updated_active_dirs[m
+[32m+[m
+[32m+[m[32m        for directory in self.active_directories:[m
+             if not directory.exists():[m
+                 continue[m
+[31m-            [m
+[31m-            # Use an iterator to avoid loading everything into memory at once[m
+[31m-            for path in directory.rglob('*'):[m
+[31m-                if path.is_file() and path.suffix.lower() in self.extensions:[m
+[31m-                    try:[m
+[31m-                        mtime = path.stat().st_mtime[m
+[31m-                        if mtime > self.last_checkpoint:[m
+[31m-                            new_files.append(path) # Track the newest file in this batch[m
+[31m-                            if mtime > max_mtime_found:[m
+[31m-                                max_mtime_found = mtime[m
+[31m-                    except OSError:[m
+[31m-                        continue # File may have been deleted or locked[m
+[31m-[m
+[31m-            new_files.sort(key=lambda p: p.stat().st_mtime)[m
+[31m-            [m
+[31m-        # Update the global checkpoint with the latest processed file timestamp[m
+[32m+[m[32m            try:[m
+[32m+[m[32m                for path in directory.rglob('*'):[m
+[32m+[m[32m                    if ([m
+[32m+[m[32m                        path.is_file()[m
+[32m+[m[32m                        and path.suffix.lower() in self.extensions[m
+[32m+[m[32m                    ):[m
+[32m+[m[32m                        try:[m
+[32m+[m[32m                            mtime = path.stat().st_mtime[m
+[32m+[m[32m                            if mtime > self.last_checkpoint:[m
+[32m+[m[32m                                new_files.append(path)[m
+[32m+[m[32m                                if mtime > max_mtime_found:[m
+[32m+[m[32m                                    max_mtime_found = mtime[m
+[32m+[m[32m                        except OSError:[m
+[32m+[m[32m                            continue[m
+[32m+[m[32m            except OSError:[m
+[32m+[m[32m                continue[m
+[32m+[m[32m        # Sort files by modification time[m
+         if new_files:[m
+             new_files.sort(key=lambda p: p.stat().st_mtime)[m
+             self.last_checkpoint = max_mtime_found[m
+             return [str(p) for p in new_files][m
+[31m-        [m
+[31m-        return [] # Return an empty list if nothing is found[m
+[32m+[m[32m        return [][m
+ [m
+     def watch(self):[m
+         """[m
+[1mdiff --git a/src/observation_manager.py b/src/observation_manager.py[m
+[1mindex 29ef787..64ac6e7 100644[m
+[1m--- a/src/observation_manager.py[m
+[1m+++ b/src/observation_manager.py[m
+[36m@@ -25,6 +25,7 @@[m [mfrom miscellaneous import setup_logging[m
+ from data_collector import DataCollector[m
+ from insertdb import InsertDB[m
+ from file_watcher import FileWatcher[m
+[32m+[m[32mfrom database_checker import DatabaseChecker[m
+ [m
+ [m
+ [m
+[36m@@ -56,6 +57,8 @@[m [mdef parse_arguments():[m
+                         help='Time interval (in seconds) to check for new images')[m
+     parser.add_argument('--drop-tables', action='store_true',[m
+                         help='Clean the database before starting')[m
+[32m+[m[32m    parser.add_argument('--check-db', action='store_true',[m
+[32m+[m[32m                        help='Check if FITS files are already inserted in the database.')[m
+ [m
+     return parser.parse_args()[m
+ [m
+[36m@@ -208,6 +211,7 @@[m [mif __name__ == "__main__":[m
+     observation_manager = ObservationManager(args)[m
+     db_schema = observation_manager.db_schema[m
+ [m
+[32m+[m
+     if args.watch_dir:[m
+         watcher = FileWatcher([m
+             directories=args.watch_dir,[m
+[36m@@ -296,4 +300,14 @@[m [mif __name__ == "__main__":[m
+                     f'Error inserting data into database: {e}'[m
+                 )[m
+     except KeyboardInterrupt:[m
+[31m-        print("\n Program interrupted by the user.")[m
+\ No newline at end of file[m
+[32m+[m[32m        print("\n Program interrupted by the user.")[m
+[32m+[m
+[32m+[m[41m    [m
+[32m+[m[32m    if args.check_db:[m
+[32m+[m
+[32m+[m[32m        checker = DatabaseChecker([m
+[32m+[m[32m            directories=watcher.directories,[m
+[32m+[m[32m            db_manager=None[m
+[32m+[m[32m        )[m
+[32m+[m[32m        checker.run()[m
+[32m+[m[32m        exit()[m
+\ No newline at end of file[m

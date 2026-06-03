@@ -121,7 +121,7 @@ class DataCollector:
                 'instrument_name': instrument,
                 'file': file
             }
-        else:
+        else: # NOTE:
             logger.error(
                 f"File '{file}' failed validation and will be skipped.")
             return {
@@ -236,6 +236,7 @@ class DataCollector:
                         converted to the required datatype '{datatype.__name__}'. \
                         Error: {e}")
                     return False, primary_data, instrument_data
+                
 
                 if minmax:
                     if not (isinstance(value, datatype) and allowed_values[0] <= value <= allowed_values[1]):
