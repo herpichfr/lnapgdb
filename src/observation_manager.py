@@ -38,25 +38,25 @@ def parse_arguments():
                         help='Database schema to use for insertion')
     parser.add_argument('--nprocs', '-n', type=int, default=1,
                         help='Number of processes to use for parallel processing')
+    parser.add_argument('--test', action='store_true',
+                        help='Run in test mode (processes a predefined set of test images)')
+    parser.add_argument('--watch-dir', nargs='+',
+                        help='Directories to watch for new images')
+    parser.add_argument('--cadence', type=int, default=10,
+                        help='Time interval (in seconds) to check for new images')
+    parser.add_argument('--avoid_work_hours', default=True,
+                        help="Stop watching directories during the night.")
+    parser.add_argument("--check-db", action="store_true",
+                        help="Check if FITS files are already inserted in the database.")
+    parser.add_argument("--date", type=str, help="Data no formato YYYYMMDD")
     parser.add_argument('--log-level', type=str, default='WARNING',
                         help='Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
     parser.add_argument('--log-file', type=str, default='observation_manager.log',
                         help='Path to the log file')
     parser.add_argument('--debug', action='store_true',
                         help='Enable debug mode (sets log level to DEBUG)')
-    parser.add_argument('--test', action='store_true',
-                        help='Run in test mode (processes a predefined set of test images)')
     parser.add_argument('--verbose', '-v', action='store_true',
                         help='Enable verbose logging')
-    parser.add_argument('--watch-dir', nargs='+',
-                        help='Directories to watch for new images')
-    parser.add_argument('--cadence', type=int, default=10,
-                        help='Time interval (in seconds) to check for new images')
-    parser.add_argument('--drop-tables', action='store_true',
-                        help='Clean the database before starting')
-    parser.add_argument("--check-db", action="store_true",
-                        help="Check if FITS files are already inserted in the database.")
-    parser.add_argument("--date", type=str, help="Data no formato YYYYMMDD")
 
     return parser.parse_args()
 
@@ -192,12 +192,14 @@ if __name__ == "__main__":
     if args.watch_dir:
         watcher = FileWatcher(
             directories=args.watch_dir,
-            poll_interval=args.cadence
+            poll_interval=args.cadence,
+            exclude_today_dir=args.avoid_work_hours
         )
     else:
         watcher = FileWatcher(
             config=observation_manager.config,
-            poll_interval=args.cadence
+            poll_interval=args.cadence,
+            exclude_today_dir=args.avoid_work_hours
         )
     
     
