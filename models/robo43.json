@@ -1,0 +1,295 @@
+[
+    {
+        "colname": "INSTMODE",
+        "default_value": "PHOTOMETRY",
+        "datatype": "String",
+        "description": "Technique used during the observation"
+    },
+    {
+        "colname": "INSTROT",
+        "default_value": "GUIDEANG",
+        "datatype": "float",
+        "allowed_values": "360",
+        "description": "Instrument rotator angle in degrees"
+    },
+    {
+        "colname": "FILTER",
+        "default_value": "V",
+        "datatype": "String",
+        "description": "Filter name"
+    },
+    {
+        "colname": "CHANNEL",
+        "datatype": "integer",
+        "allowed_values": "1,2,3,4",
+        "description": "Instrument channel: 1 (g), 2 (r), 3 (i), 4 (z)"
+    },
+    {
+        "colname": "CCDSERN",
+        "datatype": "integer",
+        "allowed_values": "99,149,917",
+        "description": "CCD serial number"
+    },
+    {
+        "colname": "NCYCLES",
+        "datatype": "integer",
+        "allowed_values": "Between:1,inf",
+        "description": "Number of cycles"
+    },
+    {
+        "colname": "CYCLIND",
+        "datatype": "integer",
+        "allowed_values": "Between:1,inf",
+        "description": "Cycle index"
+    },
+    {
+        "colname": "NSEQ",
+        "datatype": "integer",
+        "allowed_values": "Between:1,16",
+        "description": "Number of sequences in one cycle"
+    },
+    {
+        "colname": "SEQINDEX",
+        "datatype": "integer",
+        "allowed_values": "Between:1,16",
+        "description": "Sequence index in the cycle"
+    },
+    {
+        "colname": "NFRAMES",
+        "datatype": "integer",
+        "allowed_values": "191,500",
+        "description": "Number of frames in sequence"
+    },
+    {
+        "colname": "FRAMEIND",
+        "datatype": "integer",
+        "allowed_values": "191,500",
+        "description": "Frame index in sequence"
+    },
+    {
+        "colname": "ACQMODE",
+        "datatype": "string",
+        "allowed_values": "Single Scan,Kinetics",
+        "description": "Acquisition mode"
+    },
+    {
+        "colname": "PREAMP",
+        "datatype": "string",
+        "allowed_values": "Gain 1,Gain 2",
+        "description": "Pre-amplifier gain"
+    },
+    {
+        "colname": "READRATE",
+        "datatype": "float",
+        "allowed_values": "0.1,1,10,20,30",
+        "description": "Readout rate (MHz)"
+    },
+    {
+        "colname": "TRIGGER",
+        "datatype": "string",
+        "allowed_values": "Internal,External",
+        "description": "Trigger mode"
+    },
+    {
+        "colname": "VBIN",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Vertical binning (pix)"
+    },
+    {
+        "colname": "HBIN",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Horizontal binning (pix)"
+    },
+    {
+        "colname": "INITLIN",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Initial line (pix)"
+    },
+    {
+        "colname": "INITCOL",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Initial column (pix)"
+    },
+    {
+        "colname": "FINALLIN",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Final line (pix)"
+    },
+    {
+        "colname": "FINALCOL",
+        "datatype": "integer",
+        "allowed_values": "11,024",
+        "description": "Final column (pix)"
+    },
+    {
+        "colname": "SHUTTER",
+        "datatype": "string",
+        "allowed_values": "Open,Closed",
+        "description": "Shutter mode"
+    },
+    {
+        "colname": "COOLER",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "CCD cooler on: T or F"
+    },
+    {
+        "colname": "CCDTEMP",
+        "datatype": "integer",
+        "allowed_values": "Between:-10,25",
+        "description": "CCD temperature (deg C)"
+    },
+    {
+        "colname": "TGTEMP",
+        "datatype": "integer",
+        "allowed_values": "Between:-10,25",
+        "description": "CCD target temperature (deg C)"
+    },
+    {
+        "colname": "TEMPST",
+        "datatype": "string",
+        "allowed_values": "TEMPERATURE_OFF,TEMPERATURE_NOT_REACHED,TEMPERATURE_NOT_STABILIZED,TEMPERATURE_STABILIZED",
+        "description": "CCD temperature status"
+    },
+    {
+        "colname": "FRAMETRF",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Frame transfer on: T or F"
+    },
+    {
+        "colname": "GAIN",
+        "default_value": "10",
+        "datatype": "Float",
+        "description": "Specifies the detector sensitivity in number of electrons per data"
+    },
+    {
+        "colname": "RDNOISE",
+        "default_value": "10.1",
+        "datatype": "Float",
+        "description": "Specifies the detector readout noise in electrons"
+    },
+    {
+        "colname": "EFFRON",
+        "default_value": "1.1",
+        "datatype": "Float",
+        "description": "Specifies the median over all pixels of the effective readout noise"
+    },
+    {
+        "colname": "GFOC",
+        "datatype": "float",
+        "allowed_values": "Between:0,3",
+        "description": "Guiding focus position (mm)"
+    },
+    {
+        "colname": "GMIR",
+        "datatype": "float",
+        "allowed_values": "Between:0,360",
+        "description": "Rotation angle of the guiding mirror (deg)"
+    },
+    {
+        "colname": "ACSVRSN",
+        "datatype": "string",
+        "description": "Acquisition software version"
+    },
+    {
+        "colname": "GUIVRSN",
+        "datatype": "string",
+        "description": "GUI software version"
+    },
+    {
+        "colname": "ACSMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "ACS: real (T) or simulated (F)"
+    },
+    {
+        "colname": "GMIRMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Guiding mirror: real (T) or simulated (F)"
+    },
+    {
+        "colname": "GFOCMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Guiding focuser: real (T) or simulated (F)"
+    },
+    {
+        "colname": "TCSMODE",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "TCS: real (T) or simulated (F)"
+    },
+    {
+        "colname": "GMIRSTAT",
+        "datatype": "string",
+        "allowed_values": "READY,ACK,BUSY,ERROR,TIMEOUT,NONE",
+        "description": "Guiduing mirror status"
+    },
+    {
+        "colname": "GFOCSTAT",
+        "datatype": "string",
+        "allowed_values": "READY,ACK,BUSY,ERROR,TIMEOUT,NONE",
+        "description": "Guiding focuser status"
+    },
+    {
+        "colname": "ACQERROR",
+        "datatype": "boolean",
+        "allowed_values": "true,false",
+        "description": "Acquisition error - see comments"
+    },
+    {
+        "colname": "WEIGHT",
+        "default_value": "0.8",
+        "datatype": "Float",
+        "description": "This is the median over all pixels of the weight map"
+    },
+    {
+        "colname": "BLANK",
+        "default_value": "0",
+        "datatype": "Integer",
+        "description": "Value used for NULL pixels"
+    },
+    {
+        "colname": "DATAMAX",
+        "default_value": "43212",
+        "datatype": "Float",
+        "description": "Maximal pixel value"
+    },
+    {
+        "colname": "DATAMIN",
+        "default_value": "323",
+        "datatype": "Float",
+        "description": "Minimal pixel value"
+    },
+    {
+        "colname": "RADESYS",
+        "default_value": "FK5",
+        "datatype": "String",
+        "description": "Reference system"
+    },
+    {
+        "colname": "NCOMBINE",
+        "default_value": "1",
+        "datatype": "Integer",
+        "description": "Number of raw science data files that were combined to generate this data product"
+    },
+    {
+        "colname": "PROCSOFT",
+        "default_value": "Chimera v1.99",
+        "datatype": "String",
+        "description": "Version of the software used to produce this data product"
+    },
+    {
+        "colname": "REFERENC",
+        "default_value": "1924MNRAS..84..308E",
+        "datatype": "String",
+        "description": "Primary scientific publication associated with this data product"
+    }
+]
