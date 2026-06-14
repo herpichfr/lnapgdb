@@ -124,6 +124,17 @@ class Robo43(Base):
         'polymorphic_identity': 'robo43'
     }
 
+class Iagpol(Base):
+    __tablename__ = 'iagpol'
+    __table_args__ = {'schema': db_schema}
+
+    id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
+                                    ondelete='CASCADE'), primary_key=True)
+
+    _mapper_args__ = {
+        'polymorphic_identity': 'iagpol'
+    }
+
 
 def map_type_to_sqlalchemy(type_str):
     type_mapping = {
