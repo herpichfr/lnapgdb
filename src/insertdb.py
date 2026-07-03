@@ -93,8 +93,7 @@ class InsertDB:
         with open(cred_path, 'r') as f:
             db_loaded = load(f)['db']
             if self.debug:
-                print(f"Loaded DB credentials: {
-                    db_loaded['username']}@{db_loaded['host']}:{db_loaded['port']}/{db_loaded['database']}")
+                print(f"Loaded DB credentials: {db_loaded['username']}@{db_loaded['host']}:{db_loaded['port']}/{db_loaded['database']}")
                 import pdb
                 pdb.set_trace()
             return db_loaded
@@ -153,13 +152,9 @@ class InsertDB:
             try:
                 instrument_df.to_sql(instrument, self.engine,
                                      schema=db_schema, if_exists='append', index=False)
-                self.logger.info(
-                    f"Inserted {len(primary_df)} rows into primary_table for instrument {
-                        instrument}."
-                )
+                self.logger.info(f"Inserted {len(primary_df)} rows into primary_table for instrument {instrument}.")
             except Exception as e:
-                self.logger.error(f"Error inserting into {
-                                  instrument} table: {e}")
+                self.logger.error(f"Error inserting into {instrument} table: {e}")
                 session.rollback()
                 return False, 2
 
