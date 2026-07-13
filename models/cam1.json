@@ -92,12 +92,6 @@
         "description": "Filter name"
     },
     {
-        "colname": "HEAD",
-        "default_value": "",
-        "datatype": "string",
-        "description": "Head Model"
-    },
-    {
         "colname": "READMODE",
         "default_value": "Image",
         "datatype": "string",
