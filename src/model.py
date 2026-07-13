@@ -113,16 +113,18 @@ class Echarpe(Base):
         'polymorphic_identity': 'echarpe',
     }
 
-class Robo43(Base):
-    __tablename__ = 'robo43'
+
+class Robocam(Base):
+    __tablename__ = 'robocam'
     __table_args__ = {'schema': db_schema}
 
     id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
                                     ondelete='CASCADE'), primary_key=True)
 
     _mapper_args__ = {
-        'polymorphic_identity': 'robo43'
+        'polymorphic_identity': 'robocam'
     }
+
 
 class Iagpol(Base):
     __tablename__ = 'iagpol'
@@ -133,6 +135,18 @@ class Iagpol(Base):
 
     _mapper_args__ = {
         'polymorphic_identity': 'iagpol'
+    }
+
+
+class Cam1(Base):
+    __tablename__ = 'cam1'
+    __table_args__ = {'schema': db_schema}
+
+    id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
+                                    ondelete='CASCADE'), primary_key=True)
+
+    _mapper_args__ = {
+        'polymorphic_identity': 'cam1'
     }
 
 
