@@ -1,0 +1,119 @@
+[
+    {
+        "colname": "CCDSERN",
+        "default_value": "Dummy SN",
+        "datatype": "string",
+        "description": "CCD serial number"
+    },
+    {
+        "colname": "NFRAMES",
+        "default_value": "1",
+        "datatype": "integer",
+        "description": "Number of frames in sequence"
+    },
+    {
+        "colname": "ACQMODE",
+        "default_value": "Single Scan",
+        "datatype": "string",
+        "description": "Acquisition mode"
+    },
+    {
+        "colname": "PREAMP",
+        "default_value": "1",
+        "datatype": "string",
+        "description": "Pre-amplifier gain"
+    },
+    {
+        "colname": "VSHIFT",
+        "default_value": "1.13",
+        "datatype": "float",
+        "description": "Vertical shift speed (ms)"
+    },
+    {
+        "colname": "EMGAIN",
+        "datatype": "integer",
+        "allowed_values": "between:0,inf",
+        "description": "Electron multiplier gain"
+    },
+    {
+        "colname": "VBIN",
+        "default_value": "1",
+        "datatype": "integer",
+        "description": "Vertical binning (pix)"
+    },
+    {
+        "colname": "HBIN",
+        "default_value": "1",
+        "datatype": "integer",
+        "description": "Horizontal binning (pix)"
+    },
+    {
+        "colname": "CCDTEMP",
+        "datatype": "float",
+        "allowed_values": "between:-80,25",
+        "description": "CCD temperature (deg C)"
+    },
+    {
+        "colname": "VCLKAMP",
+        "default_value": "Normal",
+        "datatype": "string",
+        "description": "Clock amplitude: Normal, +1, +2, +3, +4"
+    },
+    {
+        "colname": "GAIN",
+        "default_value": "2",
+        "datatype": "Float",
+        "description": "Specifies the detector sensitivity in number of electrons per data"
+    },
+    {
+        "colname": "RDNOISE",
+        "default_value": "10.1",
+        "datatype": "Float",
+        "description": "Specifies the detector readout noise in electrons"
+    },
+    {
+        "colname": "ACSVRSN",
+        "default_value": "0.0.0",
+        "datatype": "string",
+        "description": "ACS software version"
+    },
+    {
+        "colname": "DETECTOR",
+        "default_value": "QHY600M",
+        "nullable": false,
+        "datatype": "string",
+        "description": "Name of the detector"
+    },
+    {
+        "colname": "FILTER",
+        "default_value": "V",
+        "nullable": false,
+        "datatype": "string",
+        "description": "Filter name"
+    },
+    {
+        "colname": "HEAD",
+        "default_value": "",
+        "datatype": "string",
+        "description": "Head Model"
+    },
+    {
+        "colname": "READMODE",
+        "default_value": "Image",
+        "datatype": "string",
+        "description": "Readout Mode"
+    },
+    {
+        "colname": "READTIME",
+        "default_value": "1.00E-06",
+        "datatype": "float",
+        "description": "Pixel readout time"
+    },
+    {
+        "colname": "PLATESCL",
+        "default_value": "0.68",
+        "datatype": "float",
+        "allowed_values": "between:0,inf",
+        "description": "Plate scale in arcsec/pixel"
+    }
+]
