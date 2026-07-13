@@ -60,8 +60,8 @@
     },
     {
         "colname": "CCDSERN",
-        "datatype": "integer",
-        "allowed_values": "99,149,917",
+        "default_value": "Dummy SN",
+        "datatype": "string",
         "description": "CCD serial number"
     },
     {
@@ -90,26 +90,26 @@
     },
     {
         "colname": "NFRAMES",
+        "default_value": "1",
         "datatype": "integer",
-        "allowed_values": "191,500",
         "description": "Number of frames in sequence"
     },
     {
         "colname": "FRAMEIND",
+        "default_value": "1",
         "datatype": "integer",
-        "allowed_values": "191,500",
         "description": "Frame index in sequence"
     },
     {
         "colname": "ACQMODE",
+        "default_value": "Single Scan",
         "datatype": "string",
-        "allowed_values": "Single Scan,Kinetics",
         "description": "Acquisition mode"
     },
     {
         "colname": "PREAMP",
+        "default_value": "1",
         "datatype": "string",
-        "allowed_values": "Gain 1,Gain 2",
         "description": "Pre-amplifier gain"
     },
     {
@@ -120,8 +120,8 @@
     },
     {
         "colname": "VSHIFT",
+        "default_value": "1.13",
         "datatype": "float",
-        "allowed_values": "0.6,1.13,2.2,4.33",
         "description": "Vertical shift speed (ms)"
     },
     {
@@ -139,19 +139,19 @@
     {
         "colname": "EMGAIN",
         "datatype": "integer",
-        "allowed_values": "Between:2,300",
+        "allowed_values": "Between:0,inf",
         "description": "Electron multiplier gain"
     },
     {
         "colname": "VBIN",
+        "default_value": "1",
         "datatype": "integer",
-        "allowed_values": "11,024",
         "description": "Vertical binning (pix)"
     },
     {
         "colname": "HBIN",
+        "default_value": "1",
         "datatype": "integer",
-        "allowed_values": "11,024",
         "description": "Horizontal binning (pix)"
     },
     {
@@ -216,8 +216,8 @@
     },
     {
         "colname": "VCLKAMP",
+        "default_value": "Normal",
         "datatype": "string",
-        "allowed_values": "Normal,+1,+2,+3,+4",
         "description": "Clock amplitude: Normal, +1, +2, +3, +4"
     },
     {

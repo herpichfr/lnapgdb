@@ -8,43 +8,43 @@
     {
         "colname": "BSCALE",
         "default_value": "1",
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "Linear factor in scaling equation"
     },
     {
         "colname": "BZERO",
         "default_value": "32768",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "value = fits-value*BSCALE+BZERO"
     },
     {
         "colname": "BUNIT",
         "default_value": "adu",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Physical unit of array values"
     },
     {
         "colname": "BITPIX",
         "default_value": "16",
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "# bits storing pix values"
     },
     {
         "colname": "NAXIS",
         "nullable": false,
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "# of axes in frame"
     },
     {
         "colname": "NAXIS1",
         "nullable": false,
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "# of pixels/row"
     },
     {
         "colname": "NAXIS2",
         "nullable": false,
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "# of rows (also # of scan lines)"
     },
     {
@@ -56,59 +56,63 @@
     },
     {
         "colname": "PROPID",
+        "default_value": "EN2026A-0001",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "description": "The identification code assigned to each observing run by the Science Committee"
     },
     {
         "colname": "PROPOSAL",
         "default_value": "SOAR",
-        "datatype": "String"
+        "datatype": "string"
     },
     {
         "colname": "OBSERVER",
         "default_value": "CHIMERA",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Name of the observer"
     },
     {
         "colname": "OBJECT",
         "default_value": "NGC1234",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Target as given by the user"
     },
     {
         "colname": "ORIGIN",
         "default_value": "LNA",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Who delivers the data"
     },
     {
         "colname": "TELESCOP",
         "default_value": "PE160",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Telescope name"
     },
     {
         "colname": "SITEID",
         "default_value": "OPD",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Observatory/Site"
     },
     {
         "colname": "OBSLONG",
-        "datatype": "Float",
+        "default_value": "-45:34:57",
+        "datatype": "string",
         "allowed_values": "Between:-180,180",
         "description": "Observatory East Longitude (DEG, -180 to 180)"
     },
     {
         "colname": "OBSLAT",
-        "datatype": "Float",
+        "default_value": "-22:32:04",
+        "datatype": "string",
         "allowed_values": "Between:-90,90",
         "description": "Observatory North Latitude (DEG, -90 to 90)"
     },
     {
         "colname": "OBSALT",
+        "default_value": "1864",
         "datatype": "float",
         "allowed_values": "Between:0,inf",
         "description": "Observatory elevation above sea level (m)"
@@ -116,7 +120,7 @@
     {
         "colname": "INSTRUME",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "description": "Instrument used"
     },
     {
@@ -129,20 +133,20 @@
     {
         "colname": "FILENAME",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "unique": true,
         "description": "Original file name"
     },
     {
         "colname": "DATEFILE",
         "default_value": "2001-08-19T09:33:11.950",
-        "datatype": "String",
+        "datatype": "string",
         "description": "File creation date"
     },
     {
         "colname": "DATE-OBS",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "description": "Exposure start"
     },
     {
@@ -158,7 +162,7 @@
     {
         "colname": "EXPTIME",
         "default_value": "60",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Exposure time (s)"
     },
     {
@@ -181,14 +185,14 @@
     },
     {
         "colname": "TELFOCUS",
-        "default_value": "POSITION",
+        "default_value": "0",
         "datatype": "integer",
         "allowed_values": "Between:0,inf",
         "description": "Telescope focus position (arbitrary units)"
     },
     {
         "colname": "TCSHA",
-        "default_value": "HOURANGLE",
+        "default_value": "00:00:00",
         "datatype": "string",
         "description": "TCS hour angle: HH:MM:SS"
     },
@@ -199,9 +203,9 @@
     },
     {
         "colname": "EXTTEMP",
-        "default_value": "OUTTEMP",
+        "default_value": "20",
         "datatype": "float",
-        "allowed_values": "Between:-20,30",
+        "allowed_values": "Between:-20,40",
         "description": "Temperature (deg C), weather tower"
     },
     {
@@ -226,78 +230,80 @@
     {
         "colname": "DATE",
         "default_value": "2001-08-19T09:34:52.676",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Date the file was written"
     },
     {
         "colname": "TEXPTIME",
         "default_value": "240",
-        "datatype": "Float",
-        "description": "The arithmetic sum of the integration time of all exposures included in this\nproduct (s)."
+        "datatype": "float",
+        "description": "The arithmetic sum of the integration time of all exposures included in this product (s)."
     },
     {
         "colname": "MJD-OBS",
         "default_value": "52140.39805",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "MJD at exposure start (d)"
     },
     {
         "colname": "MJD-END",
         "default_value": "52140.39875",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "MJD at exposure end (d)"
     },
     {
         "colname": "DATE-END",
         "default_value": "2001-08-19T09:34:51.950",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Exposure end"
     },
     {
         "colname": "TIMESYS",
         "default_value": "UTC",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Time system used"
     },
     {
         "colname": "LST",
         "default_value": "19:51:15.380",
-        "datatype": "String",
+        "datatype": "string",
         "description": "LST at start (s)"
     },
     {
         "colname": "PI-COI",
         "default_value": "SCIENTIST",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Name of the PI/Co-I"
     },
     {
         "colname": "OBID",
         "default_value": "311",
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "Observation Block ID run number"
     },
     {
         "colname": "PRODCATG",
         "default_value": "SCIENCE.IMAGE",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Data product category"
     },
     {
         "colname": "CHECKSUM",
+        "default_value": "1234567890",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "description": "HDU checksum"
     },
     {
         "colname": "DATASUM",
+        "default_value": "1234567890",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "description": "Data unit checksum"
     },
     {
         "colname": "COMMENT",
         "default_value": "Any comment",
-        "datatype": "String"
+        "datatype": "string"
     }
 ]
