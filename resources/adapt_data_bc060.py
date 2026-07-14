@@ -27,6 +27,11 @@ def parse_args():
         required=True,
         help="Directory containing the Cam1 data.",
     )
+    parser.add_argument(
+        "--clobber",
+        action="store_true",
+        help="Overwrite existing files in the new directory.",
+    )
     return parser.parse_args()
 
 
@@ -104,7 +109,48 @@ def get_primary_model():
     return primary_model_keys
 
 
-def adapt_headers_and_directories(fits_file, raw_dir, new_fits_path):
+def get_telescope_properties(telescope_orig_name):
+    """
+    Get the properties of the given telescope.
+
+    Parameters
+    ----------
+    telescope_name : str
+        Name of the telescope.
+
+    Returns
+    -------
+    dict
+        Properties of the given telescope.
+    """
+    telescope_names = {
+        "BC060": ["BC060", "IAG", "0.60m(BC)"],
+        "PE160": ["PE160"]
+    }
+    # NOTE: The legacy telescope value contains the name and may have attached
+    # the focal reducer separated by space
+    telescope_array = telescope_orig_name.split(" ")
+    if len(telescope_array) > 1:
+        telescope_name = telescope_array[0]
+    else:
+        telescope_name = telescope_orig_name
+    # Check if the telescope name is in the dictionary and select the equivalent name atributed to the list where the telescope is located
+    for key, value in telescope_names.items():
+        if telescope_name in value:
+            telescope_value = key
+            break
+        else:
+            telescope_value = None
+
+    if "reducer" in telescope_array:
+        has_reducer = True
+    else:
+        has_reducer = False
+
+    return telescope_value, has_reducer
+
+
+def adapt_headers_and_directories(fits_file, new_fits_path):
     """
     Adapt headers and directories names for instruments used in IAG telescope.
 
@@ -145,9 +191,16 @@ def adapt_headers_and_directories(fits_file, raw_dir, new_fits_path):
             print(f"INSTRUME keyword not found in {fits_file}. Skipping.")
             failed_fits = True
         else:
-            # Add current INSTRUME as HIERARCH keyword to preserve original value
+            # NOTE: Keywords INSTRUME and OBSERVER present in the header
+            # are not compatible with the LNADB data model. Moving their
+            # values to legacy keywords INST INSTRUME and OPER OBSERVER,
+            # respectively.
             header["INST INSTRUME"] = (instrument,
                                        header.comments["INSTRUME"])
+            header["OPER OBSERVER"] = (header.get("OBSERVER", None),
+                                       header.comments["OBSERVER"])
+            header["TEL TELESCOP"] = (header.get("TELESCOP", None),
+                                      header.comments["TELESCOP"])
             instrument_name = instrument.split('+')[0]
             header["INSTRUME"] = (instrument_name,
                                   primary_model["INSTRUME"]["description"])
@@ -155,6 +208,15 @@ def adapt_headers_and_directories(fits_file, raw_dir, new_fits_path):
             instrument_model = get_data_model(instrument_name.lower())
             header["DETECTOR"] = (detector_name,
                                   instrument_model["DETECTOR"]["description"])
+            header["OBSERVER"] = (primary_model["OBSERVER"]["default"],
+                                  primary_model["OBSERVER"]["description"])
+            telescope_name = header.get("TELESCOP", None)
+            telescope_value, has_reducer = get_telescope_properties(
+                telescope_name)
+            header["TELESCOP"] = (telescope_value,
+                                  primary_model["TELESCOP"]["description"])
+            header["FOCRED"] = (has_reducer,
+                                primary_model["FOCRED"]["description"])
         if not failed_fits:
             for keyname in primary_model.keys():
                 if keyname not in header:
@@ -235,7 +297,11 @@ def adapt_headers_and_directories(fits_file, raw_dir, new_fits_path):
         # Update CHECKSUM and DATASUM keywords in the header
         new_fits_file[0].verify('fix')
         new_fits_file.writeto(new_fits_path)
-        print(f"Adapted header and saved new fits file to {new_path}.")
+        print(f"Adapted header and saved new fits file to {new_fits_path}.")
+    else:
+        print(f"Failed to adapt header for {fits_file}.")
+        import pdb
+        pdb.set_trace()
 
     return failed_fits
 
@@ -253,10 +319,14 @@ def main(args, new_data_dir):
     for fits_file in fits_files[:1]:
         new_fits_file = os.path.join(new_data_dir, os.path.basename(fits_file))
         if os.path.exists(new_fits_file):
-            print(f"File {new_fits_file} already exists. Skipping.")
-            continue
+            if not args.clobber:
+                print(f"File {new_fits_file} already exists. Skipping.")
+                continue
+            else:
+                print(f"File {new_fits_file} already exists. Overwriting.")
+                os.remove(new_fits_file)
         failed_fits = adapt_headers_and_directories(
-            fits_file, new_data_dir, new_fits_file)
+            fits_file, new_fits_file)
         if failed_fits:
             print(f"Failed to adapt header for {fits_file}.")
 
