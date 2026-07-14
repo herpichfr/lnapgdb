@@ -91,6 +91,12 @@
         "description": "Telescope name"
     },
     {
+        "colname": "FOCRED",
+        "default_value": false,
+        "datatype": "Boolean",
+        "description": "Focal reducer used"
+    },
+    {
         "colname": "SITEID",
         "default_value": "OPD",
         "datatype": "string",
