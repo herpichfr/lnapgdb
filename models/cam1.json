@@ -62,13 +62,13 @@
     {
         "colname": "GAIN",
         "default_value": "2",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Specifies the detector sensitivity in number of electrons per data"
     },
     {
         "colname": "RDNOISE",
         "default_value": "10.1",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Specifies the detector readout noise in electrons"
     },
     {

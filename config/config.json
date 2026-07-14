@@ -27,16 +27,16 @@
     "cam1": {
       "name": "CAM1",
       "description": "Photometric Camera #1",
-      "raw_data_directory": "$CAM1_PATH",
-      "failed_directory": "$CAM1_FAILED_PATH",
+      "raw_data_directory": "$BC060_PATH",
+      "failed_directory": "$BC060_FAILED_PATH",
       "model_name": "cam1.json"
     },
-    "robo43": {
-      "name": "ROBOCAM1",
+    "robocam01": {
+      "name": "ROBOCAM01",
       "description": "Simple Large FoV Camera for the ROBO43 telescope",
-      "raw_data_directory": "$ROBOCAM1_PATH",
+      "raw_data_directory": "$ROBOCAM01_PATH",
       "failed_directory": "$ROBOCAM1_FAILED_PATH",
-      "model_name": "robocam1.json"
+      "model_name": "robocam01.json"
     }
   }
 }
