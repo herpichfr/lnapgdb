@@ -10,6 +10,8 @@ we implement the robotization of the data acquisition.
 
 import os
 from astropy.io import fits
+from astropy.time import Time
+import numpy as np
 import json
 import pandas as pd
 import argparse
@@ -26,6 +28,12 @@ def parse_args():
         type=str,
         required=True,
         help="Directory containing the Cam1 data.",
+    )
+    parser.add_argument(
+        "--calendar",
+        type=str,
+        required=True,
+        help="Path to the calendar CSV file.",
     )
     parser.add_argument(
         "--clobber",
@@ -150,17 +158,17 @@ def get_telescope_properties(telescope_orig_name):
     return telescope_value, has_reducer
 
 
-def adapt_headers_and_directories(fits_file, new_fits_path):
+def adapt_headers_and_directories(fits_file, new_fits_path, obs_data):
     """
     Adapt headers and directories names for instruments used in IAG telescope.
 
     Parameters
     ----------
-    directory : str
+    directory : str 
         Directory containing the raw data.
     raw_dir : str
         Directory where the formated raw data is stored.
-    """
+    """  # TODO: Correct parameters
     synonym_keys = {
         "ACSVRSN": "DLLVER",
         "TEXPTIME": "EXPOSURE",
@@ -217,6 +225,10 @@ def adapt_headers_and_directories(fits_file, new_fits_path):
                                   primary_model["TELESCOP"]["description"])
             header["FOCRED"] = (has_reducer,
                                 primary_model["FOCRED"]["description"])
+            header["PROPID"] = (obs_data["propid"],
+                                primary_model["PROPID"]["description"])
+            header["PI-COI"] = (obs_data["pi_coi"],
+                                primary_model["PI-COI"]["description"])
         if not failed_fits:
             for keyname in primary_model.keys():
                 if keyname not in header:
@@ -306,6 +318,34 @@ def adapt_headers_and_directories(fits_file, new_fits_path):
     return failed_fits
 
 
+def get_calendar(args):
+    """
+    Get calendar to define the projects associated to a given observation.
+
+    Parameters
+    ----------
+    args : Namespace
+        Command line arguments.
+
+    Returns
+    -------
+    calendar : dict
+        Dictionary with the calendar information.
+    """
+    calendar = pd.read_csv(args.calendar, sep=',', header=0)
+    night_starts = [Time(date, format='isot', scale='utc')
+                    for date in calendar['yyyy-mm-dd']]
+    propid = calendar["PropID-BC060"]
+    pi_coi = calendar["PrincipalInvestigatorIAG"]
+
+    bc060_calendar = {}
+    bc060_calendar["night_starts"] = night_starts
+    bc060_calendar["propid"] = propid
+    bc060_calendar["pi_coi"] = pi_coi
+
+    return bc060_calendar
+
+
 def main(args, new_data_dir):
 
     # collect all fits files in the directory and its subdirectories
@@ -315,6 +355,25 @@ def main(args, new_data_dir):
         for file in files:
             if file.endswith(".fits"):
                 fits_files.append(os.path.join(root, file))
+
+    # Get calendar
+    cal = get_calendar(args)
+    obs_starts = Time.strptime(
+        new_data_dir.split("/")[-1], "%Y%m%d", scale='utc')
+    # TODO: Calculate the match with date from calendar and pass it as argument to get PROPID and PI-COI to fill the header
+    _match_date = cal["night_starts"] == obs_starts
+    if not np.any(_match_date):
+        print(f"No matching date found in calendar for {obs_starts}.")
+        raise ValueError(
+            f"No matching date found in calendar for {obs_starts}.")
+    elif sum(_match_date) > 1:
+        print(f"Multiple matching dates found in calendar for {obs_starts}.")
+        raise ValueError(
+            f"Multiple matching dates found in calendar for {obs_starts}.")
+    else:
+        propid = np.array(cal["propid"])[_match_date][0]
+        pi_coi = np.array(cal["pi_coi"])[_match_date][0]
+        obs_date = {"propid": propid, "pi_coi": pi_coi}
 
     for fits_file in fits_files[:1]:
         new_fits_file = os.path.join(new_data_dir, os.path.basename(fits_file))
@@ -326,7 +385,7 @@ def main(args, new_data_dir):
                 print(f"File {new_fits_file} already exists. Overwriting.")
                 os.remove(new_fits_file)
         failed_fits = adapt_headers_and_directories(
-            fits_file, new_fits_file)
+            fits_file, new_fits_file, obs_date)
         if failed_fits:
             print(f"Failed to adapt header for {fits_file}.")
 
