@@ -1,4 +1,4 @@
-#!/bin/python2
+#!/bin/python
 
 """
 Adapt headers and directories names for Cam1 data so it is compliant with
@@ -360,7 +360,6 @@ def main(args, new_data_dir):
     cal = get_calendar(args)
     obs_starts = Time.strptime(
         new_data_dir.split("/")[-1], "%Y%m%d", scale='utc')
-    # TODO: Calculate the match with date from calendar and pass it as argument to get PROPID and PI-COI to fill the header
     _match_date = cal["night_starts"] == obs_starts
     if not np.any(_match_date):
         print(f"No matching date found in calendar for {obs_starts}.")
@@ -375,7 +374,7 @@ def main(args, new_data_dir):
         pi_coi = np.array(cal["pi_coi"])[_match_date][0]
         obs_date = {"propid": propid, "pi_coi": pi_coi}
 
-    for fits_file in fits_files[:1]:
+    for fits_file in fits_files:
         new_fits_file = os.path.join(new_data_dir, os.path.basename(fits_file))
         if os.path.exists(new_fits_file):
             if not args.clobber:
