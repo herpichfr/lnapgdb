@@ -29,38 +29,44 @@ class DatabaseChecker:
 
         return files
     
-    def file_exists_in_db(self, filepath):
-        with self.db.engine.connect() as conn:
-                result = conn.execute(
-                    text("""
-                        SELECT 1
-                        FROM public.primary_table
-                        WHERE raw_path = :filepath
-                        LIMIT 1
-                    """),
-                    {"filepath": filepath}
-                    ).fetchone()
 
-        return result is not None
+    def get_registered_files(self):
+        """Search all database paths that contain the folder date"""
+        query = text("""
+            SELECT raw_path 
+            FROM public.primary_table 
+            WHERE raw_path LIKE :date_filter
+        """)
+        # LIKE ensures that we will only bring the data from that night, saving memory.
+        date_filter = f"%{self.date}%" 
+
+        with self.db.engine.connect() as conn:
+            result = conn.execute(query, {"date_filter": date_filter}).fetchall()
+            
+        return {row[0] for row in result}
     
     def run(self):
         files = self.scan_files()
         missing_files = []
-        print(f"Checking {len(files)} files...")
+        if not files:
+            print(f"Nenhum arquivo local encontrado para a data: {self.date}")
+            return
+        print(f"Avaliando {len(files)} arquivos no disco. Buscando banco de dados...")
 
-        for file in files:
-            if not self.file_exists_in_db(file):
-                missing_files.append(file)
+        db_files = self.get_registered_files()
 
-        print(f"Missing files: {len(missing_files)}")
+        missing_files = [file for file in files if file not in db_files]
+
+        print(f"Arquivos faltando: {len(missing_files)}")
 
         if missing_files:
             log_name = f"missing_files_{self.date}.log"
-            with open(log_name, "w") as f:
+            
+            with open(log_name, "w", encoding="utf-8") as f: # para evitar erros com caracteres especiais
                 for file in missing_files:
                     f.write(f"{file}\n")
 
-            print(f"Missing files log saved: {log_name}")
+            print(f"Log de arquivos faltando salvo em: {log_name}")
 
         else:
-            print("All files are present in the database.")
+            print("Sucesso! Todos os arquivos estão presentes no banco de dados.")

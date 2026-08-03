@@ -41,19 +41,6 @@ class FileWatcher:
         else:
             self.directories = [Path(d) for d in (directories or [])]
 
-    # def initialize(self):
-    #     """
-    #     Define the starting point (timestamp)
-    #     """
-    #     if self.process_existing:
-    #         self.last_checkpoint = 0.0
-    #         print(f"Watcher initialized.")
-    #     else:
-    #         self.last_checkpoint = time.time()
-    #         print(f"Watcher initialized => time.time")
-    #     self.initialized = True
-    #     print(f"Watcher initialized. Starting point: {self.last_checkpoint}")
-
     def initialize(self):
         """
         Define the starting point (timestamp)
@@ -85,7 +72,6 @@ class FileWatcher:
 
         print(f"Watcher initialized. Starting point: {self.last_checkpoint}")
 
-
     def _find_latest_directory(self, root_directory):
         """
         Find the most recently modified subdirectory.
@@ -109,7 +95,6 @@ class FileWatcher:
 
                         except OSError:
                             continue
-
         except OSError:
             return None
         return latest_dir

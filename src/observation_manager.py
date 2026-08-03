@@ -60,7 +60,6 @@ def parse_arguments():
 
     return parser.parse_args()
 
-
 def get_git_branch():
     try:
         # Returns the name of the current branch
@@ -73,7 +72,6 @@ def get_git_branch():
         # Fallback if git is not initialized or not installed
         return "dev"
 
-
 def get_schema_from_branch(branch):
     if branch == 'main':
         return 'prod'
@@ -85,7 +83,6 @@ def get_schema_from_branch(branch):
         return 'public'  # or 'test'
     else:
         return 'public'  # Default fallback
-
 
 class ObservationManager:
     def __init__(self, args):
@@ -154,24 +151,18 @@ class ObservationManager:
 
             model_name = instrument_data.get('model_name')
             if not model_name:
-                logger.critical(f'Model name not defined for {
-                                instrument_name}')
-                raise ValueError(f'Model name not defined for {
-                                 instrument_name}')
+                logger.critical(f'Model name not defined for {instrument_name}')
+                raise ValueError(f'Model name not defined for {instrument_name}')
 
             model_file = os.path.join(models_dir, model_name)
 
             if os.path.exists(model_file):
-                logger.info(f'Loading model for {
-                            instrument_name} from {model_file}')
+                logger.info(f'Loading model for {instrument_name} from {model_file}')
                 with open(model_file, 'r') as f:
                     instrument_models_mapping = load(f)
             else:
-                logger.critical(f'Model file for instrument {
-                                instrument_name} not found: {model_file}')
-                raise FileNotFoundError(
-                    f'Model file for {instrument_name} not found: {model_file}'
-                )
+                logger.critical(f'Model file for instrument {instrument_name} not found: {model_file}')
+                raise FileNotFoundError(f'Model file for {instrument_name} not found: {model_file}')
 
             if not isinstance(instrument_models_mapping, list):
                 raise ValueError(f'Invalid model format for {instrument_name}')
@@ -182,12 +173,10 @@ class ObservationManager:
 
         return instrument_models
 
-
 if __name__ == "__main__":
     args = parse_arguments()
     observation_manager = ObservationManager(args)
     db_schema = observation_manager.db_schema
-
 
     if args.watch_dir:
         watcher = FileWatcher(
@@ -202,8 +191,6 @@ if __name__ == "__main__":
             exclude_today_dir=args.avoid_work_hours
         )
     
-    
-
     # Get schema from git branch
     git_branch = get_git_branch()
     db_schema_from_branch = get_schema_from_branch(git_branch)
@@ -278,15 +265,9 @@ if __name__ == "__main__":
             if inserted:
                 print(f"✅ {len(p_df)} records inserted into the database.")
 
-                observation_manager.logger.info(
-                    f'Data inserted successfully into the database with code {
-                        error_code}'
-                )
+                observation_manager.logger.info(f'Data inserted successfully into the database with code {error_code}')
             else:
-                observation_manager.logger.error(
-                    f'Failed to insert data into the database with code {
-                        error_code}'
-                )
+                observation_manager.logger.error(f'Failed to insert data into the database with code {error_code}' )
         except KeyboardInterrupt:
             print("\n Program interrupted by the user.")
 
