@@ -21,7 +21,8 @@ class FileWatcher:
         config: dict = None,
         poll_interval=1,
         extensions=None,
-        process_existing=False
+        process_existing=False,
+        exclude_today_dir=True
     ):
         self.extensions = extensions or {'.fits', '.fit', '.fts'}
         self.poll_interval = poll_interval
@@ -33,6 +34,7 @@ class FileWatcher:
 
         # Directories currently being monitored
         self.active_directories = []
+        self.exclude_today = exclude_today_dir if exclude_today_dir else True
 
         if config:
             self.directories = self._load_directories_from_config(config)
@@ -143,6 +145,8 @@ class FileWatcher:
 
         for directory in self.active_directories:
             if not directory.exists():
+                continue
+            if self.exclude_today and directory == "today":
                 continue
             try:
                 for path in directory.rglob('*'):

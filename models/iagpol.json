@@ -60,8 +60,8 @@
     },
     {
         "colname": "CCDSERN",
-        "default_value": "Dummy SN",
-        "datatype": "string",
+        "datatype": "integer",
+        "allowed_values": "99,149,917",
         "description": "CCD serial number"
     },
     {
@@ -90,26 +90,26 @@
     },
     {
         "colname": "NFRAMES",
-        "default_value": "1",
         "datatype": "integer",
+        "allowed_values": "191,500",
         "description": "Number of frames in sequence"
     },
     {
         "colname": "FRAMEIND",
-        "default_value": "1",
         "datatype": "integer",
+        "allowed_values": "191,500",
         "description": "Frame index in sequence"
     },
     {
         "colname": "ACQMODE",
-        "default_value": "Single Scan",
         "datatype": "string",
+        "allowed_values": "Single Scan,Kinetics",
         "description": "Acquisition mode"
     },
     {
         "colname": "PREAMP",
-        "default_value": "1",
         "datatype": "string",
+        "allowed_values": "Gain 1,Gain 2",
         "description": "Pre-amplifier gain"
     },
     {
@@ -120,8 +120,8 @@
     },
     {
         "colname": "VSHIFT",
-        "default_value": "1.13",
         "datatype": "float",
+        "allowed_values": "0.6,1.13,2.2,4.33",
         "description": "Vertical shift speed (ms)"
     },
     {
@@ -139,19 +139,19 @@
     {
         "colname": "EMGAIN",
         "datatype": "integer",
-        "allowed_values": "Between:0,inf",
+        "allowed_values": "Between:2,300",
         "description": "Electron multiplier gain"
     },
     {
         "colname": "VBIN",
-        "default_value": "1",
         "datatype": "integer",
+        "allowed_values": "11,024",
         "description": "Vertical binning (pix)"
     },
     {
         "colname": "HBIN",
-        "default_value": "1",
         "datatype": "integer",
+        "allowed_values": "11,024",
         "description": "Horizontal binning (pix)"
     },
     {
@@ -216,8 +216,8 @@
     },
     {
         "colname": "VCLKAMP",
-        "default_value": "Normal",
         "datatype": "string",
+        "allowed_values": "Normal,+1,+2,+3,+4",
         "description": "Clock amplitude: Normal, +1, +2, +3, +4"
     },
     {
@@ -253,22 +253,22 @@
     {
         "colname": "ACSVRSN",
         "datatype": "string",
-        "description": "S4ACS software version"
+        "description": "ACS software version"
     },
     {
         "colname": "ICSVRSN",
         "datatype": "string",
-        "description": "S4ICS software version"
+        "description": "ICS software version"
     },
     {
         "colname": "GUIVRSN",
         "datatype": "string",
-        "description": "S4GUI software version"
+        "description": "GUI software version"
     },
     {
         "colname": "CTRLINTE",
         "datatype": "string",
-        "allowed_values": "S4GUI,S4GEI",
+        "allowed_values": "GUI,GEI",
         "description": "Graphical control interface of ACS"
     },
     {
@@ -443,7 +443,7 @@
         "colname": "NCOMBINE",
         "default_value": "1",
         "datatype": "Integer",
-        "description": "Number of raw science data files that were combined to generate this data\nproduct"
+        "description": "Number of raw science data files that were combined to generate this data product"
     },
     {
         "colname": "DISPELEM",
@@ -467,12 +467,6 @@
         "colname": "REFERENC",
         "default_value": "1924MNRAS..84..308E",
         "datatype": "String",
-        "description": "Primary scientific publication associated with this data\nproduct"
-    },
-    {
-        "colname": "PROVi",
-        "default_value": "20251105_S4C1_00001",
-        "datatype": "String",
-        "description": "Processing provenance in terms of the list of science files originating this\ndata product"
+        "description": "Primary scientific publication associated with this data product"
     }
 ]

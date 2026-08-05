@@ -114,6 +114,42 @@ class Echarpe(Base):
     }
 
 
+class Robocam01(Base):
+    __tablename__ = 'robocam01'
+    __table_args__ = {'schema': db_schema}
+
+    id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
+                                    ondelete='CASCADE'), primary_key=True)
+
+    _mapper_args__ = {
+        'polymorphic_identity': 'robocam01'
+    }
+
+
+class Iagpol(Base):
+    __tablename__ = 'iagpol'
+    __table_args__ = {'schema': db_schema}
+
+    id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
+                                    ondelete='CASCADE'), primary_key=True)
+
+    _mapper_args__ = {
+        'polymorphic_identity': 'iagpol'
+    }
+
+
+class Cam1(Base):
+    __tablename__ = 'cam1'
+    __table_args__ = {'schema': db_schema}
+
+    id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
+                                    ondelete='CASCADE'), primary_key=True)
+
+    _mapper_args__ = {
+        'polymorphic_identity': 'cam1'
+    }
+
+
 def map_type_to_sqlalchemy(type_str):
     type_mapping = {
         'integer': Integer,
@@ -215,6 +251,9 @@ def main():
 
     add_columns_from_json(Sparc4)
     print("Columns added to Sparc4 successfully!")
+
+    add_columns_from_json(Cam1)
+    print("Columns added to Cam1 successfully!")
 
     Base.metadata.create_all(engine)  # Create tables with new columns
 

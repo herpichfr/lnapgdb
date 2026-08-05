@@ -12,10 +12,31 @@
     },
     "echarpe": {
       "name": "ECHARPE",
-      "description": "ECHARPE (Enhanced Camera for High Angular Resolution Polarimetry and Exoplanetary studies) is a high-contrast imaging instrument designed for the 3.6m telescope at the European Southern Observatory (ESO). It is optimized for direct imaging of exoplanets and circumstellar disks, utilizing advanced adaptive optics and coronagraphy techniques to achieve high contrast and angular resolution.",
+      "description": "High Resolution Spectrograph for PE160 telescope",
       "raw_data_directory": "$ECHARPE_PATH",
       "failed_directory": "$ECHARPE_FAILED_PATH",
       "model_name": "echarpe.json"
+    },
+    "iagpol": {
+      "name": "IAGPOL",
+      "description": "Polarimeter for the 60cm B&E Telescope",
+      "raw_data_directory": "$IAGPOL_PATH",
+      "failed_directory": "$IAGPOL_FAILED_PATH",
+      "model_name": "iagpol.json"
+    },
+    "cam1": {
+      "name": "CAM1",
+      "description": "Photometric Camera #1",
+      "raw_data_directory": "$BC060_PATH",
+      "failed_directory": "$BC060_FAILED_PATH",
+      "model_name": "cam1.json"
+    },
+    "robocam01": {
+      "name": "ROBOCAM01",
+      "description": "Simple Large FoV Camera for the ROBO43 telescope",
+      "raw_data_directory": "$ROBOCAM01_PATH",
+      "failed_directory": "$ROBOCAM1_FAILED_PATH",
+      "model_name": "robocam01.json"
     }
   }
 }

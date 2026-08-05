@@ -121,7 +121,7 @@ class DataCollector:
                 'instrument_name': instrument,
                 'file': file
             }
-        else: # NOTE:
+        else:  # NOTE:
             logger.error(
                 f"File '{file}' failed validation and will be skipped.")
             return {
@@ -202,6 +202,19 @@ class DataCollector:
 
         return primary_df, instrument_df
 
+    def dms_to_decimal(dms_str):
+        """Convert DMS (Degrees, Minutes, Seconds) string to decimal degrees."""
+        try:
+            float_value = float(dms_str)
+            return float_value
+        except ValueError:
+            parts = dms_str.split(':')
+            if len(parts) < 2:
+                raise ValueError(f"Invalid DMS format: {dms_str}")
+            degrees, minutes, seconds = map(float, parts)
+            decimal_degrees = degrees + (minutes / 60) + (seconds / 3600)
+            return decimal_degrees
+
     @staticmethod
     def validate_data(
             header_data,
@@ -236,15 +249,22 @@ class DataCollector:
                         converted to the required datatype '{datatype.__name__}'. \
                         Error: {e}")
                     return False, primary_data, instrument_data
-                
 
                 if minmax:
                     if not (isinstance(value, datatype) and allowed_values[0] <= value <= allowed_values[1]):
-                        logger.error(
-                            f"Key '{key}' has value '{value}' which is not within \
-                            the allowed range:\
-                            {allowed_values[0]} - {allowed_values[1]}.")
-                        return False, primary_data, instrument_data
+                        if key in ["OBSLAT", "OBSLONG"]:
+                            float_value = DataCollector.dms_to_decimal(value)
+                            if not (float(allowed_values[0]) <= float_value <= float(allowed_values[1])):
+                                logger.error(
+                                    f"Key '{key}' has value '{value}' which is not within \
+                                    the allowed range:\
+                                    {allowed_values[0]} - {allowed_values[1]}.")
+                                return False, primary_data, instrument_data
+                            else:
+                                logger.debug(
+                                    f"Key '{key}' has value '{value}' which is within the \
+                                    allowed range:\
+                                    {allowed_values[0]} - {allowed_values[1]}.")
                     else:
                         logger.debug(
                             f"Key '{key}' has value '{value}' which is within the \
@@ -260,7 +280,7 @@ class DataCollector:
                 primary_data[key] = value
             elif key in instrument_model:
                 is_nullable = instrument_model[key].get('nullable', True)
-                if not is_nullable:
+                if not is_nullable and value is None:
                     logger.critical(
                         f"Key '{key}' is not defined in the instrument model and \
                         cannot be null.")
