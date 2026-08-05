@@ -209,7 +209,7 @@
     },
     {
         "colname": "EXTTEMP",
-        "default_value": "20",
+        "default_value": "-20.0",
         "datatype": "float",
         "allowed_values": "Between:-20,40",
         "description": "Temperature (deg C), weather tower"
