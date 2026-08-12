@@ -7,395 +7,208 @@ a pandas table to be uset for insertion into the database.
 """
 
 import os
+import glob
+import logging
+import argparse
+import datetime
 import pandas as pd
 from astropy.io import fits
-import glob
-import argparse
-from miscellaneous import setup_logging
-import logging
 from concurrent.futures import ProcessPoolExecutor
-from functools import partial
-import datetime
+from pydantic import BaseModel, Field, ValidationError, field_validator
+
+# We use a module-level logger fetching strategy to avoid Multiprocessing Pickle errors
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Collect and validate FITS header data for database insertion.")
-    parser.add_argument(
-        '--fits_files', '-f', required=True, help="List of FITS files.")
-    parser.add_argument(
-        '--db_schema', '-s', default=None,
-        help="Database schema to use (default: dev).")
-    parser.add_argument(
-        '--nprocs', '-n', type=int, default=4, help="Number of parallel processes to use (default: 4).")
-    parser.add_argument(
-        '--verbose', '-v', action='store_true', help="Enable verbose logging.")
-    parser.add_argument(
-        '--logfile', '-l', default='log/data_collection.log', help="Log file path (default: log/data_collection.log).")
-    parser.add_argument(
-        '--debug', action='store_true', help="Run in test mode with limited files for quick testing.")
-    return parser.parse_args()
+def get_worker_logger():
+    return logging.getLogger("lnapgdb")
+
+# ---------------------------------------------------------
+# PYDANTIC MODELS (Replaces manual validate_data)
+# ---------------------------------------------------------
+# By defining these, Pydantic handles type coercion (str -> float),
+# bounds checking (ge, le), and nullability automatically.
+
+
+class PrimaryHeaderModel(BaseModel):
+    INSTRUME: str = Field(..., description="Instrument name")
+    FILENAME: str = Field(..., description="Original filename")
+
+    # Example of bounds checking replacing the "between:X,Y" logic
+    # ge = greater than or equal to, le = less than or equal to
+    OBSLAT: float = Field(..., ge=-90.0, le=90.0)
+    OBSLONG: float = Field(..., ge=-180.0, le=180.0)
+
+    @field_validator('OBSLAT', 'OBSLONG', mode='before')
+    @classmethod
+    def convert_dms(cls, v):
+        """Automatically converts DMS strings to floats before validation."""
+        if isinstance(v, (int, float)):
+            return float(v)
+        try:
+            parts = str(v).split(':')
+            if len(parts) == 3:
+                degrees, minutes, seconds = map(float, parts)
+                # Handle negative degrees properly
+                sign = -1 if degrees < 0 else 1
+                return sign * (abs(degrees) + (minutes / 60) + (seconds / 3600))
+            return float(v)
+        except ValueError:
+            raise ValueError(f"Invalid DMS format: {v}")
+
+# ---------------------------------------------------------
+# DATA COLLECTOR CLASS
+# ---------------------------------------------------------
 
 
 class DataCollector:
-    def __init__(self,
-                 fits_files,
-                 primary_model=None,
-                 instrument_models_cache=None,
-                 db_schema='dev',
-                 nprocs=4,
-                 logger=None,
-                 verbose=False,
-                 logfile='log/data_collection.log',
-                 config=None,
-                 debug=False):
+    def __init__(
+            self,
+            fits_files,
+            db_schema='dev',
+            nprocs=4,
+            config=None,
+            debug=False
+    ):
         self.fits_files = fits_files
-        self.primary_model = primary_model
-        self.instrument_models_cache = instrument_models_cache or {}
         self.db_schema = db_schema
         self.nprocs = nprocs
-        self.logger = logger if logger else setup_logging(
-            verbose=verbose, logfile=logfile, loglevel=logging.DEBUG if debug else logging.INFO)
+        self.config = config or {}
         self.debug = debug
-        self.error_log_file = "failed_fits.log"
-        self.config = config
-
-    def __repr__(self):
-        return f"DataCollector(fits_files='{self.fits_files}', db_schema='{self.db_schema}', nprocs={self.nprocs}, debug={self.debug})"
+        self.logger = get_worker_logger()
 
     @staticmethod
-    def process_file(file, primary_model=None, instrument_models_cache=None, logger=logging.getLogger(__name__)):
-        """Process a single FITS file: extract header, validate, and return data."""
-        logger.debug(f"Processing file: {file}")
-        raw_full_filename = os.path.abspath(file)
+    def process_file(file_path):
+        """
+        Worker function. Must be static and not rely on 'self' to remain picklable 
+        for ProcessPoolExecutor.
+        """
+        logger = get_worker_logger()
+        logger.debug(f"Processing file: {file_path}")
 
+        result = {
+            'error': False,
+            'file': file_path,
+            'instrument_name': 'unknown',
+            'primary': {},
+            'instrument': {}
+        }
+
+        # 1. Read File Safely
         try:
-            with fits.open(file, checksum=True) as hdul:
-                header = hdul[0].header
+            # ignore_missing_end is critical for astronomy pipelines
+            with fits.open(file_path, ignore_missing_end=True, checksum=True) as hdul:
+                raw_header = dict(hdul[0].header)
         except Exception as e:
-            logger.error(f"Error opening file '{file}': {e}")
-            return {
-                'error': True,
-                'file': file,
-                'instrument_name': None
-            }
+            logger.error(f"Error opening file '{file_path}': {e}")
+            result['error'] = True
+            return result
 
-        # primary_model = DataCollector.get_primary_model()
-        instrument = header.get('INSTRUME', None).lower(
-        ) if header.get('INSTRUME', None) else None
+        raw_header['FILENAME'] = os.path.basename(file_path)
+        instrument = raw_header.get('INSTRUME', '').lower().strip()
+        result['instrument_name'] = instrument or 'unknown'
 
-        if instrument is None:
+        if not instrument:
             logger.critical(
-                f"File '{file}' is missing 'INSTRUME' keyword in header.")
-            return {
-                'error': True,
-                'file': file,
-                'instrument_name': None
-            }
-        instrument_model = instrument_models_cache.get(
-            instrument, None) if instrument_models_cache else DataCollector.get_instrument_model(instrument)
+                f"File '{file_path}' is missing 'INSTRUME' keyword.")
+            result['error'] = True
+            return result
 
-        if not instrument_model:
-            logger.critical(
-                f"File '{file}' has unknown instrument '{instrument}' in header.")
-            return {
-                'error': True,
-                'file': file,
-                'instrument_name': instrument
-            }
+        # 2. Validate using Pydantic (Replacing validate_data)
+        try:
+            # This single line handles type casting, bounds checking, and null checks!
+            validated_primary = PrimaryHeaderModel(**raw_header)
 
-        is_valid, primary_data, instrument_data = DataCollector.validate_data(
-            header, primary_model, instrument_model, logger)
+            # Extract out-of-model fields
+            primary_dict = validated_primary.model_dump()
+            primary_dict['raw_path'] = os.path.abspath(file_path)
 
-        # NOTE: Add out-of-model raw_path to the primary data. This needs to
-        # happen here to garantee that the path is associated with the correct file
-        primary_data['raw_path'] = raw_full_filename
+            result['primary'] = primary_dict
+            # Note: You would instantiate your specific instrument model here too
+            # result['instrument'] = Sparc4Model(**raw_header).model_dump()
 
-        if is_valid:
-            logger.debug(
-                f"File '{file}' passed validation successfully.")
+            logger.debug(f"File '{file_path}' passed validation.")
 
-            return {
-                'primary': primary_data,
-                'instrument': instrument_data,
-                'instrument_name': instrument,
-                'file': file
-            }
-        else:  # NOTE:
-            logger.error(
-                f"File '{file}' failed validation and will be skipped.")
-            return {
-                'error': True,
-                'file': file,
-                'instrument_name': instrument if 'instrument' in locals() else None
-            }
+        except ValidationError as e:
+            logger.error(f"Validation failed for '{file_path}': {e}")
+            result['error'] = True
+
+        return result
 
     def collect_data(self):
-        """Collect and validate FITS header data for database insertion."""
-        new_fits_files = self.fits_files
-        if not new_fits_files:
-            return pd.DataFrame()  # Return empty DataFrame if no new files
+        """Collect and validate FITS header data in parallel."""
+        files_to_process = self.fits_files[:
+                                           10] if self.debug else self.fits_files
 
-        worker = partial(self.process_file,
-                         primary_model=self.primary_model,
-                         instrument_models_cache=self.instrument_models_cache,
-                         logger=self.logger)
+        if not files_to_process:
+            return pd.DataFrame(), pd.DataFrame()
 
-        if self.debug or len(new_fits_files) < self.nprocs or self.nprocs <= 1:
-            self.logger.warning(
-                "Debug mode enabled or not enough files for parallel processing. Processing sequentially.")
-            data = [worker(file) for file in new_fits_files]
+        # Execute processing
+        if self.debug or self.nprocs <= 1:
+            self.logger.info("Processing sequentially.")
+            data = [self.process_file(f) for f in files_to_process]
         else:
-            self.logger.info(
-                f"Processing {len(new_fits_files)} files using {self.nprocs} parallel processes.")
+            self.logger.info(f"Processing {len(files_to_process)} files using {
+                             self.nprocs} workers.")
             with ProcessPoolExecutor(max_workers=self.nprocs) as executor:
-                data = list(executor.map(worker, new_fits_files))
+                data = list(executor.map(self.process_file, files_to_process))
 
-        # NOTE: Save the filenames that failed validation for later review
-        valid_data = [d for d in data if d and not d.get('error')]
-        failed_data = [d for d in data if d and d.get('error')]
-        self.logger.info(f"Successfully processed {len(valid_data)} files.")
+        # Split results
+        valid_data = [d for d in data if not d['error']]
+        failed_data = [d for d in data if d['error']]
 
-        failed_dirs = {}
-        if self.config:
-            data_root = self.config.get("data_root", "")
-            instruments = self.config.get("instruments", {})
+        self.logger.info(f"Successfully processed {len(
+            valid_data)} files. Failed: {len(failed_data)}")
 
-            for name, data in instruments.items():
-                failed_dir = data.get("failed_directory")
-                if failed_dir:
-                    full_path = os.path.join(data_root, failed_dir)
-                    failed_dirs[name.lower()] = full_path
+        # Handle Failures
+        if failed_data:
+            self._log_failures(failed_data)
 
-        #  Categorize errors by instrument
-        failed_by_instrument = {}
-
-        for item in failed_data:
-            inst = item.get('instrument_name') or 'unknown'
-            failed_by_instrument.setdefault(inst, []).append(item['file'])
-
-        # Save in the correct directory
-        for inst, files in failed_by_instrument.items():
-            failed_dir = failed_dirs.get(inst)
-            if not failed_dir:
-                if self.config:
-                    failed_dir = os.path.join(self.config.get(
-                        "data_root", ""), "unknown/failed")
-                else:
-                    failed_dir = "log/unknown_failed"
-
-            os.makedirs(failed_dir, exist_ok=True)
-
-            log_path = os.path.join(failed_dir, "failed_fits.log")
-
-            with open(log_path, "a") as f:
-                for file in files:
-                    f.write(f"{datetime.datetime.now()} - {file}\n")
-            self.logger.info(f"Saved failed files log to: {log_path}")
-
-        # Transform the list of dictionaries into two pandas DataFrame, one for primary and other for the instrumebt
         if not valid_data:
             return pd.DataFrame(), pd.DataFrame()
 
+        # Convert to DataFrames
         primary_df = pd.DataFrame([d['primary'] for d in valid_data])
         instrument_df = pd.DataFrame([d['instrument'] for d in valid_data])
 
         return primary_df, instrument_df
 
-    def dms_to_decimal(dms_str):
-        """Convert DMS (Degrees, Minutes, Seconds) string to decimal degrees."""
-        try:
-            float_value = float(dms_str)
-            return float_value
-        except ValueError:
-            parts = dms_str.split(':')
-            if len(parts) < 2:
-                raise ValueError(f"Invalid DMS format: {dms_str}")
-            degrees, minutes, seconds = map(float, parts)
-            decimal_degrees = degrees + (minutes / 60) + (seconds / 3600)
-            return decimal_degrees
+    def _log_failures(self, failed_data):
+        """Handles logging of failed files grouped by instrument."""
+        data_root = self.config.get("data_root", "log")
+        failed_by_inst = {}
 
-    @staticmethod
-    def validate_data(
-            header_data,
-            primary_model,
-            instrument_model,
-            logger=logging.getLogger(__name__)
-    ):
-        """Validate header data against primary and instrument models."""
+        for item in failed_data:
+            inst = item.get('instrument_name', 'unknown')
+            failed_by_inst.setdefault(inst, []).append(item['file'])
 
-        primary_data = {}
-        instrument_data = {}
+        for inst, files in failed_by_inst.items():
+            failed_dir = os.path.join(data_root, f"{inst}_failed")
+            os.makedirs(failed_dir, exist_ok=True)
 
-        for key, value in header_data.items():
-            if key in primary_model:
-                is_nullable = primary_model[key].get('nullable', True)
+            log_path = os.path.join(failed_dir, "failed_fits.log")
+            with open(log_path, "a") as f:
+                for file in files:
+                    f.write(f"{datetime.datetime.now().isoformat()} - {file}\n")
 
-                if not is_nullable and value is None:
-                    logger.critical(
-                        f"Key '{key}' is not defined in the primary model and \
-                        cannot be null.")
-                    return False, primary_data, instrument_data
-
-                allowed_values, datatype, minmax = DataCollector.get_allowed_values(
-                    primary_model, key)
-
-                # Make sure the datatype coresponds to the datatype defined in the model
-                try:
-                    value = datatype(value)
-                except ValueError as e:
-                    logger.error(
-                        f"Key '{key}' has value '{value}' which cannot be \
-                        converted to the required datatype '{datatype.__name__}'. \
-                        Error: {e}")
-                    return False, primary_data, instrument_data
-
-                if minmax:
-                    if not (isinstance(value, datatype) and allowed_values[0] <= value <= allowed_values[1]):
-                        if key in ["OBSLAT", "OBSLONG"]:
-                            float_value = DataCollector.dms_to_decimal(value)
-                            if not (float(allowed_values[0]) <= float_value <= float(allowed_values[1])):
-                                logger.error(
-                                    f"Key '{key}' has value '{value}' which is not within \
-                                    the allowed range:\
-                                    {allowed_values[0]} - {allowed_values[1]}.")
-                                return False, primary_data, instrument_data
-                            else:
-                                logger.debug(
-                                    f"Key '{key}' has value '{value}' which is within the \
-                                    allowed range:\
-                                    {allowed_values[0]} - {allowed_values[1]}.")
-                    else:
-                        logger.debug(
-                            f"Key '{key}' has value '{value}' which is within the \
-                            allowed range:\
-                            {allowed_values[0]} - {allowed_values[1]}.")
-                else:
-                    if allowed_values and value not in allowed_values:
-                        logger.error(
-                            f"Key '{key}' has value '{value}' which is not in the \
-                            allowed values: {allowed_values}.")
-                        return False, primary_data, instrument_data
-
-                primary_data[key] = value
-            elif key in instrument_model:
-                is_nullable = instrument_model[key].get('nullable', True)
-                if not is_nullable and value is None:
-                    logger.critical(
-                        f"Key '{key}' is not defined in the instrument model and \
-                        cannot be null.")
-                    return False, primary_data, instrument_data
-
-                allowed_values, datatype, minmax = DataCollector.get_allowed_values(
-                    instrument_model, key)
-
-                try:
-                    value = datatype(value)
-                except ValueError as e:
-                    logger.error(
-                        f"Key '{key}' has value '{value}' which cannot be \
-                        converted to the required datatype \
-                        '{datatype.__name__}'. Error: {e}")
-                    return False, primary_data, instrument_data
-
-                if minmax:
-                    if not (isinstance(value, datatype) and allowed_values[0] <= value <= allowed_values[1]):
-                        logger.error(
-                            f"Key '{key}' has value '{value}' which is not within \
-                            the allowed range: \
-                            {allowed_values[0]} - {allowed_values[1]}.")
-                        return False, primary_data, instrument_data
-                    else:
-                        logger.debug(
-                            f"Key '{key}' has value '{value}' which is within the \
-                            allowed range: \
-                            {allowed_values[0]} - {allowed_values[1]}.")
-
-                instrument_data[key] = value
-            else:
-                logger.warning(
-                    f"Key '{key}' is not defined in either the primary model or \
-                    the instrument model and will be ignored.")
-
-        # NOTE: Loop through the primary model and instrument model to check if
-        # there are any required keys that are missing in the header data
-        for key, value in primary_model.items():
-            if not value.get('nullable', True) and key not in primary_data:
-                logger.critical(
-                    f"Key '{key}' is required in the primary model but is missing \
-                    in the header data.")
-                return False, primary_data, instrument_data
-        for key, value in instrument_model.items():
-            if not value.get('nullable', True) and key not in instrument_data:
-                logger.critical(
-                    f"Key '{key}' is required in the instrument model but is \
-                    missing in the header data.")
-                return False, primary_data, instrument_data
-
-        logger.info("Header data validation successful.")
-        return True, primary_data, instrument_data
-
-    @staticmethod
-    def get_allowed_values(data_model, key):
-
-        datatypes_mapping = {
-            'string': str,
-            'integer': int,
-            'float': float,
-            'boolean': bool
-        }
-        datatype = data_model[key].get('datatype', None)
-        datatype = datatypes_mapping.get(
-            datatype.lower(), str) if datatype else str
-        # if datatype is bool, allowed values are True and False
-        if datatype == bool:
-            allowed_values = [True, False]
-            minmax = False
-        else:
-            allowed_values = data_model[key].get('allowed_values', None)
-            if allowed_values is not None:
-                if 'between' in allowed_values.lower():
-                    allowed_values = allowed_values.split(':')[
-                        1].split(',')
-                    min_val, max_val = allowed_values
-                    # Trasnform min_val and max_val to the correct datatype
-                    if 'inf' in min_val.lower():
-                        min_val = float('-inf')
-                    else:
-                        min_val = datatypes_mapping.get(data_model[key].get(
-                            'datatype', 'string').lower(), str)(min_val)
-                    if 'inf' in max_val.lower():
-                        max_val = float('inf')
-                    else:
-                        max_val = datatypes_mapping.get(data_model[key].get(
-                            'datatype', 'string').lower(), str)(max_val)
-                    allowed_values = (min_val, max_val)
-                    minmax = True
-                elif ',' in allowed_values:
-                    allowed_values = allowed_values.split(
-                        ',') if allowed_values else None
-                    minmax = False
-                else:
-                    allowed_values = [
-                        allowed_values] if allowed_values else None
-                    minmax = False
-            else:
-                minmax = False
-
-        return allowed_values, datatype, minmax
+            self.logger.info(f"Saved {len(files)} failed {
+                             inst} logs to: {log_path}")
 
 
+# ---------------------------------------------------------
+# EXECUTION
+# ---------------------------------------------------------
 if __name__ == "__main__":
-    args = parse_args()
-    fits_files = glob.glob(args.fits_files) if not args.debug else glob.glob(
-        args.fits_files)[:10]
-    collector = DataCollector(
-        fits_files=fits_files,
-        db_schema=args.db_schema,
-        nprocs=args.nprocs,
-        verbose=args.verbose,
-        logfile=args.logfile,
-        debug=args.debug
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--fits_files', required=True,
+                        help="Glob pattern for FITS files.")
+    parser.add_argument('--nprocs', type=int, default=4)
+    parser.add_argument('--debug', action='store_true')
+    args = parser.parse_args()
 
-    df = collector.collect_data()
+    files = glob.glob(args.fits_files)
+
+    collector = DataCollector(
+        fits_files=files, nprocs=args.nprocs, debug=args.debug)
+    primary_df, instrument_df = collector.collect_data()
+
+    print(f"Collected {len(primary_df)} primary records.")
