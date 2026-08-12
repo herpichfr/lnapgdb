@@ -1,5 +1,11 @@
 [
     {
+        "colname": "INSTMODE",
+        "default_value": "PHOTOMETRY",
+        "datatype": "String",
+        "description": "Technique used during the observation"
+    },
+    {
         "colname": "CCDSERN",
         "default_value": "Dummy SN",
         "datatype": "string",
