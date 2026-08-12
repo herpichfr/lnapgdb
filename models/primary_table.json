@@ -106,21 +106,21 @@
         "colname": "OBSLONG",
         "default_value": "-45:34:57",
         "datatype": "string",
-        "allowed_values": "Between:-180,180",
+        "allowed_values": "range:-180,180",
         "description": "Observatory East Longitude (DEG, -180 to 180)"
     },
     {
         "colname": "OBSLAT",
         "default_value": "-22:32:04",
         "datatype": "string",
-        "allowed_values": "Between:-90,90",
+        "allowed_values": "range:-90,90",
         "description": "Observatory North Latitude (DEG, -90 to 90)"
     },
     {
         "colname": "OBSALT",
         "default_value": "1864",
         "datatype": "float",
-        "allowed_values": "Between:0,inf",
+        "allowed_values": "range:0,inf",
         "description": "Observatory elevation above sea level (m)"
     },
     {
@@ -193,7 +193,7 @@
         "colname": "TELFOCUS",
         "default_value": "0",
         "datatype": "integer",
-        "allowed_values": "Between:0,inf",
+        "allowed_values": "range:0,inf",
         "description": "Telescope focus position (arbitrary units)"
     },
     {
@@ -211,26 +211,26 @@
         "colname": "EXTTEMP",
         "default_value": "-20.0",
         "datatype": "float",
-        "allowed_values": "Between:-20,40",
+        "allowed_values": "range:-20,40",
         "description": "Temperature (deg C), weather tower"
     },
     {
         "colname": "AIRMASS",
         "datatype": "float",
-        "allowed_values": "Between:1,inf",
+        "allowed_values": "range:1,inf",
         "description": "Airmass at start of observation"
     },
     {
         "colname": "PRESSURE",
         "datatype": "float",
-        "allowed_values": "Between:0,inf",
+        "allowed_values": "range:0,inf",
         "description": "Barometric pressure (mb), weather tower"
     },
     {
         "colname": "HUMIDITY",
         "default_value": "90",
         "datatype": "float",
-        "allowed_values": "between:0,100",
+        "allowed_values": "range:0,100",
         "description": "Relative humidity (%), weather tower"
     },
     {

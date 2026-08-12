@@ -67,25 +67,25 @@
     {
         "colname": "NCYCLES",
         "datatype": "integer",
-        "allowed_values": "Between:1,inf",
+        "allowed_values": "range:1,inf",
         "description": "Number of cycles"
     },
     {
         "colname": "CYCLIND",
         "datatype": "integer",
-        "allowed_values": "Between:1,inf",
+        "allowed_values": "range:1,inf",
         "description": "Cycle index"
     },
     {
         "colname": "NSEQ",
         "datatype": "integer",
-        "allowed_values": "Between:1,16",
+        "allowed_values": "range:1,16",
         "description": "Number of sequences in one cycle"
     },
     {
         "colname": "SEQINDEX",
         "datatype": "integer",
-        "allowed_values": "Between:1,16",
+        "allowed_values": "range:1,16",
         "description": "Sequence index in the cycle"
     },
     {
@@ -139,7 +139,7 @@
     {
         "colname": "EMGAIN",
         "datatype": "integer",
-        "allowed_values": "Between:0,inf",
+        "allowed_values": "range:0,inf",
         "description": "Electron multiplier gain"
     },
     {
@@ -193,13 +193,13 @@
     {
         "colname": "CCDTEMP",
         "datatype": "integer",
-        "allowed_values": "Between:-80,25",
+        "allowed_values": "range:-80,25",
         "description": "CCD temperature (deg C)"
     },
     {
         "colname": "TGTEMP",
         "datatype": "integer",
-        "allowed_values": "Between:-80,25",
+        "allowed_values": "range:-80,25",
         "description": "CCD target temperature (deg C)"
     },
     {
@@ -241,7 +241,7 @@
     {
         "colname": "GFOC",
         "datatype": "float",
-        "allowed_values": "Between:0,inf",
+        "allowed_values": "range:0,inf",
         "description": "Guiding focus position (mm)"
     },
     {
@@ -364,7 +364,7 @@
     {
         "colname": "WPSELPO",
         "datatype": "float",
-        "allowed_values": "Between:-5,165",
+        "allowed_values": "range:-5,165",
         "description": "Waveplate selector position (mm)"
     },
     {
