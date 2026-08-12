@@ -1,8 +1,8 @@
 # local credentials
 credentials/
 tmp/
+graveyard/
 *.bak
-*.lnk
 
 # ignore symbolic links to avoid accidentally committing them
 *.lnk
