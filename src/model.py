@@ -22,30 +22,19 @@ connection with the code or the use or other dealings in the code.
 # pg_hba.conf settings.
 
 import os
-from sqlalchemy import create_engine, func, Column, Integer, String, Float, ForeignKey, Date, DateTime, Boolean, Numeric
-from sqlalchemy.ext.declarative import declarative_base
+import argparse
 from json import load
 from datetime import datetime, timezone
-import argparse
-from urllib.parse import quote_plus
-
-parser = argparse.ArgumentParser(
-    description='Create LNA DB tables and add columns from JSON files.')
-parser.add_argument('--db_schema',
-                    default='public',
-                    choices=['public', 'cyc', 'dev', 'prod'],
-                    help='Database schema to use (default: public)'
-                    )
-parser.add_argument(
-    '--reset-db',
-    action='store_true',
-    help='Drop all tables before creating (DANGEROUS)'
+from sqlalchemy import (
+    create_engine, func, Column, Integer, String, Float,
+    ForeignKey, Date, DateTime, Boolean, Numeric
 )
+from sqlalchemy.engine import URL
+from sqlalchemy.ext.declarative import declarative_base
 
-args = parser.parse_args()
 
 # Define db_schema to be used globally in the module
-db_schema = args.db_schema
+db_schema = os.getenv('DB_SCHEMA', 'public')  # Default to 'public' if not set
 
 Base = declarative_base()
 
@@ -90,7 +79,7 @@ class PrimaryTable(Base):
     }
 
 
-class Sparc4(Base):
+class Sparc4(PrimaryTable):
     __tablename__ = 'sparc4'
     __table_args__ = {'schema': db_schema}
 
@@ -102,7 +91,7 @@ class Sparc4(Base):
     }
 
 
-class Echarpe(Base):
+class Echarpe(PrimaryTable):
     __tablename__ = 'echarpe'
     __table_args__ = {'schema': db_schema}
 
@@ -114,38 +103,26 @@ class Echarpe(Base):
     }
 
 
-class Robocam01(Base):
-    __tablename__ = 'robocam01'
+class Robocam(PrimaryTable):
+    __tablename__ = 'robocam'
     __table_args__ = {'schema': db_schema}
 
     id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
                                     ondelete='CASCADE'), primary_key=True)
 
-    _mapper_args__ = {
-        'polymorphic_identity': 'robocam01'
+    __mapper_args__ = {
+        'polymorphic_identity': 'robocam'
     }
 
 
-class Iagpol(Base):
-    __tablename__ = 'iagpol'
-    __table_args__ = {'schema': db_schema}
-
-    id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
-                                    ondelete='CASCADE'), primary_key=True)
-
-    _mapper_args__ = {
-        'polymorphic_identity': 'iagpol'
-    }
-
-
-class Cam1(Base):
+class Cam1(PrimaryTable):
     __tablename__ = 'cam1'
     __table_args__ = {'schema': db_schema}
 
     id = Column(Integer, ForeignKey(f'{db_schema}.primary_table.id',
                                     ondelete='CASCADE'), primary_key=True)
 
-    _mapper_args__ = {
+    __mapper_args__ = {
         'polymorphic_identity': 'cam1'
     }
 
@@ -181,25 +158,30 @@ def get_db_credentials():
     cred_dir = os.path.join(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))), 'credentials')
 
-    # with open(os.path.expanduser(f'{cred_dir}/config.json'), 'r') as f:
     with open(os.path.join(f'{cred_dir}/db_config.json'), 'r') as f:
         data = load(f)
-    # return data['lnapgdatabase']
     return data['db']
 
 
 def add_columns_from_json(table_class):
     if not hasattr(table_class, '__tablename__'):
         raise ValueError("Provided class must have a __tablename__ attribute.")
+
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     json_path = os.path.join(
         base_dir,
         'models',
         f'{table_class.__tablename__.lower()}.json'
     )
+    # Fail gracefully if a JSON model doesn't exist for a table yet
+    if not os.path.exists(json_path):
+        print(f"Warning: No JSON model found for {
+              table_class.__tablename__} at {json_path}")
+        return
 
     with open(json_path) as f:
         table_cols = load(f)
+
     for col in table_cols:
         colname = col['colname']
         # NOTE: Colname INSTRUME is reserved for the polymorphic identity, but
@@ -210,52 +192,63 @@ def add_columns_from_json(table_class):
         # the JSON files for documentation purposes.
         if colname.upper() in ['INSTRUME', 'FILENAME']:
             continue
-        default_value = col.get('default', None)
+
         # Map SQLAlchemy type
         type_class = map_type_to_sqlalchemy(col['datatype'])
-        is_nullable = col.get('nullable', True)
-        is_unique = col.get('unique', False)
-        description = col.get('description', '')
-        allowed_values = col['allowed_values'] if 'allowed_values' in col.keys(
-        ) else None
-        new_column = Column(type_class,
-                            nullable=is_nullable,
-                            default=default_value,
-                            unique=is_unique,
-                            info={'allowed_values': allowed_values,
-                                  'description': description})
+        new_column = Column(
+            type_class,
+            nullable=col.get('nullable', True),
+            default=col.get('default_value', None),
+            unique=col.get('unique', False),
+            info={
+                'allowed_values': col.get('allowed_values', None),
+                'description': col.get('description', '')
+            }
+        )
 
         setattr(table_class, colname, new_column)
         table_class.__table__.append_column(new_column)
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description='Create LNA DB tables and add columns from JSON files.')
+    parser.add_argument('--reset-db', action='store_true',
+                        help='Drop all tables before creating (DANGEROUS)')
+    args = parser.parse_args()
+
     creds = get_db_credentials()
 
-    # Compatibilidade com diferentes formatos
-    user = creds.get('user') or creds.get('username')
-    password = quote_plus(creds['password'])
-    driver = creds.get('driver', 'postgresql')
-
-    engine = create_engine(
-        f"{driver}://{user}:{password}@{creds['host']
-                                        }:{creds['port']}/{creds['database']}"
+    # Use SQLAlchemy's secure URL builder instead of f-strings
+    db_url = URL.create(
+        drivername=creds.get('driver', 'postgresql'),
+        username=creds.get('user') or creds.get('username'),
+        password=creds['password'],
+        host=creds['host'],
+        port=creds['port'],
+        database=creds['database']
     )
 
+    engine = create_engine(db_url)
+
     if args.reset_db:
+        input("WARNING: You are about to drop all tables in the database. "
+              "This action is irreversible. Are you sure you want to continue?[y/N]: ")
+        if input().lower() != 'y':
+            print("Aborting operation.")
+            return
+
         print("Dropping all tables")  # Drop existing tables
         Base.metadata.drop_all(engine)
 
-    add_columns_from_json(PrimaryTable)
-    print("Columns added to PrimaryTable successfully!")
-
-    add_columns_from_json(Sparc4)
-    print("Columns added to Sparc4 successfully!")
-
-    add_columns_from_json(Cam1)
-    print("Columns added to Cam1 successfully!")
+    # Add columns from JSON files to each table class
+    for table_class in [PrimaryTable, Sparc4, Echarpe, Robocam, Cam1]:
+        add_columns_from_json(table_class)
+        print(f"Added columns from JSON for table: {
+              table_class.__tablename__}")
 
     Base.metadata.create_all(engine)  # Create tables with new columns
+    print("Database schema successfully generated and applied.")
 
 
 if __name__ == '__main__':
