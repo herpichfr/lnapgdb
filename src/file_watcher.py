@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/python3
 
 """
 This module defines the FileWatcher class, which is responsible for monitoring
@@ -9,8 +9,8 @@ Author: Thaiane Cassetari
 """
 
 import time
-import os #mtime
-from pathlib import Path #mtime
+import os
+from pathlib import Path
 from typing import List
 
 
@@ -28,8 +28,9 @@ class FileWatcher:
         self.poll_interval = poll_interval
         self.process_existing = process_existing
 
-        # State tracking -> highest timestamp seen
-        self.last_checkpoint = 0.0 
+        # State tracking -> highest timestamp seen and files sharing that exact timestamp
+        self.last_checkpoint = 0.0
+        self.seen_files_at_checkpoint = set()
         self.initialized = False
 
         # Directories currently being monitored
@@ -46,13 +47,12 @@ class FileWatcher:
         Define the starting point (timestamp)
         and discover latest active directories.
         """
-
         if self.process_existing:
             self.last_checkpoint = 0.0
             self.initialized = True
-            print("Watcher initialized.")
+            print("Watcher initialized. Processing existing files.")
             return
-        
+
         newest_file_mtime = 0
         self.active_directories = []
 
@@ -61,18 +61,25 @@ class FileWatcher:
             if latest_dir:
                 self.active_directories.append(latest_dir)
                 print(f"DEBUG: Active directory => {latest_dir}")
-                file_mtime = self._find_latest_file_mtime(latest_dir)
 
-                if file_mtime > newest_file_mtime:
-                    newest_file_mtime = file_mtime
+                # Find the maximum mtime in this directory
+                for path, mtime in self._fast_scan_fits(latest_dir):
+                    if mtime > newest_file_mtime:
+                        newest_file_mtime = mtime
 
         self.last_checkpoint = newest_file_mtime
 
-        self.initialized = True
+        # Pre-populate the seen list with files exactly matching the starting checkpoint
+        # to prevent them from being processed again
+        for latest_dir in self.active_directories:
+            for path, mtime in self._fast_scan_fits(latest_dir):
+                if mtime == self.last_checkpoint:
+                    self.seen_files_at_checkpoint.add(str(path))
 
+        self.initialized = True
         print(f"Watcher initialized. Starting point: {self.last_checkpoint}")
 
-    def _find_latest_directory(self, root_directory):
+    def _find_latest_directory(self, root_directory: Path):
         """
         Find the most recently modified subdirectory.
         """
@@ -81,62 +88,50 @@ class FileWatcher:
 
         try:
             with os.scandir(root_directory) as entries:
-
                 for entry in entries:
-
                     if entry.is_dir():
-
                         try:
                             mtime = entry.stat().st_mtime
-
                             if mtime > latest_mtime:
                                 latest_mtime = mtime
                                 latest_dir = Path(entry.path)
-
                         except OSError:
                             continue
         except OSError:
             return None
+
         return latest_dir
 
-    def _find_latest_file_mtime(self, directory):
+    def _fast_scan_fits(self, directory: Path):
         """
-        Find the newest FITS file inside a directory.
+        Recursively scan for fits files efficiently using os.scandir.
+        Yields (Path object, mtime).
         """
-        latest_mtime = 0
-
-        try:
-            for path in directory.rglob('*'):
-
-                if (
-                    path.is_file()
-                    and path.suffix.lower() in self.extensions
-                ):
-                    try:
-                        mtime = path.stat().st_mtime
-
-                        if mtime > latest_mtime:
-                            latest_mtime = mtime
-
-                    except OSError:
-                        continue
-
-        except OSError:
-            pass
-
-        return latest_mtime
+        stack = [str(directory)]
+        while stack:
+            current_dir = stack.pop()
+            try:
+                with os.scandir(current_dir) as entries:
+                    for entry in entries:
+                        if entry.is_dir(follow_symlinks=False):
+                            stack.append(entry.path)
+                        elif entry.is_file(follow_symlinks=False):
+                            # Fast string suffix check before creating Path objects
+                            _, ext = os.path.splitext(entry.name)
+                            if ext.lower() in self.extensions:
+                                yield Path(entry.path), entry.stat().st_mtime
+            except OSError:
+                continue
 
     def get_new_files(self):
         """
         Return only new files since last iteration.
         Scan only the latest modified directories.
         """
-        new_files = []
-        max_mtime_found = self.last_checkpoint
+        new_files_data = []
 
         # Refresh active directories
         updated_active_dirs = []
-
         for root_dir in self.directories:
             latest_dir = self._find_latest_directory(root_dir)
             if latest_dir:
@@ -146,29 +141,39 @@ class FileWatcher:
         for directory in self.active_directories:
             if not directory.exists():
                 continue
-            if self.exclude_today and directory == "today":
+
+            # Fixed bug: Compare directory name to string, not Path to string
+            if self.exclude_today and directory.name == "today":
                 continue
-            try:
-                for path in directory.rglob('*'):
-                    if (
-                        path.is_file()
-                        and path.suffix.lower() in self.extensions
-                    ):
-                        try:
-                            mtime = path.stat().st_mtime
-                            if mtime > self.last_checkpoint:
-                                new_files.append(path)
-                                if mtime > max_mtime_found:
-                                    max_mtime_found = mtime
-                        except OSError:
-                            continue
-            except OSError:
-                continue
-        # Sort files by modification time
-        if new_files:
-            new_files.sort(key=lambda p: p.stat().st_mtime)
-            self.last_checkpoint = max_mtime_found
-            return [str(p) for p in new_files]
+
+            for path, mtime in self._fast_scan_fits(directory):
+                path_str = str(path)
+
+                # Strict greater than
+                if mtime > self.last_checkpoint:
+                    new_files_data.append((path_str, mtime))
+                # Handle millisecond exact matches to avoid dropping concurrent files
+                elif mtime == self.last_checkpoint and path_str not in self.seen_files_at_checkpoint:
+                    new_files_data.append((path_str, mtime))
+
+        # Sort files by modification time chronologically
+        if new_files_data:
+            new_files_data.sort(key=lambda x: x[1])
+
+            # Identify the new absolute maximum checkpoint
+            new_max_mtime = new_files_data[-1][1]
+
+            if new_max_mtime > self.last_checkpoint:
+                self.last_checkpoint = new_max_mtime
+                # Reset seen files for the new max checkpoint
+                self.seen_files_at_checkpoint = {
+                    f[0] for f in new_files_data if f[1] == new_max_mtime}
+            else:
+                # If the max time didn't change (we just processed parallel files with the exact same mtime)
+                self.seen_files_at_checkpoint.update(
+                    f[0] for f in new_files_data if f[1] == new_max_mtime)
+
+            return [f[0] for f in new_files_data]
 
         return []  # Return an empty list if nothing is found
 
@@ -188,24 +193,20 @@ class FileWatcher:
 
             time.sleep(self.poll_interval)
 
-            print(f"DEBUG: Waiting {self.poll_interval} seconds... ")
-
     def _load_directories_from_config(self, config):
         """
         Load directories from config file.
         """
         directories = []
-
         data_root = config.get("data_root", "")
         instruments = config.get("instruments", {})
 
         for instrument_name, instrument_data in instruments.items():
             raw_dir = os.path.expandvars(
-                instrument_data.get("raw_data_directory"))
+                instrument_data.get("raw_data_directory", ""))
 
             if raw_dir:
                 full_path = Path(data_root) / raw_dir
-
                 if full_path.exists():
                     print(f"DEBUG: Watching {full_path}")
                     directories.append(full_path)
