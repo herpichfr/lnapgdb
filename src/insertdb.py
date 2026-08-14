@@ -110,24 +110,31 @@ class InsertDB:
 
         return data['db']
 
-    def _allocate_sequence_ids(
-            self,
-            conn,
-            target_schema,
-            count
-    ):
-        """
-        Atomically allocates a block of sequence IDs from PostgreSQL.
-        100% concurrent-safe, zero table locking required.
-        """
-        # pg_get_serial_sequence dynamically fetches the sequence bound to primary_table.id
+    def _allocate_sequence_ids(self, conn, target_schema, count):
+        """Atomically allocates a block of sequence IDs from PostgreSQL."""
+        table_spec = f"{target_schema}.primary_table"
+
+        # Try pg_get_serial_sequence first
         query = text("""
             SELECT nextval(pg_get_serial_sequence(:table_name, 'id')) 
             FROM generate_series(1, :count)
         """)
-        table_spec = f"{target_schema}.primary_table"
-        result = conn.execute(
-            query, {"table_name": table_spec, "count": count})
+        try:
+            result = conn.execute(
+                query, {"table_name": table_spec, "count": count}
+            )
+            ids = [row[0] for row in result.fetchall()]
+            if ids and ids[0] is not None:
+                return ids
+        except Exception:
+            pass
+
+        # Fallback: Query explicitly named sequence if pg_get_serial_sequence returns NULL
+        seq_name = f"{target_schema}.primary_table_id_seq"
+        fallback_query = text(
+            f"SELECT nextval('{seq_name}') FROM generate_series(1, :count)"
+        )
+        result = conn.execute(fallback_query, {"count": count})
         return [row[0] for row in result.fetchall()]
 
     def insert_batch(self, primary_df, instrument_df, db_schema=None):
@@ -170,59 +177,71 @@ class InsertDB:
             return self._insert_row_by_row(primary_df, instrument_df, target_schema, instrument)
 
     def _insert_row_by_row(
-            self,
-            primary_df,
-            instrument_df,
-            target_schema,
-            instrument
+        self, primary_df, instrument_df, target_schema, instrument
     ):
-        """
-        Slow path: Inserts rows individually so valid data isn't dropped because of one bad file.
-        """
+        """Slow path: Inserts rows individually without table locking deadlocks."""
         successful_inserts = 0
         failed_files = []
 
         for i in range(len(primary_df)):
             p_row = primary_df.iloc[[i]].copy()
             i_row = instrument_df.iloc[[i]].copy()
-            filename = p_row['FILENAME'].iloc[0]
+            filename = p_row["FILENAME"].iloc[0]
 
             try:
-                # Each row gets its own transaction block
                 with self.engine.begin() as conn:
-                    # We must re-fetch MAX(id) per row in case another pipeline instance inserted data
-                    conn.execute(
-                        text(f"LOCK TABLE {target_schema}.primary_table IN EXCLUSIVE MODE"))
-                    query = text(f"SELECT MAX(id) FROM {
-                                 target_schema}.primary_table")
-                    result = conn.execute(query).fetchone()
-                    new_id = (result[0] if result[0] is not None else 0) + 1
+                    # Atomically fetch next sequence ID directly without table locking
+                    seq_query = text(f"""
+                        SELECT nextval(pg_get_serial_sequence('{target_schema}.primary_table', 'id'))
+                    """)
+                    res = conn.execute(seq_query).fetchone()
 
-                    p_row['id'] = new_id
-                    i_row['id'] = new_id
+                    if res and res[0] is not None:
+                        new_id = res[0]
+                    else:
+                        # Fallback if sequence lookup fails: fetch MAX(id) safely inside transaction
+                        max_query = text(
+                            f"SELECT COALESCE(MAX(id), 0) + 1 FROM"
+                            f" {target_schema}.primary_table"
+                        )
+                        new_id = conn.execute(max_query).scalar()
+
+                    p_row["id"] = new_id
+                    i_row["id"] = new_id
 
                     p_row.to_sql(
-                        'primary_table', con=conn, schema=target_schema, if_exists='append', index=False)
+                        "primary_table",
+                        con=conn,
+                        schema=target_schema,
+                        if_exists="append",
+                        index=False,
+                    )
                     i_row.to_sql(
-                        instrument, con=conn, schema=target_schema, if_exists='append', index=False)
+                        instrument,
+                        con=conn,
+                        schema=target_schema,
+                        if_exists="append",
+                        index=False,
+                    )
 
                 successful_inserts += 1
 
             except Exception as e:
-                # If this specific row fails, the context manager rolls back ONLY this row
-                self.logger.error(f"Failed to ingest file '{
-                                  filename}'. Reason: {e}")
+                self.logger.error(
+                    f"Failed to ingest file '{filename}'. Reason: {e}"
+                )
                 failed_files.append(filename)
 
         self.logger.info(
-            f"Row-by-row recovery complete. Inserted: {
-                successful_inserts}, Failed: {len(failed_files)}"
+            f"Row-by-row recovery complete. Inserted: {successful_inserts},"
+            f" Failed: {len(failed_files)}"
         )
 
-        if failed_files:
-            return False, len(failed_files)
-
-        return True, 0
+        return (
+            (True, 0)
+            if not failed_files
+            else (False, len(failed_files))
+        )
 
 
 if __name__ == "__main__":
