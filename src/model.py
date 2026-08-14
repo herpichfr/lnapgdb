@@ -232,9 +232,11 @@ def main():
     engine = create_engine(db_url)
 
     if args.reset_db:
-        input("WARNING: You are about to drop all tables in the database. "
-              "This action is irreversible. Are you sure you want to continue?[y/N]: ")
-        if input().lower() != 'y':
+        user_input = input(
+            f"WARNING: You are about to drop all tables from schema {
+                db_schema}. "
+            "This action is irreversible. Are you sure you want to continue?[y/N]: ")
+        if user_input.lower() != 'y':
             print("Aborting operation.")
             return
 
