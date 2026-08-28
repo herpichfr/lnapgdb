@@ -10,6 +10,7 @@ Author: Thaiane Cassetari
 
 import time
 import os
+import re
 from pathlib import Path
 from typing import List
 
@@ -81,15 +82,22 @@ class FileWatcher:
 
     def _find_latest_directory(self, root_directory: Path):
         """
-        Find the most recently modified subdirectory.
+        Find the most recently modified subdirectory that matches YYYYMMDD format.
         """
         latest_dir = None
         latest_mtime = 0
+
+        # Regex pattern for exactly 8 digits (YYYYMMDD)
+        date_pattern = re.compile(r"^\d{8}$")
 
         try:
             with os.scandir(root_directory) as entries:
                 for entry in entries:
                     if entry.is_dir():
+                        # Ignore folders that are not exactly 8 digits
+                        if not date_pattern.match(entry.name):
+                            continue
+
                         try:
                             mtime = entry.stat().st_mtime
                             if mtime > latest_mtime:
@@ -101,6 +109,28 @@ class FileWatcher:
             return None
 
         return latest_dir
+    # def _find_latest_directory(self, root_directory: Path):
+    #     """
+    #     Find the most recently modified subdirectory.
+    #     """
+    #     latest_dir = None
+    #     latest_mtime = 0
+    #
+    #     try:
+    #         with os.scandir(root_directory) as entries:
+    #             for entry in entries:
+    #                 if entry.is_dir():
+    #                     try:
+    #                         mtime = entry.stat().st_mtime
+    #                         if mtime > latest_mtime:
+    #                             latest_mtime = mtime
+    #                             latest_dir = Path(entry.path)
+    #                     except OSError:
+    #                         continue
+    #     except OSError:
+    #         return None
+    #
+    #     return latest_dir
 
     def _fast_scan_fits(self, directory: Path):
         """
