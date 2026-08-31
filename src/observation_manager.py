@@ -8,7 +8,7 @@ Decide if we go for a config file or if we just use environment variables to set
 The manager must be able to handle a large number of directories and images within
 The code needs to keep track of the images that have already been processed
 The list of new images at any given moment should be handled to the data_collector.py, which will extract the metadata, validate them and return as a pandas df
-Finally, the manager haddles the df to the insertdb.py module for database insertion
+Finally, the manager handles the df to the insertdb.py module for database insertion
 
 Copyright (c) 2026, LNA - Laboratório Nacional de Astrofísica, Brazil. All rights reserved.
 """
@@ -19,6 +19,7 @@ import time
 import argparse
 import logging
 import subprocess
+from datetime import datetime
 
 from log_utils import setup_logging
 from data_collector import DataCollector
@@ -57,6 +58,10 @@ def parse_arguments():
                         help='Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
     parser.add_argument('--log-file', type=str, default='observation_manager.log',
                         help='Path to the log file')
+    parser.add_argument('--failed-files-log', type=str,
+                        default=os.environ.get(
+                            'FAILED_FILES_LOG_PATH', 'failed_files.log'),
+                        help='Path to the file recording failed FITS files')
     parser.add_argument('--debug', action='store_true',
                         help='Enable debug mode (sets log level to DEBUG)')
     parser.add_argument('--verbose', '-v', action='store_true',
@@ -67,14 +72,12 @@ def parse_arguments():
 
 def get_git_branch():
     try:
-        # Returns the name of the current branch
         branch = subprocess.check_output(
             ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
             stderr=subprocess.DEVNULL
         ).decode('utf-8').strip()
         return branch
     except Exception:
-        # Fallback if git is not initialized or not installed
         return "dev"
 
 
@@ -86,9 +89,9 @@ def get_schema_from_branch(branch):
     elif branch == 'dev':
         return 'dev'
     elif '_dev' in branch:
-        return 'public'  # or 'test'
+        return 'public'
     else:
-        return 'public'  # Default fallback
+        return 'public'
 
 
 class ObservationManager:
@@ -106,7 +109,6 @@ class ObservationManager:
         self.db_schema = self.config.get('db_schema') if self.config.get(
             'db_schema') else args.db_schema
 
-        # Map string log level to logging integer constant
         level_map = {
             'DEBUG': logging.DEBUG,
             'INFO': logging.INFO,
@@ -115,9 +117,13 @@ class ObservationManager:
             'CRITICAL': logging.CRITICAL
         }
 
-        # Override to DEBUG if --debug is passed
         log_level_int = logging.DEBUG if args.debug else level_map.get(
             args.log_level.upper(), logging.WARNING)
+
+        # Ensure parent directory for main log file exists
+        if args.log_file:
+            log_dir = os.path.dirname(os.path.abspath(args.log_file))
+            os.makedirs(log_dir, exist_ok=True)
 
         self.logger = setup_logging(
             loglevel=log_level_int,
@@ -125,13 +131,22 @@ class ObservationManager:
             verbose=args.verbose
         )
 
+        # Setup and validate failed files log path
+        self.failed_files_log = args.failed_files_log
+        if self.failed_files_log:
+            failed_dir = os.path.dirname(
+                os.path.abspath(self.failed_files_log))
+            try:
+                os.makedirs(failed_dir, exist_ok=True)
+            except Exception as e:
+                self.logger.error(
+                    f"Could not create directory for failed files log ({failed_dir}): {e}")
+
         self.debug = args.debug
         self.test = args.test
 
         self.processed_images = set()
 
-        # Models are kept here in case database_checker or file_watcher needs them,
-        # but DataCollector now relies on Pydantic instead.
         self.models_dir = os.path.join(self.root_dir, 'models')
         self.primary_model = self.load_primary_model(
             self.models_dir, self.logger)
@@ -141,6 +156,20 @@ class ObservationManager:
         self.last_check_time = time.time()
         self.cadence = args.cadence
 
+    def write_failed_files(self, file_paths, reason="Unknown error"):
+        """Directly record failed files to the designated log path."""
+        if not self.failed_files_log or not file_paths:
+            return
+
+        try:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with open(self.failed_files_log, "a") as f:
+                for path in file_paths:
+                    f.write(f"{timestamp}\t{path}\t{reason}\n")
+        except Exception as e:
+            self.logger.error(f"Failed writing to failed files log ({
+                              self.failed_files_log}): {e}")
+
     @staticmethod
     def load_config(config_path):
         with open(config_path, 'r') as f:
@@ -148,7 +177,6 @@ class ObservationManager:
 
     @staticmethod
     def load_primary_model(models_dir, logger=logging.getLogger()):
-        """Get the primary model from the models directory."""
         primary_model_file = os.path.join(models_dir, 'primary_table.json')
         if os.path.exists(primary_model_file):
             logger.info(f'Loading primary model from {primary_model_file}')
@@ -169,7 +197,6 @@ class ObservationManager:
 
     @staticmethod
     def load_instrument_models(config, models_dir, logger=logging.getLogger()):
-        """Load instrument models from the configuration file."""
         instrument_models = {}
 
         for instrument_name, instrument_data in config.get('instruments', {}).items():
@@ -223,19 +250,17 @@ if __name__ == "__main__":
             exclude_today_dir=args.avoid_work_hours
         )
 
-    # Get schema from git branch
     git_branch = get_git_branch()
     db_schema_from_branch = get_schema_from_branch(git_branch)
     if db_schema_from_branch != db_schema:
         observation_manager.logger.warning(
             f"Git branch '{git_branch}' suggests using database schema '{db_schema_from_branch}', but config specifies '{db_schema}'.")
         observation_manager.logger.warning(
-            "Please select which branch you want to use:"
-            "1 - Use schema from config file"
+            "Please select which branch you want to use:\n"
+            "1 - Use schema from config file\n"
             "2 - Use schema from git branch"
         )
 
-        # Only prompt if we are in an interactive terminal
         if os.isatty(0):
             user_input = input("Enter 1 or 2 (default is 1): ").strip()
             if user_input == '2':
@@ -254,7 +279,6 @@ if __name__ == "__main__":
                 "Non-interactive environment detected. Defaulting to schema from config file.")
 
     if args.test_images:
-        # If test images are provided, process them directly
         observation_manager.logger.info(
             f"Processing test images: {args.test_images}")
         try:
@@ -275,6 +299,8 @@ if __name__ == "__main__":
             if p_df.empty:
                 observation_manager.logger.warning(
                     "No valid data collected from test images. Exiting.")
+                observation_manager.write_failed_files(
+                    args.test_images, "Data collection returned empty dataframe")
                 exit(0)
 
             db_inserter = InsertDB(
@@ -297,38 +323,39 @@ if __name__ == "__main__":
                     f"Failed to process test images. Errors encountered: {
                         error_count}"
                 )
+                observation_manager.write_failed_files(
+                    args.test_images, f"Database insertion failed on {error_count} records")
 
         except Exception as e:
             observation_manager.logger.error(
                 f'Error processing test images: {e}')
+            observation_manager.write_failed_files(
+                args.test_images, f"Exception during processing: {e}")
         exit(0)
 
-    # After collecting storage directories, validate
     if not watcher.directories:
         observation_manager.logger.critical(
-            'No valid directories found to monitor'
-        )
+            'No valid directories found to monitor')
         raise ValueError('No valid directories found to monitor')
 
     if args.check_db:
-        db = InsertDB(
-            config=observation_manager.config,
-            args=args,
-            logger=observation_manager.logger
-        )
+        observation_manager.logger.error(
+            "Database check functionality is not implemented yet.")
 
-        checker = DatabaseChecker(
-            directories=watcher.directories,
-            db=db,
-            date=args.date
-        )
-
-        checker.run()
-        exit()
-
-    # Enter main watch loop
     try:
-        for new_images in watcher.watch():
+        watcher_iter = iter(watcher.watch())
+
+        while True:
+            current_hour = datetime.now().hour
+            if not (10 <= current_hour < 16):
+                time.sleep(args.cadence)
+                continue
+
+            try:
+                new_images = next(watcher_iter)
+            except StopIteration:
+                break
+
             if not new_images:
                 continue
 
@@ -338,7 +365,6 @@ if __name__ == "__main__":
                 "Starting data collection process...")
 
             try:
-                # Updated DataCollector signature to match the refactored module
                 data_collector = DataCollector(
                     fits_files=new_images,
                     primary_model=observation_manager.primary_model,
@@ -356,12 +382,15 @@ if __name__ == "__main__":
             except Exception as e:
                 observation_manager.logger.error(
                     f'Error collecting data from images: {e}')
+                observation_manager.write_failed_files(
+                    new_images, f"Collection error: {e}")
                 continue
 
-            # If no valid data was collected, move to next batch
             if p_df.empty:
                 observation_manager.logger.warning(
                     "No valid data collected from this batch. Skipping insertion.")
+                observation_manager.write_failed_files(
+                    new_images, "No valid metadata extracted")
                 continue
 
             try:
@@ -371,7 +400,6 @@ if __name__ == "__main__":
                     logger=observation_manager.logger
                 )
 
-                # insert_batch no longer takes debug arg; returns (success_bool, error_count)
                 inserted, error_count = db_inserter.insert_batch(
                     p_df, i_df, db_schema=db_schema
                 )
@@ -386,10 +414,14 @@ if __name__ == "__main__":
                         f"Failed to process batch. Errors encountered: {
                             error_count}"
                     )
+                    observation_manager.write_failed_files(
+                        new_images, f"Batch DB insertion failed on {error_count} records")
 
             except Exception as e:
                 observation_manager.logger.error(
                     f"Critical error during database insertion: {e}")
+                observation_manager.write_failed_files(
+                    new_images, f"Insertion exception: {e}")
                 continue
 
     except KeyboardInterrupt:

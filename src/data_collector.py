@@ -38,8 +38,8 @@ def parse_args():
         '--verbose', '-v', action='store_true',
         help="Enable verbose logging.")
     parser.add_argument(
-        '--logfile', '-l', default='log/data_collection.log',
-        help="Log file path (default: log/data_collection.log).")
+        '--logfile', '-l', default='logs/data_collection.log',
+        help="Log file path (default: logs/data_collection.log).")
     parser.add_argument(
         '--debug', action='store_true',
         help="Run in test mode with limited files for quick testing.")
@@ -55,8 +55,9 @@ class DataCollector:
                  nprocs=4,
                  logger=None,
                  verbose=False,
-                 logfile='log/data_collection.log',
+                 logfile='logs/data_collection.log',
                  config=None,
+                failed_files_log='failed_fits.log',
                  debug=False
                  ):
         self.fits_files = fits_files
@@ -64,6 +65,7 @@ class DataCollector:
         self.nprocs = nprocs
         self.debug = debug
         self.config = config or {}
+        self.failed_files_log = failed_files_log
         self.primary_model = primary_model
         self.instrument_models_cache = instrument_models_cache or {}
         self.logger = logger or setup_logging(logfile=logfile, verbose=verbose)
@@ -273,7 +275,7 @@ class DataCollector:
                     failed_dir = os.path.join(self.config.get(
                         "data_root", ""), "unknown/failed")
                 else:
-                    failed_dir = "log/unknown_failed"
+                    failed_dir = "logs/unknown_failed"
 
             os.makedirs(failed_dir, exist_ok=True)
             log_path = os.path.join(failed_dir, "failed_fits.log")
