@@ -1,2 +1,5 @@
-sqlalchemy
-psycopg2
+# Dependency list is defined in pyproject.toml (single source of truth).
+# This file exists only so `pip install -r requirements.txt` keeps working;
+# it installs the package itself (in editable mode) and pulls in every
+# dependency declared under [project.dependencies].
+-e .

@@ -11,7 +11,39 @@ without warranty of any kind, express or implied. In no event shall the authors
 """
 
 import logging
+import os
 import sys
+from pathlib import Path
+
+
+def ensure_not_root():
+    """
+    Refuse to continue if the current process is running as root, either
+    directly or via sudo. This tool creates files (logs, and data inserted
+    into the database) that must remain owned by the observing account, and
+    elevated privileges are never required to run it.
+    """
+    is_root = hasattr(os, "geteuid") and os.geteuid() == 0
+    ran_via_sudo = "SUDO_USER" in os.environ or "SUDO_UID" in os.environ
+
+    if is_root or ran_via_sudo:
+        sys.stderr.write(
+            "lnapgdb: refusing to run as root or via sudo. "
+            "Please run this tool as a regular, non-privileged user.\n"
+        )
+        sys.exit(1)
+
+
+def get_log_dir():
+    """
+    Return the directory where lnapgdb log files should be written, creating
+    it if it does not already exist. Logs must never be written inside the
+    installed package directory, so this always resolves to a ``logs``
+    folder in the home directory of the user running the code.
+    """
+    log_dir = Path.home() / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir
 
 
 def setup_logging(
@@ -29,6 +61,8 @@ def setup_logging(
         logfile (str): Optional path to a file to write logs to.
         loglevel (int): The base logging level (e.g., logging.INFO, logging.DEBUG).
     """
+    ensure_not_root()
+
     # 1. Use a project-specific name instead of __name__
     logger = logging.getLogger(logger_name)
 

@@ -17,7 +17,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL
 
-from log_utils import setup_logging
+from .log_utils import setup_logging, ensure_not_root
 
 
 def parse_args():
@@ -244,7 +244,9 @@ class InsertDB:
         )
 
 
-if __name__ == "__main__":
+def main():
+    ensure_not_root()
+
     parser = parse_args()
     args = parser.parse_args()
 
@@ -263,3 +265,7 @@ if __name__ == "__main__":
 
     # Insert data into the database
     insert_db.insert_batch(primary_df, instrument_df, args.db_schema)
+
+
+if __name__ == "__main__":
+    main()

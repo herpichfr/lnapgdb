@@ -22,12 +22,12 @@ import logging
 import subprocess
 from datetime import datetime
 
-from log_utils import setup_logging
-from data_collector import DataCollector
-from insertdb import InsertDB
+from .log_utils import setup_logging, get_log_dir, ensure_not_root
+from .data_collector import DataCollector
+from .insertdb import InsertDB
 
-from file_watcher import FileWatcher
-# from database_checker import DatabaseChecker
+from .file_watcher import FileWatcher
+# from .database_checker import DatabaseChecker
 
 
 def parse_arguments():
@@ -61,11 +61,13 @@ def parse_arguments():
                              "has to expand large file lists itself.")
     parser.add_argument('--log-level', type=str, default='WARNING',
                         help='Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
-    parser.add_argument('--log-file', type=str, default='observation_manager.log',
+    parser.add_argument('--log-file', type=str,
+                        default=str(get_log_dir() / 'observation_manager.log'),
                         help='Path to the log file')
     parser.add_argument('--failed-files-log', type=str,
                         default=os.environ.get(
-                            'FAILED_FILES_LOG_PATH', 'failed_files.log'),
+                            'FAILED_FILES_LOG_PATH',
+                            str(get_log_dir() / 'failed_files.log')),
                         help='Path to the file recording failed FITS files')
     parser.add_argument('--debug', action='store_true',
                         help='Enable debug mode (sets log level to DEBUG)')
@@ -237,7 +239,9 @@ class ObservationManager:
         return instrument_models
 
 
-if __name__ == "__main__":
+def main():
+    ensure_not_root()
+
     args = parse_arguments()
     observation_manager = ObservationManager(args)
     db_schema = observation_manager.db_schema
@@ -448,3 +452,7 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         print("\nProgram interrupted by the user. Exiting gracefully.")
+
+
+if __name__ == "__main__":
+    main()

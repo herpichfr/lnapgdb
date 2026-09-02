@@ -17,7 +17,7 @@ from functools import partial
 import pandas as pd
 from astropy.io import fits
 
-from log_utils import setup_logging
+from .log_utils import setup_logging, get_log_dir, ensure_not_root
 logger = logging.getLogger("lnapgdb")
 
 
@@ -38,8 +38,8 @@ def parse_args():
         '--verbose', '-v', action='store_true',
         help="Enable verbose logging.")
     parser.add_argument(
-        '--logfile', '-l', default='logs/data_collection.log',
-        help="Log file path (default: logs/data_collection.log).")
+        '--logfile', '-l', default=str(get_log_dir() / 'data_collection.log'),
+        help="Log file path (default: <home>/logs/data_collection.log).")
     parser.add_argument(
         '--debug', action='store_true',
         help="Run in test mode with limited files for quick testing.")
@@ -55,9 +55,9 @@ class DataCollector:
                  nprocs=4,
                  logger=None,
                  verbose=False,
-                 logfile='logs/data_collection.log',
+                 logfile=None,
                  config=None,
-                failed_files_log='failed_fits.log',
+                failed_files_log=None,
                  debug=False
                  ):
         self.fits_files = fits_files
@@ -65,11 +65,14 @@ class DataCollector:
         self.nprocs = nprocs
         self.debug = debug
         self.config = config or {}
-        self.failed_files_log = failed_files_log
+        self.failed_files_log = failed_files_log or str(
+            get_log_dir() / 'failed_fits.log')
         self.primary_model = primary_model
         self.instrument_models_cache = instrument_models_cache or {}
-        self.logger = logger or setup_logging(logfile=logfile, verbose=verbose)
-        self.error_log_file = "failed_fits.log"
+        self.logger = logger or setup_logging(
+            logfile=logfile or str(get_log_dir() / 'data_collection.log'),
+            verbose=verbose)
+        self.error_log_file = str(get_log_dir() / 'failed_fits.log')
 
         # 1. Define where models should live relative to this script
         self.root_dir = os.path.dirname(
@@ -275,7 +278,7 @@ class DataCollector:
                     failed_dir = os.path.join(self.config.get(
                         "data_root", ""), "unknown/failed")
                 else:
-                    failed_dir = "logs/unknown_failed"
+                    failed_dir = str(get_log_dir() / "unknown_failed")
 
             os.makedirs(failed_dir, exist_ok=True)
             log_path = os.path.join(failed_dir, "failed_fits.log")
@@ -497,7 +500,9 @@ class DataCollector:
         return allowed_values, datatype, minmax
 
 
-if __name__ == "__main__":
+def main():
+    ensure_not_root()
+
     args = parse_args()
 
     # Collect files properly handling shell expansion and glob lists
@@ -518,3 +523,7 @@ if __name__ == "__main__":
 
     # Correctly unpack the two DataFrames returned by collect_data
     primary_df, instrument_df = collector.collect_data()
+
+
+if __name__ == "__main__":
+    main()

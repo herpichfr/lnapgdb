@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lnapgdb"
+version = "0.1.0"
+description = "PostgreSQL database tooling for LNA astronomical observations (BancoINA)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+    "sqlalchemy>=2.0,<3",
+    "psycopg2-binary>=2.9,<3",
+    "astropy>=6.0",
+    "numpy>=1.26",
+    "pandas>=2.0",
+]
+
+[project.scripts]
+lnapgdb-observation-manager = "lnapgdb.observation_manager:main"
+lnapgdb-data-collector = "lnapgdb.data_collector:main"
+lnapgdb-database-checker = "lnapgdb.database_checker:main"
+lnapgdb-insert-db = "lnapgdb.insertdb:main"
+lnapgdb-retry-missing = "lnapgdb.retry_missing:main"
+lnapgdb-build-model = "lnapgdb.model:main"
+
+[tool.setuptools]
+packages = ["lnapgdb"]

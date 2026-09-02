@@ -8,9 +8,24 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from sqlalchemy import text
 
-from log_utils import setup_logging
-from insertdb import InsertDB
-from file_watcher import resolve_instrument_directories
+from .log_utils import setup_logging, get_log_dir, ensure_not_root
+from .insertdb import InsertDB
+from .file_watcher import resolve_instrument_directories
+
+
+def default_check_date():
+    """Return the default night (YYYYMMDD) checked when no date is given: yesterday."""
+    return (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
+
+
+def missing_log_path(date):
+    """
+    Path of the missing-files log for a given night (YYYYMMDD). Written by
+    DatabaseChecker.run() and read back by retry_missing.py, which uses this
+    same function to locate the file and re-attempt ingestion of exactly the
+    files it lists.
+    """
+    return get_log_dir() / f"missing_files_{date}.log"
 
 
 class DatabaseChecker:
@@ -29,9 +44,7 @@ class DatabaseChecker:
         self.extensions = extensions or {'.fits', '.fit', '.fts'}
 
         # Default to yesterday if no date is provided
-        self.date = date or (
-            datetime.now() - timedelta(days=1)
-        ).strftime("%Y%m%d")
+        self.date = date or default_check_date()
 
     def _fast_scan_fits(self, directory_path):
         """Recursively find FITS files using the high-performance os.scandir."""
@@ -119,12 +132,18 @@ class DatabaseChecker:
         return {row[0] for row in result}
 
     def run(self):
+        """
+        Scan disk, cross-reference against the DB, and log whichever files
+        are missing. Returns the path to the missing-files log written (the
+        same path retry_missing.py resolves via missing_log_path()), or None
+        if there was nothing to report.
+        """
         files = self.scan_files()
 
         if not files:
             print(f"Nenhum arquivo local encontrado no disco para a data: {
                   self.date}")
-            return
+            return None
 
         print(f"Avaliando {len(
             files)} arquivos no disco. Buscando no banco de dados schema '{self.schema}'...")
@@ -138,10 +157,7 @@ class DatabaseChecker:
         print(f"Arquivos faltantes: {len(missing_files)}")
 
         if missing_files:
-            root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            log_dir = os.path.join(root_dir, 'log')
-            os.makedirs(log_dir, exist_ok=True)
-            log_name = os.path.join(log_dir, f"missing_files_{self.date}.log")
+            log_name = missing_log_path(self.date)
 
             # Log to file for batch processing/retry
             with open(log_name, "w", encoding="utf-8") as f:
@@ -149,9 +165,11 @@ class DatabaseChecker:
                     f.write(f"{file}\n")
 
             print(f"Log de arquivos faltando salvo em: {log_name}")
+            return str(log_name)
         else:
             print(
                 "✅ Sucesso! Todos os arquivos do disco estão presentes no banco de dados.")
+            return None
 
 
 def parse_arguments():
@@ -164,7 +182,8 @@ def parse_arguments():
                         help='Database schema to check')
     parser.add_argument('--date', type=str,
                         help='Night to check, format YYYYMMDD. Defaults to yesterday.')
-    parser.add_argument('--log-file', type=str, default='database_checker.log',
+    parser.add_argument('--log-file', type=str,
+                        default=str(get_log_dir() / 'database_checker.log'),
                         help='Path to the log file')
     parser.add_argument('--log-level', type=str, default='INFO',
                         help='Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
@@ -173,7 +192,9 @@ def parse_arguments():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def main():
+    ensure_not_root()
+
     args = parse_arguments()
 
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -209,3 +230,7 @@ if __name__ == "__main__":
         schema=db_schema,
     )
     checker.run()
+
+
+if __name__ == "__main__":
+    main()

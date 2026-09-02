@@ -31,13 +31,15 @@ The project aims to facilitate the ingestion, querying, and retrieval of astrono
 lnapgdb/
 │
 ├── config/
+├── credentials/
 ├── data/
 ├── figures/
+├── lnapgdb/         # installable Python package (was "src/")
 ├── models/
 ├── resources/
-├── src/
 ├── venv/
 ├── LICENSE
+├── pyproject.toml
 ├── README.md
 └── ...
 ```
@@ -57,32 +59,41 @@ git clone https://github.com/herpichfr/lnapgdb.git
 ```bash
 cd lnapgdb
 ```
-### 3. Create and activate a virtual environment 
-(optional but recommended)
+### 3. Create and activate a virtual environment
 
 ```bash
-python -m venv venv
-```
-
-**Linux/macOS**
-
-```bash
+python3 -m venv venv
 source venv/bin/activate
 ```
 
-**Windows**
+> ⚠️ Do not create the virtual environment or run any of the commands below
+> as `root`, and never invoke them with `sudo`. The tool refuses to start
+> when it detects either, since it writes logs and inserts data on behalf of
+> the regular observing account, not `root`.
+
+### 4. Install the package
+
+Installing in **editable** mode is the supported method, since the tool
+resolves `config/`, `credentials/` and `models/` relative to the location of
+the `lnapgdb/` package on disk — keep the git checkout in place after
+installing.
 
 ```bash
-venv\Scripts\activate
+pip install -e .
 ```
 
-### 4. Install the dependencies
+This reads all dependencies from `pyproject.toml` and also installs a set of
+console commands onto your `PATH` (inside the virtualenv):
 
-**Python**
+- `lnapgdb-observation-manager`
+- `lnapgdb-data-collector`
+- `lnapgdb-database-checker`
+- `lnapgdb-insert-db`
+- `lnapgdb-retry-missing`
+- `lnapgdb-build-model`
 
-```bash
-pip install -r requirements.txt
-```
+`pip install -r requirements.txt` still works too — it simply runs the same
+editable install.
 
 ### 5. Configure the database
 
@@ -92,12 +103,22 @@ pip install -r requirements.txt
 
 - Configure the required environment variables.
 
+- Add machine-specific credentials to `credentials/db_config.json` (this
+  directory is gitignored and never committed).
 
 ### 6. Run the project
 
 ```bash
-python src/observation_manager.py
+lnapgdb-observation-manager
+# equivalent to: python -m lnapgdb.observation_manager
 ```
+
+### 📄 Logs
+
+All log files (main run logs, failed-file logs, missing-file reports, etc.)
+are written to a `logs/` folder in the **home directory of the user running
+the code** (`~/logs`), which is created automatically if it doesn't exist
+yet. Log files are never written inside the package/installation directory.
 ---
 
 ## 📁 FITS Format

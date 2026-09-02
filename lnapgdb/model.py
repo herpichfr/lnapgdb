@@ -32,6 +32,8 @@ from sqlalchemy import (
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.declarative import declarative_base
 
+from .log_utils import ensure_not_root
+
 
 # Define db_schema to be used globally in the module
 db_schema = os.getenv('DB_SCHEMA', 'public')  # Default to 'public' if not set
@@ -211,6 +213,8 @@ def add_columns_from_json(table_class):
 
 
 def main():
+    ensure_not_root()
+
     parser = argparse.ArgumentParser(
         description='Create LNA DB tables and add columns from JSON files.')
     parser.add_argument('--reset-db', action='store_true',
