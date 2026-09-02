@@ -1,14 +1,29 @@
 #!/bin/env python3
 
 import os
+import argparse
+import logging
+from json import load
 from pathlib import Path
 from datetime import datetime, timedelta
 from sqlalchemy import text
 
+from log_utils import setup_logging
+from insertdb import InsertDB
+from file_watcher import resolve_instrument_directories
+
 
 class DatabaseChecker:
-    def __init__(self, directories, db, date=None, extensions=None, schema="public"):
-        self.directories = directories
+    def __init__(self, directories=None, config=None, db=None, date=None,
+                 extensions=None, schema="public"):
+        if config:
+            self.directories = [
+                full_path for _, full_path, exists in resolve_instrument_directories(config)
+                if exists
+            ]
+        else:
+            self.directories = [Path(d) for d in (directories or [])]
+
         self.db = db
         self.schema = schema
         self.extensions = extensions or {'.fits', '.fit', '.fts'}
@@ -33,46 +48,74 @@ class DatabaseChecker:
                         elif entry.is_file(follow_symlinks=False):
                             _, ext = os.path.splitext(entry.name)
                             if ext.lower() in self.extensions:
-                                # Resolve to absolute path to match DB entries
-                                files.append(str(Path(entry.path).resolve()))
+                                files.append(entry.path)
             except OSError as e:
                 print(f"Warning: Could not read directory {current_dir}: {e}")
 
         return files
 
+    def _find_date_directories(self, root_directory):
+        """
+        Recursively locate every directory named exactly self.date under
+        root_directory, regardless of nesting depth. This covers both flat
+        layouts (root/YYYYMMDD, e.g. bc060) and nested ones (root/channel/
+        YYYYMMDD, e.g. sparc4's per-camera mounts) without needing to know
+        the layout ahead of time.
+        """
+        matches = []
+        stack = [str(root_directory)]
+
+        while stack:
+            current_dir = stack.pop()
+            try:
+                with os.scandir(current_dir) as entries:
+                    for entry in entries:
+                        if not entry.is_dir(follow_symlinks=False):
+                            continue
+                        if entry.name == self.date:
+                            matches.append(Path(entry.path))
+                        else:
+                            stack.append(entry.path)
+            except OSError as e:
+                print(f"Warning: Could not read directory {current_dir}: {e}")
+
+        return matches
+
     def scan_files(self):
-        """Scans all monitored directories for the specific date folder."""
+        """Recursively scans all active raw directories for the target date."""
         files = []
 
         for directory in self.directories:
-            date_directory = Path(directory) / self.date
+            date_directories = self._find_date_directories(directory)
 
-            if not date_directory.exists():
-                print(f"Directory not found: {date_directory}")
+            if not date_directories:
+                print(f"No '{self.date}' directory found under: {directory}")
                 continue
 
-            # Fast scan the date directory
-            files.extend(self._fast_scan_fits(date_directory))
+            for date_directory in date_directories:
+                files.extend(self._fast_scan_fits(date_directory))
 
         return files
 
     def get_registered_files(self):
-        """Search all database paths that contain the folder date."""
-        # Use dynamic schema injected from the observation manager
+        """
+        Fetch filenames already ingested for this date. FILENAME is unique
+        and always prefixed with the observation night (YYYYMMDD...), so a
+        trailing-wildcard LIKE can use the unique index Postgres already
+        maintains on that column instead of forcing a full table scan.
+        """
         query = text(f"""
-            SELECT raw_path
+            SELECT "FILENAME"
             FROM {self.schema}.primary_table
-            WHERE raw_path LIKE :date_filter
+            WHERE "FILENAME" LIKE :date_prefix
         """)
 
-        # LIKE ensures that we will only bring the data from that night, saving memory.
-        date_filter = f"%{self.date}%"
+        date_prefix = f"{self.date}%"
 
         with self.db.engine.connect() as conn:
             result = conn.execute(
-                query, {"date_filter": date_filter}).fetchall()
+                query, {"date_prefix": date_prefix}).fetchall()
 
-        # Return a set of strings for O(1) lookup speeds
         return {row[0] for row in result}
 
     def run(self):
@@ -88,13 +131,17 @@ class DatabaseChecker:
 
         db_files = self.get_registered_files()
 
-        # Cross-reference
-        missing_files = [file for file in files if file not in db_files]
+        # Cross-reference by filename, since that's what's actually unique in the DB
+        missing_files = [
+            file for file in files if os.path.basename(file) not in db_files]
 
         print(f"Arquivos faltantes: {len(missing_files)}")
 
         if missing_files:
-            log_name = f"missing_files_{self.date}.log"
+            root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            log_dir = os.path.join(root_dir, 'log')
+            os.makedirs(log_dir, exist_ok=True)
+            log_name = os.path.join(log_dir, f"missing_files_{self.date}.log")
 
             # Log to file for batch processing/retry
             with open(log_name, "w", encoding="utf-8") as f:
@@ -105,3 +152,60 @@ class DatabaseChecker:
         else:
             print(
                 "✅ Sucesso! Todos os arquivos do disco estão presentes no banco de dados.")
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description='Check whether all raw FITS files for a given night were ingested into the DB.')
+    parser.add_argument('--config', type=str, default='config.json',
+                        help='Path to the configuration file')
+    parser.add_argument('--db_schema', type=str, default='public',
+                        choices=['public', 'dev', 'cyc', 'prod'],
+                        help='Database schema to check')
+    parser.add_argument('--date', type=str,
+                        help='Night to check, format YYYYMMDD. Defaults to yesterday.')
+    parser.add_argument('--log-file', type=str, default='database_checker.log',
+                        help='Path to the log file')
+    parser.add_argument('--log-level', type=str, default='INFO',
+                        help='Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
+    parser.add_argument('--debug', action='store_true',
+                        help='Enable debug mode (sets log level to DEBUG)')
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
+
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(root_dir, 'config', args.config), 'r') as f:
+        config = load(f)
+
+    db_schema = config.get('db_schema') or args.db_schema
+
+    level_map = {
+        'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING,
+        'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL,
+    }
+    log_level_int = logging.DEBUG if args.debug else level_map.get(
+        args.log_level.upper(), logging.INFO)
+
+    logger = setup_logging(
+        logger_name="lnapgdb.database_checker",
+        loglevel=log_level_int,
+        logfile=args.log_file,
+        verbose=True,
+    )
+
+    # Reuse InsertDB purely for its credential loading / engine setup, so
+    # the checker never has to duplicate (and risk drifting from) how the
+    # ingestion process connects to Postgres. This opens a short-lived,
+    # read-only-usage connection - it does not insert anything.
+    db = InsertDB(config=config, args=args, logger=logger)
+
+    checker = DatabaseChecker(
+        config=config,
+        db=db,
+        date=args.date,
+        schema=db_schema,
+    )
+    checker.run()
