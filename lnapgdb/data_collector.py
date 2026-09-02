@@ -17,7 +17,16 @@ from functools import partial
 import pandas as pd
 from astropy.io import fits
 
-from .log_utils import setup_logging, get_log_dir, ensure_not_root
+try:
+    from .log_utils import setup_logging, get_log_dir, ensure_not_root
+except ImportError:
+    # Allow running this file directly without the package having been
+    # installed, by putting the repo root on sys.path and importing lnapgdb
+    # as a regular top-level package instead.
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from lnapgdb.log_utils import setup_logging, get_log_dir, ensure_not_root
+
 logger = logging.getLogger("lnapgdb")
 
 

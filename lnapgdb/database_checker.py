@@ -8,9 +8,19 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from sqlalchemy import text
 
-from .log_utils import setup_logging, get_log_dir, ensure_not_root
-from .insertdb import InsertDB
-from .file_watcher import resolve_instrument_directories
+try:
+    from .log_utils import setup_logging, get_log_dir, ensure_not_root
+    from .insertdb import InsertDB
+    from .file_watcher import resolve_instrument_directories
+except ImportError:
+    # Allow running this file directly without the package having been
+    # installed, by putting the repo root on sys.path and importing lnapgdb
+    # as a regular top-level package instead.
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from lnapgdb.log_utils import setup_logging, get_log_dir, ensure_not_root
+    from lnapgdb.insertdb import InsertDB
+    from lnapgdb.file_watcher import resolve_instrument_directories
 
 
 def default_check_date():

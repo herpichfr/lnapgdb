@@ -22,12 +22,22 @@ import logging
 import subprocess
 from datetime import datetime
 
-from .log_utils import setup_logging, get_log_dir, ensure_not_root
-from .data_collector import DataCollector
-from .insertdb import InsertDB
-
-from .file_watcher import FileWatcher
-# from .database_checker import DatabaseChecker
+try:
+    from .log_utils import setup_logging, get_log_dir, ensure_not_root
+    from .data_collector import DataCollector
+    from .insertdb import InsertDB
+    from .file_watcher import FileWatcher
+    # from .database_checker import DatabaseChecker
+except ImportError:
+    # Allow running this file directly (e.g. `python3 observation_manager.py`)
+    # without the package having been installed, by putting the repo root on
+    # sys.path and importing lnapgdb as a regular top-level package instead.
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from lnapgdb.log_utils import setup_logging, get_log_dir, ensure_not_root
+    from lnapgdb.data_collector import DataCollector
+    from lnapgdb.insertdb import InsertDB
+    from lnapgdb.file_watcher import FileWatcher
 
 
 def parse_arguments():

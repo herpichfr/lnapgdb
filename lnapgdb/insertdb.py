@@ -17,7 +17,15 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL
 
-from .log_utils import setup_logging, ensure_not_root
+try:
+    from .log_utils import setup_logging, ensure_not_root
+except ImportError:
+    # Allow running this file directly without the package having been
+    # installed, by putting the repo root on sys.path and importing lnapgdb
+    # as a regular top-level package instead.
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from lnapgdb.log_utils import setup_logging, ensure_not_root
 
 
 def parse_args():

@@ -26,10 +26,21 @@ import logging
 from json import load
 from datetime import datetime
 
-from .log_utils import setup_logging, get_log_dir, ensure_not_root
-from .data_collector import DataCollector
-from .insertdb import InsertDB
-from .database_checker import default_check_date, missing_log_path
+try:
+    from .log_utils import setup_logging, get_log_dir, ensure_not_root
+    from .data_collector import DataCollector
+    from .insertdb import InsertDB
+    from .database_checker import default_check_date, missing_log_path
+except ImportError:
+    # Allow running this file directly without the package having been
+    # installed, by putting the repo root on sys.path and importing lnapgdb
+    # as a regular top-level package instead.
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from lnapgdb.log_utils import setup_logging, get_log_dir, ensure_not_root
+    from lnapgdb.data_collector import DataCollector
+    from lnapgdb.insertdb import InsertDB
+    from lnapgdb.database_checker import default_check_date, missing_log_path
 
 
 def parse_arguments():
