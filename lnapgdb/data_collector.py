@@ -91,6 +91,22 @@ class DataCollector:
         return f"DataCollector(fits_files='{self.fits_files}', db_schema='{self.db_schema}', nprocs={self.nprocs}, debug={self.debug})"
 
     @staticmethod
+    def default_service_nprocs(fraction=0.8):
+        """
+        Number of worker processes to use for unattended (service) data
+        collection: roughly `fraction` of the CPUs actually available to
+        this process, with a floor of 1. Prefers the CPU affinity mask
+        (accurate under cgroup/container CPU limits) and falls back to the
+        total CPU count if that isn't available on this platform.
+        """
+        try:
+            cpu_count = len(os.sched_getaffinity(0))
+        except (AttributeError, NotImplementedError):
+            cpu_count = os.cpu_count() or 1
+
+        return max(1, int(cpu_count * fraction))
+
+    @staticmethod
     def get_instrument_model(instrument_name, instrument_models_cache=None):
         """Retrieve instrument model from cache or fall back to loading from disk."""
         if not instrument_name:
@@ -245,8 +261,15 @@ class DataCollector:
         else:
             self.logger.info(f"Processing {len(new_fits_files)} files using {
                              self.nprocs} parallel processes.")
-            with ProcessPoolExecutor(max_workers=self.nprocs) as executor:
-                data = list(executor.map(worker, new_fits_files))
+            try:
+                with ProcessPoolExecutor(max_workers=self.nprocs) as executor:
+                    data = list(executor.map(worker, new_fits_files))
+            except Exception as e:
+                self.logger.warning(
+                    f"Parallel processing with {self.nprocs} processes failed "
+                    f"({e}). Falling back to single-file (sequential) processing."
+                )
+                data = [worker(file) for file in new_fits_files]
 
         # NOTE: Save the filenames that failed validation for later review
         valid_data = [d for d in data if d and not d.get('error')]

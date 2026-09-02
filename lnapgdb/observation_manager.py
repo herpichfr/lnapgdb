@@ -40,8 +40,13 @@ def parse_arguments():
                         default='public',
                         choices=['public', 'dev', 'cyc', 'prod'],
                         help='Database schema to use for insertion')
-    parser.add_argument('--nprocs', '-n', type=int, default=1,
-                        help='Number of processes to use for parallel processing')
+    parser.add_argument('--nprocs', '-n', type=int, default=None,
+                        help='Number of processes to use for parallel processing of '
+                             '--test_images. Ignored when running as a service (watching '
+                             'directories): that mode always tries to use ~80%% of the '
+                             'available CPUs, falling back to single-file processing if '
+                             'that fails. If not given here, --test_images defaults to '
+                             'single-file processing.')
     parser.add_argument('--test', action='store_true',
                         help='Run in test mode (processes a predefined set of test images)')
     parser.add_argument('--watch-dir', nargs='+',
@@ -305,15 +310,19 @@ def main():
                 "No test images found after expanding patterns/paths.")
             exit(1)
 
+        # Manual runs never guess at parallelism: use exactly what the user
+        # asked for with --nprocs, or fall back to single-file processing.
+        test_nprocs = args.nprocs if args.nprocs else 1
         observation_manager.logger.info(
-            f"Processing {len(args.test_images)} test images.")
+            f"Processing {len(args.test_images)} test images using {
+                test_nprocs} process(es).")
         try:
             data_collector = DataCollector(
                 fits_files=args.test_images,
                 primary_model=observation_manager.primary_model,
                 instrument_models_cache=observation_manager.instrument_models,
                 db_schema=db_schema,
-                nprocs=args.nprocs,
+                nprocs=test_nprocs,
                 config=observation_manager.config,
                 debug=args.debug
             )
@@ -368,6 +377,15 @@ def main():
         observation_manager.logger.error(
             "Database check functionality is not implemented yet.")
 
+    # Running unattended (as a service): always try to use ~80% of the
+    # available CPUs for data collection, since a night's worth of images
+    # can be large. DataCollector itself falls back to single-file
+    # processing if parallel processing fails for any reason.
+    service_nprocs = DataCollector.default_service_nprocs()
+    observation_manager.logger.info(
+        f"Service mode: using up to {service_nprocs} parallel process(es) "
+        "for data collection.")
+
     try:
         watcher_iter = iter(watcher.watch())
 
@@ -396,7 +414,7 @@ def main():
                     primary_model=observation_manager.primary_model,
                     instrument_models_cache=observation_manager.instrument_models,
                     db_schema=db_schema,
-                    nprocs=args.nprocs,
+                    nprocs=service_nprocs,
                     config=observation_manager.config,
                     debug=args.debug
                 )
