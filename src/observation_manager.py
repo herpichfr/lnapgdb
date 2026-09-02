@@ -14,6 +14,7 @@ Copyright (c) 2026, LNA - Laboratório Nacional de Astrofísica, Brazil. All rig
 """
 
 import os
+import glob
 from json import load
 import time
 import argparse
@@ -53,7 +54,11 @@ def parse_arguments():
                         help="Check if FITS files are already inserted in the database.")
     parser.add_argument("--date", type=str, help="Data no formato YYYYMMDD")
     parser.add_argument("--test_images", nargs="+",
-                        help="List of test images to process in test mode")
+                        help="List of test images to process in test mode. "
+                             "Accepts literal file paths and/or quoted glob "
+                             "patterns (e.g. '/mnt/sparc4/*/20260829/*.fits'), "
+                             "which are expanded internally so the shell never "
+                             "has to expand large file lists itself.")
     parser.add_argument('--log-level', type=str, default='WARNING',
                         help='Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
     parser.add_argument('--log-file', type=str, default='observation_manager.log',
@@ -279,8 +284,25 @@ if __name__ == "__main__":
                 "Non-interactive environment detected. Defaulting to schema from config file.")
 
     if args.test_images:
+        expanded_images = []
+        for pattern in args.test_images:
+            if glob.has_magic(pattern):
+                matches = glob.glob(pattern, recursive=True)
+                if not matches:
+                    observation_manager.logger.warning(
+                        f"No files matched pattern: {pattern}")
+                expanded_images.extend(matches)
+            else:
+                expanded_images.append(pattern)
+        args.test_images = sorted(set(expanded_images))
+
+        if not args.test_images:
+            observation_manager.logger.error(
+                "No test images found after expanding patterns/paths.")
+            exit(1)
+
         observation_manager.logger.info(
-            f"Processing test images: {args.test_images}")
+            f"Processing {len(args.test_images)} test images.")
         try:
             data_collector = DataCollector(
                 fits_files=args.test_images,
