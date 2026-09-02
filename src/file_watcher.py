@@ -15,6 +15,31 @@ from pathlib import Path
 from typing import List
 
 
+def resolve_instrument_directories(config):
+    """
+    Resolve each instrument's raw_data_directory from a loaded config dict,
+    expanding environment variables. Shared by FileWatcher and DatabaseChecker
+    so both always agree on where each instrument's data actually lives.
+
+    Returns a list of (instrument_name, Path, exists) tuples.
+    """
+    resolved = []
+    data_root = config.get("data_root", "")
+    instruments = config.get("instruments", {})
+
+    for instrument_name, instrument_data in instruments.items():
+        raw_dir = os.path.expandvars(
+            instrument_data.get("raw_data_directory", ""))
+
+        if not raw_dir:
+            continue
+
+        full_path = Path(data_root) / raw_dir
+        resolved.append((instrument_name, full_path, full_path.exists()))
+
+    return resolved
+
+
 class FileWatcher:
     def __init__(
         self,
@@ -219,7 +244,8 @@ class FileWatcher:
 
             if new_files:
                 print(f"DEBUG: Found {len(new_files)} new files.")
-                yield new_files
+
+            yield new_files
 
             time.sleep(self.poll_interval)
 
@@ -228,19 +254,12 @@ class FileWatcher:
         Load directories from config file.
         """
         directories = []
-        data_root = config.get("data_root", "")
-        instruments = config.get("instruments", {})
 
-        for instrument_name, instrument_data in instruments.items():
-            raw_dir = os.path.expandvars(
-                instrument_data.get("raw_data_directory", ""))
-
-            if raw_dir:
-                full_path = Path(data_root) / raw_dir
-                if full_path.exists():
-                    print(f"DEBUG: Watching {full_path}")
-                    directories.append(full_path)
-                else:
-                    print(f"WARNING: Directory does not exist: {full_path}")
+        for instrument_name, full_path, exists in resolve_instrument_directories(config):
+            if exists:
+                print(f"DEBUG: Watching {full_path}")
+                directories.append(full_path)
+            else:
+                print(f"WARNING: Directory does not exist: {full_path}")
 
         return directories
