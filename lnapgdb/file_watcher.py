@@ -83,8 +83,7 @@ class FileWatcher:
         self.active_directories = []
 
         for root_dir in self.directories:
-            latest_dir = self._find_latest_directory(root_dir)
-            if latest_dir:
+            for latest_dir in self._find_active_directories(root_dir):
                 self.active_directories.append(latest_dir)
                 print(f"DEBUG: Active directory => {latest_dir}")
 
@@ -134,28 +133,46 @@ class FileWatcher:
             return None
 
         return latest_dir
-    # def _find_latest_directory(self, root_directory: Path):
-    #     """
-    #     Find the most recently modified subdirectory.
-    #     """
-    #     latest_dir = None
-    #     latest_mtime = 0
-    #
-    #     try:
-    #         with os.scandir(root_directory) as entries:
-    #             for entry in entries:
-    #                 if entry.is_dir():
-    #                     try:
-    #                         mtime = entry.stat().st_mtime
-    #                         if mtime > latest_mtime:
-    #                             latest_mtime = mtime
-    #                             latest_dir = Path(entry.path)
-    #                     except OSError:
-    #                         continue
-    #     except OSError:
-    #         return None
-    #
-    #     return latest_dir
+
+    def _find_active_directories(self, root_directory: Path):
+        """
+        Resolve the currently active (most recently modified) YYYYMMDD
+        directories under root_directory. Two raw-data layouts are
+        supported without any extra configuration:
+
+          - flat:   root_directory/YYYYMMDD/*.fits            (e.g. bc060,
+                    robo43)
+          - nested: root_directory/<channel>/YYYYMMDD/*.fits  (e.g.
+                    sparc4's four win_sparc4acs[1-4] channel mounts)
+
+        A flat layout yields at most one directory. A nested layout yields
+        one directory per channel subdirectory that has its own YYYYMMDD
+        directory, since each channel is written independently and can be
+        on a different "latest" night.
+        """
+        direct_latest = self._find_latest_directory(root_directory)
+        if direct_latest:
+            return [direct_latest]
+
+        # Nothing YYYYMMDD-named directly under root_directory: this may be
+        # a per-channel layout, so look one level deeper, once per
+        # immediate subdirectory.
+        active_directories = []
+        try:
+            with os.scandir(root_directory) as entries:
+                channel_dirs = [
+                    Path(entry.path) for entry in entries
+                    if entry.is_dir(follow_symlinks=False)
+                ]
+        except OSError:
+            return active_directories
+
+        for channel_dir in channel_dirs:
+            latest_dir = self._find_latest_directory(channel_dir)
+            if latest_dir:
+                active_directories.append(latest_dir)
+
+        return active_directories
 
     def _fast_scan_fits(self, directory: Path):
         """
@@ -188,9 +205,7 @@ class FileWatcher:
         # Refresh active directories
         updated_active_dirs = []
         for root_dir in self.directories:
-            latest_dir = self._find_latest_directory(root_dir)
-            if latest_dir:
-                updated_active_dirs.append(latest_dir)
+            updated_active_dirs.extend(self._find_active_directories(root_dir))
         self.active_directories = updated_active_dirs
 
         for directory in self.active_directories:
