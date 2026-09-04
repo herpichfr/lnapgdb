@@ -291,7 +291,8 @@ class DataCollector:
             instruments = self.config.get("instruments", {})
 
             for name, inst_data in instruments.items():
-                failed_dir = inst_data.get("failed_directory")
+                failed_dir = os.path.expandvars(
+                    inst_data.get("failed_directory", ""))
                 if failed_dir:
                     full_path = os.path.join(data_root, failed_dir)
                     failed_dirs[name.lower()] = full_path
@@ -312,13 +313,34 @@ class DataCollector:
                 else:
                     failed_dir = str(get_log_dir() / "unknown_failed")
 
-            os.makedirs(failed_dir, exist_ok=True)
-            log_path = os.path.join(failed_dir, "failed_fits.log")
+            try:
+                os.makedirs(failed_dir, exist_ok=True)
+                log_path = os.path.join(failed_dir, "failed_fits.log")
 
-            with open(log_path, "a") as f:
-                for file in files:
-                    f.write(f"{datetime.datetime.now()} - {file}\n")
-            self.logger.info(f"Saved failed files log to: {log_path}")
+                with open(log_path, "a") as f:
+                    for file in files:
+                        f.write(f"{datetime.datetime.now()} - {file}\n")
+                self.logger.info(f"Saved failed files log to: {log_path}")
+            except OSError as e:
+                # The configured failed-files directory couldn't be created
+                # or written to (e.g. an unresolved/invalid env var, or a
+                # permissions issue on the mount). Don't reject the
+                # ingestion over a logging problem: fall back to a
+                # temporary local log inside this project's tmp/ directory.
+                fallback_dir = os.path.join(self.root_dir, "tmp")
+                fallback_log_path = os.path.join(
+                    fallback_dir, f"failed_fits_{inst}.log")
+
+                self.logger.warning(
+                    f"Could not write failed files log to '{failed_dir}' "
+                    f"({e}). Creating a temporary local log instead at: "
+                    f"{fallback_log_path}"
+                )
+
+                os.makedirs(fallback_dir, exist_ok=True)
+                with open(fallback_log_path, "a") as f:
+                    for file in files:
+                        f.write(f"{datetime.datetime.now()} - {file}\n")
 
         # Transform the list of dictionaries into two pandas DataFrames
         if not valid_data:
