@@ -13,6 +13,7 @@ without warranty of any kind, express or implied. In no event shall the authors
 import logging
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 
@@ -97,3 +98,41 @@ def setup_logging(
     logger.propagate = False
 
     return logger
+
+
+def close_and_timestamp_logfile(logger):
+    """
+    Close every FileHandler attached to `logger` and rename its log file on
+    disk, appending "_<closure time, YYYYMMDD_HHMMSS>" to the filename just
+    before its extension (e.g. ``observation_manager.log`` becomes
+    ``observation_manager_20260904_113025.log``).
+
+    Meant to be called on a graceful shutdown (e.g. Ctrl+C) so the log from
+    that run is preserved under its own name instead of being appended to on
+    the next start. Returns the list of new paths the log file(s) were
+    renamed to.
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    archived_paths = []
+
+    for handler in list(logger.handlers):
+        if not isinstance(handler, logging.FileHandler):
+            continue
+
+        old_path = handler.baseFilename
+        handler.close()
+        logger.removeHandler(handler)
+
+        base, ext = os.path.splitext(old_path)
+        new_path = f"{base}_{timestamp}{ext}"
+
+        try:
+            os.rename(old_path, new_path)
+            archived_paths.append(new_path)
+        except OSError as e:
+            sys.stderr.write(
+                f"lnapgdb: could not rename log file '{old_path}' to "
+                f"'{new_path}': {e}\n"
+            )
+
+    return archived_paths

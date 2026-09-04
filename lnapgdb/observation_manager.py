@@ -23,7 +23,7 @@ import subprocess
 from datetime import datetime
 
 try:
-    from .log_utils import setup_logging, get_log_dir, ensure_not_root
+    from .log_utils import setup_logging, get_log_dir, ensure_not_root, close_and_timestamp_logfile
     from .data_collector import DataCollector
     from .insertdb import InsertDB
     from .file_watcher import FileWatcher
@@ -34,7 +34,7 @@ except ImportError:
     # sys.path and importing lnapgdb as a regular top-level package instead.
     import sys
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from lnapgdb.log_utils import setup_logging, get_log_dir, ensure_not_root
+    from lnapgdb.log_utils import setup_logging, get_log_dir, ensure_not_root, close_and_timestamp_logfile
     from lnapgdb.data_collector import DataCollector
     from lnapgdb.insertdb import InsertDB
     from lnapgdb.file_watcher import FileWatcher
@@ -334,7 +334,8 @@ def main():
                 db_schema=db_schema,
                 nprocs=test_nprocs,
                 config=observation_manager.config,
-                debug=args.debug
+                debug=args.debug,
+                logger=observation_manager.logger
             )
 
             p_df, i_df = data_collector.collect_data()
@@ -426,7 +427,8 @@ def main():
                     db_schema=db_schema,
                     nprocs=service_nprocs,
                     config=observation_manager.config,
-                    debug=args.debug
+                    debug=args.debug,
+                    logger=observation_manager.logger
                 )
 
                 p_df, i_df = data_collector.collect_data()
@@ -480,6 +482,8 @@ def main():
 
     except KeyboardInterrupt:
         print("\nProgram interrupted by the user. Exiting gracefully.")
+        for archived_path in close_and_timestamp_logfile(observation_manager.logger):
+            print(f"Closed log file and archived it as: {archived_path}")
 
 
 if __name__ == "__main__":
