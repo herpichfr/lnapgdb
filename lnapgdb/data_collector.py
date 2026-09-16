@@ -19,6 +19,7 @@ from astropy.io import fits
 
 try:
     from .log_utils import setup_logging, get_log_dir, ensure_not_root
+    from .coords import ra_to_degrees, dec_to_degrees
 except ImportError:
     # Allow running this file directly without the package having been
     # installed, by putting the repo root on sys.path and importing lnapgdb
@@ -26,6 +27,7 @@ except ImportError:
     import sys
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from lnapgdb.log_utils import setup_logging, get_log_dir, ensure_not_root
+    from lnapgdb.coords import ra_to_degrees, dec_to_degrees
 
 logger = logging.getLogger("lnapgdb")
 
@@ -235,6 +237,24 @@ class DataCollector:
         # happen here to garantee that the path is associated with the correct file
         primary_data['raw_path'] = raw_full_filename
 
+        # NOTE: Derive numeric decimal-degree coordinates from the raw
+        # RA/DEC header strings for indexed positional queries. Read from
+        # header (not primary_data) so they're populated even if validation
+        # dropped RA/DEC, and assign both keys unconditionally (including
+        # None) so every record in the batch carries the same columns.
+        ra_raw = header.get('RA')
+        dec_raw = header.get('DEC')
+        primary_data['ra_deg'] = ra_to_degrees(ra_raw)
+        primary_data['dec_deg'] = dec_to_degrees(dec_raw)
+        if ra_raw not in (None, '') and primary_data['ra_deg'] is None:
+            logger.warning(
+                f"File '{file}' has RA '{ra_raw}' which could not be "
+                f"converted to decimal degrees.")
+        if dec_raw not in (None, '') and primary_data['dec_deg'] is None:
+            logger.warning(
+                f"File '{file}' has DEC '{dec_raw}' which could not be "
+                f"converted to decimal degrees.")
+
         if is_valid:
             logger.debug(f"File '{file}' passed validation successfully.")
             return {
@@ -354,16 +374,11 @@ class DataCollector:
     @staticmethod
     def dms_to_decimal(dms_str):
         """Convert DMS (Degrees, Minutes, Seconds) string to decimal degrees."""
-        try:
-            float_value = float(dms_str)
-            return float_value
-        except ValueError:
-            parts = dms_str.split(':')
-            if len(parts) < 2:
-                raise ValueError(f"Invalid DMS format: {dms_str}")
-            degrees, minutes, seconds = map(float, parts)
-            decimal_degrees = degrees + (minutes / 60) + (seconds / 3600)
-            return decimal_degrees
+        # NOTE: Thin delegate over lnapgdb.coords.dec_to_degrees, which fixes
+        # the sign bug this used to have (the leading '-' only applied to the
+        # degrees field, so '-22:32:04' became -21.466 instead of -22.534)
+        # and never raises.
+        return dec_to_degrees(dms_str)
 
     @staticmethod
     def validate_data(

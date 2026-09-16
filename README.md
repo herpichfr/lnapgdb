@@ -106,6 +106,20 @@ editable install.
 - Add machine-specific credentials to `credentials/db_config.json` (this
   directory is gitignored and never committed).
 
+- `primary_table` carries two derived, indexed columns in addition to the
+  raw `RA`/`DEC` header strings: `ra_deg` and `dec_deg`, decimal degrees
+  (double precision), populated automatically during collection. On a
+  schema created fresh with `lnapgdb-build-model` they are already present.
+  On an existing schema, run the one-time migration instead:
+
+  ```bash
+  DB_SCHEMA=dev lnapgdb-build-model --sync-schema --backfill-coords
+  ```
+
+  `--sync-schema` idempotently adds the columns and their indexes (safe to
+  re-run); `--backfill-coords` computes `ra_deg`/`dec_deg` for rows that
+  predate the change (also safe to re-run).
+
 ### 6. Run the project
 
 ```bash
