@@ -1,8 +1,12 @@
 # local credentials
 credentials/
+
+# other
 tmp/
 graveyard/
 *.bak
+PLAN*
+HANDOFF*
 
 # ignore symbolic links to avoid accidentally committing them
 *.lnk
