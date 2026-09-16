@@ -1,0 +1,57 @@
+KWS2026A,Mandatory,INSTRUME,Default,Example,Type,Nullable,Allowed_Values,Comment
+SIMPLE,y,primary,T,T,Boolean,FALSE,,Standard FITS (NOST-100-2.0)
+BSCALE,y,primary,,1,Integer,TRUE,,Linear factor in scaling equation
+BZERO,y,primary,,32768,Float,TRUE,,value = fits-value*BSCALE+BZERO
+BUNIT,n,primary,,adu,String,TRUE,,Physical unit of array values
+BITPIX,y,primary,,16,Integer,TRUE,,# bits storing pix values
+NAXIS,y,primary,,2,Integer,FALSE,,# of axes in frame
+NAXIS1,y,primary,,2080,Integer,FALSE,,# of pixels/row
+NAXIS2,y,primary,,2048,Integer,FALSE,,# of rows (also # of scan lines)
+EXTEND,y,primary,T,T,Boolean,TRUE,,Extensions may be present
+PROPID,y,primary,UNKNOWN,OP2025B-001,String,FALSE,,The identification code assigned to each observing run by the Science Committee
+PROPOSAL,n,primary,,SOAR,String,TRUE,,Through where the proposal was received
+OBSERVER,n,primary,,CHIMERA,String,TRUE,,Name of the observer
+OBJECT,n,primary,,NGC1234,String,TRUE,,Target as given by the user
+ORIGIN,n,primary,LNA,LNA,String,TRUE,,Who delivers the data
+TELESCOP,n,primary,,PE160,String,TRUE,,Telescope name
+SITEID,n,primary,,OPD,String,TRUE,,Observatory/Site
+OBSLONG,n,primary,,-45.3,Float,TRUE,"range:-180,180","Observatory East Longitude (DEG, -180 to 180)"
+OBSLAT,n,primary,,-22.3,Float,TRUE,"range:-90,90","Observatory North Latitude (DEG, -90 to 90)"
+OBSALT,n,primary,,1864,float,TRUE,"range:0,inf",Observatory elevation above sea level (m)
+INSTRUME,y,primary,,SPARC4,String,FALSE,,Instrument used
+OBSTYPE,y,primary,,OBJECT,string,TRUE,"OBJECT,ZERO,FLAT,DARK,FOCUS,COMP","Image type: OBJECT, ZERO, FLAT, DARK, FOCUS"
+FILENAME,y,primary,,20251105_S4C1_00001.fits,String,FALSE,,Original file name
+DATEFILE,n,primary,,2001-08-19T09:33:11.950,String,TRUE,,File creation date
+DATE-OBS,y,primary,,2001-08-19T09:33:11.950,String,FALSE,,Exposure start
+UTTIME,n,primary,,,string,TRUE,,UTC time at start of observation
+UTDATE,n,primary,,34391,Float,TRUE,,UTC at start (s)
+EXPTIME,n,primary,,60,Float,TRUE,,Exposure time (s)
+RA,y,primary,,21.955217,string,TRUE,,Pointing (deg) (J2000.0)
+DEC,y,primary,,-1.8821,string,TRUE,,Pointing (deg) (J2000.0)
+EQUINOX,n,primary,,2000,string,FALSE,,Standard FK5 epoch
+TELFOCUS,n,primary,,0,integer,TRUE,"range:0,inf",Telescope focus position (arbitrary units)
+TCSHA,n,primary,,00:00:00,string,TRUE,,TCS hour angle: HH:MM:SS
+TCSDATE,n,primary,,,string,TRUE,,TCS local date (isot)
+EXTTEMP,n,primary,,20,float,TRUE,"range:-60,60","Temperature (deg C), weather tower"
+AIRMASS,n,primary,,,float,TRUE,"range:1,inf",Airmass at start of observation
+PRESSURE,n,primary,,,float,TRUE,"range:0,inf","Barometric pressure (mb), weather tower"
+HUMIDITY,n,primary,,90,float,TRUE,"range:0,100","Relative humidity (%), weather tower"
+WEIGHT,p,primary,,0.8,Float,TRUE,,This is the median over all pixels of the weight map
+BLANK,n,primary,,0,Integer,TRUE,,Value used for NULL pixels
+DATE,y,primary,,2001-08-19T09:34:52.676,String,TRUE,,Date the file was written
+DATAMAX,n,primary,,43212,Float,TRUE,,Maximal pixel value
+DATAMIN,n,primary,,323,Float,TRUE,,Minimal pixel value
+TEXPTIME,n,primary,,240,Float,TRUE,,"The arithmetic sum of the integration time of all exposures included in this
+product (s)."
+MJD-OBS,n,primary,,52140.39805,Float,TRUE,,MJD at exposure start (d)
+MJD-END,n,primary,,52140.39875,Float,TRUE,,MJD at exposure end (d)
+DATE-END,n,primary,,2001-08-19T09:34:51.950,String,TRUE,,Exposure end
+TIMESYS,n,primary,,UTC,String,TRUE,,Time system used
+LST,n,primary,,19:51:15.380,String,TRUE,,LST at start (s)
+PI-COI,n,primary,UNKNOWN,SCIENTIST,String,TRUE,,Name of the PI/Co-I
+OBID,n,primary,,311,Integer,TRUE,,Observation Block ID run number
+PRODCATG,n,primary,,SCIENCE.IMAGE,String,TRUE,,Data product category
+CHECKSUM,y,primary,,B5445389D6586A3E,String,FALSE,,HDU checksum
+DATASUM,y,primary,,0265279410,String,FALSE,,Data unit checksum
+COMMENT,n,primary,Any comment,Any comment,String,TRUE,,
+FOCRED,n,primary,,FALSE,boolean,TRUE,,Focal reducer used

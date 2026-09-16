@@ -1,0 +1,8 @@
+KWS2026A,Mandatory,INSTRUME,Default,Example,Type,Nullable,Allowed_Values,Comment,Column 10,Column 11,Column 12
+INSTMODE,y,"sparc4,cam1,robocam",,PHOTOMETRY,String,TRUE,,Technique used during the observation,,,
+FILTER,y,"sparc4,cam1,robocam",,V,String,TRUE,,Filter name,,,
+CCDSERN,n,"sparc4,cam1,robocam",,Dummy SN,string,TRUE,,CCD serial number,,,
+DETEXP,n,robocam,,30,Float,TRUE,"range:0,inf",[s] Actual exposure time,,,
+DETECTOR,y,"robocam,cam1",,QHY600M,string,FALSE,,Name of the detector,,,
+FWHEEL,n,robocam,,CenterLine Filter Wheel,string,TRUE,,Filter Wheel Model,,,
+FWSRN,n,robocam,,12345,string,TRUE,,Filter Wheel Serial Number,,,

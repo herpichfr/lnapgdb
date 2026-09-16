@@ -1,0 +1,20 @@
+KWS2026A,Mandatory,INSTRUME,Default,Example,Type,Nullable,Allowed_Values,Comment
+INSTMODE,y,"sparc4,cam1,robocam",,PHOTOMETRY,String,TRUE,,Technique used during the observation
+FILTER,y,"sparc4,cam1,robocam",,V,String,TRUE,,Filter name
+CCDSERN,n,"sparc4,cam1,robocam",,Dummy SN,string,TRUE,,CCD serial number
+NFRAMES,n,"sparc4,cam1",,1,integer,TRUE,,Number of frames in sequence
+ACQMODE,n,"sparc4,cam1",,Single Scan,string,TRUE,,Acquisition mode
+PREAMP,n,"sparc4,cam1",,1,string,TRUE,,Pre-amplifier gain
+VSHIFT,n,"sparc4,cam1",,1.13,float,TRUE,,Vertical shift speed (ms)
+EMGAIN,n,"sparc4,cam1",,,integer,TRUE,"range:0,inf",Electron multiplier gain
+VBIN,n,"sparc4,cam1",,1,integer,TRUE,,Vertical binning (pix)
+HBIN,n,"sparc4,cam1",,1,integer,TRUE,,Horizontal binning (pix)
+CCDTEMP,n,"sparc4,cam1",,,integer,TRUE,"range:-80,25",CCD temperature (deg C)
+VCLKAMP,n,"sparc4,cam1",,Normal,string,TRUE,,"Clock amplitude: Normal, +1, +2, +3, +4"
+GAIN,n,"sparc4,cam1",,2,Float,TRUE,,Specifies the detector sensitivity in number of electrons per data
+RDNOISE,n,"sparc4,cam1",,10.1,Float,TRUE,,Specifies the detector readout noise in electrons
+ACSVRSN,n,"sparc4,cam1",,,string,TRUE,,S4ACS software version
+DETECTOR,y,"robocam,cam1",,QHY600M,string,FALSE,,Name of the detector
+READMODE,n,cam1,,Image,string,TRUE,,Readout Mode
+READTIME,n,cam1,,1.00E-06,float,TRUE,,Pixel readout time
+PLATESCL,n,cam1,,0.68,float,FALSE,"range:0,inf",Plate scale in arcsec/pixel

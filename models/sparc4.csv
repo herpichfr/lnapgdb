@@ -1,0 +1,70 @@
+KWS2026A,Mandatory,INSTRUME,Default,Example,Type,Nullable,Allowed_Values,Comment
+INSTMODE,y,"sparc4,cam1,robocam",,PHOTOMETRY,String,TRUE,,Technique used during the observation
+SYNCMODE,n,sparc4,,,String,TRUE,"SYNC,ASYNC",Synchronization across channels at start of acq
+INSTROT,n,sparc4,,GUIDEANG,float,TRUE,360,Instrument rotator angle in degrees
+FILTER,y,"sparc4,cam1,robocam",,V,String,TRUE,,Filter name
+CHANNEL,n,sparc4,,,integer,TRUE,"1,2,3,4","Instrument channel: 1 (g), 2 (r), 3 (i), 4 (z)"
+CHANNEL1,n,sparc4,,CHANNEL 1,boolean,TRUE,"true,false",Channel 1 is on (T) or off (F)
+CHANNEL2,n,sparc4,,CHANNEL 2,boolean,TRUE,"true,false",Channel 2 is on (T) or off (F)
+CHANNEL3,n,sparc4,,CHANNEL 3,boolean,TRUE,"true,false",Channel 3 is on (T) or off (F)
+CHANNEL4,n,sparc4,,CHANNEL 4,boolean,TRUE,"true,false",Channel 4 is on (T) or off (F)
+CCDSERN,n,"sparc4,cam1,robocam",,Dummy SN,string,TRUE,,CCD serial number
+NCYCLES,n,sparc4,,,integer,TRUE,"range:1,inf",Number of cycles
+CYCLIND,n,sparc4,,,integer,TRUE,"range:1,inf",Cycle index
+NSEQ,n,sparc4,,,integer,TRUE,"range:1,16",Number of sequences in one cycle
+SEQINDEX,n,sparc4,,,integer,TRUE,"range:1,16",Sequence index in the cycle
+NFRAMES,n,"sparc4,cam1",,1,integer,TRUE,,Number of frames in sequence
+FRAMEIND,n,sparc4,,1,integer,TRUE,,Frame index in sequence
+ACQMODE,n,"sparc4,cam1",,Single Scan,string,TRUE,,Acquisition mode
+PREAMP,n,"sparc4,cam1",,1,string,TRUE,,Pre-amplifier gain
+READRATE,n,sparc4,,,float,TRUE,"0.1,1,10,20,30",Readout rate (MHz)
+VSHIFT,n,"sparc4,cam1",,1.13,float,TRUE,,Vertical shift speed (ms)
+TRIGGER,n,sparc4,,,string,TRUE,"Internal,External",Trigger mode
+EMMODE,n,sparc4,,,string,TRUE,"Electron Multiplying,Conventional",Output amplifier mode
+EMGAIN,n,"sparc4,cam1",,,integer,TRUE,"range:0,inf",Electron multiplier gain
+VBIN,n,"sparc4,cam1",,1,integer,TRUE,,Vertical binning (pix)
+HBIN,n,"sparc4,cam1",,1,integer,TRUE,,Horizontal binning (pix)
+INITLIN,n,sparc4,,,integer,TRUE,"11,024",Initial line (pix)
+INITCOL,n,sparc4,,,integer,TRUE,"11,024",Initial column (pix)
+FINALLIN,n,sparc4,,,integer,TRUE,"11,024",Final line (pix)
+FINALCOL,n,sparc4,,,integer,TRUE,"11,024",Final column (pix)
+SHUTTER,n,sparc4,,,string,TRUE,"Open,Closed",Shutter mode
+COOLER,n,sparc4,,,boolean,TRUE,"true,false",CCD cooler on: T or F
+CCDTEMP,n,"sparc4,cam1",,,integer,TRUE,"range:-80,25",CCD temperature (deg C)
+TGTEMP,n,sparc4,,,integer,TRUE,"range:-80,25",CCD target temperature (deg C)
+TEMPST,n,sparc4,,,string,TRUE,"TEMPERATURE_OFF,TEMPERATURE_NOT_REACHED,TEMPERATURE_NOT_STABILIZED,TEMPERATURE_STABILIZED",CCD temperature status
+FRAMETRF,n,sparc4,,,boolean,TRUE,"true,false",Frame transfer on: T or F
+VCLKAMP,n,"sparc4,cam1",,Normal,string,TRUE,,"Clock amplitude: Normal, +1, +2, +3, +4"
+GAIN,n,"sparc4,cam1",,2,Float,TRUE,,Specifies the detector sensitivity in number of electrons per data
+RDNOISE,n,"sparc4,cam1",,10.1,Float,TRUE,,Specifies the detector readout noise in electrons
+EFFRON,n,sparc4,,1.1,Float,TRUE,,Specifies the median over all pixels of the effective readout noise
+GFOC,n,sparc4,,,float,TRUE,"range:0,inf",Guiding focus position (mm)
+GMIR,n,sparc4,,,float,TRUE,360,Rotation angle of the guiding mirror (deg)
+ACSVRSN,n,"sparc4,cam1",,,string,TRUE,,S4ACS software version
+ICSVRSN,n,sparc4,,,string,TRUE,,S4ICS software version
+GUIVRSN,n,sparc4,,,string,TRUE,,S4GUI software version
+CTRLINTE,n,sparc4,,,string,TRUE,"S4GUI,S4GEI",Graphical control interface of ACS
+ACSMODE,n,sparc4,,,boolean,TRUE,"true,false",ACS: real (T) or simulated (F)
+WPROMODE,n,sparc4,,,boolean,TRUE,"true,false",Waveplate rotator: real (T) or simulated (F)
+WPSEMODE,n,sparc4,,,boolean,TRUE,"true,false",Waveplate selector: real (T) or simulated (F)
+ANMODE,n,sparc4,,,boolean,TRUE,"true,false",Analyzer: real (T) or simulated (F)
+CALWMODE,n,sparc4,,,boolean,TRUE,"true,false",Calibration wheel: real (T) or simulated (F)
+GMIRMODE,n,sparc4,,,boolean,TRUE,"true,false",Guiding mirror: real (T) or simulated (F)
+GFOCMODE,n,sparc4,,,boolean,TRUE,"true,false",Guiding focuser: real (T) or simulated (F)
+TCSMODE,n,sparc4,,,boolean,TRUE,"true,false",TCS: real (T) or simulated (F)
+WPROSTAT,n,sparc4,,,string,TRUE,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Waveplate rotator status
+WPSESTAT,n,sparc4,,,string,TRUE,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Waveplate selector status
+ANSTAT,n,sparc4,,,string,TRUE,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Analyzer status
+CALWSTAT,n,sparc4,,,string,TRUE,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Calibration wheel status
+GMIRSTAT,n,sparc4,,,string,TRUE,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Guiduing mirror status
+GFOCSTAT,n,sparc4,,,string,TRUE,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Guiding focuser status
+WPSEL,n,sparc4,,,string,TRUE,"None,L2,L4","Waveplate: half-wave (L2), quarter-wave (L4)"
+WPSELPO,n,sparc4,,,float,TRUE,"range:-5,165",Waveplate selector position (mm)
+WPPOS,n,sparc4,,,integer,TRUE,"0,16","Waveplate idx position from 1 to 16, 0 if none"
+WPANG,n,sparc4,,,float,TRUE,360,Waveplate position angle (deg)
+CALW,n,sparc4,,,string,TRUE,"POLARIZER,DEPOLARIZER,CLEAR,SPARE,CLOSED",Selected element in calibration wheel
+CALWANG,n,sparc4,,,float,TRUE,360,Calibration wheel position angle (deg)
+ASEL,n,sparc4,,,boolean,TRUE,"true,false",Savart prism analyzer selected
+ANALANG,n,sparc4,,,float,TRUE,360,Analyzer position angle (deg)
+ACQERROR,n,sparc4,,,boolean,TRUE,"true,false",Acquisition error - see comments
+RADESYS,n,sparc4,,FK5,String,TRUE,,Reference system
