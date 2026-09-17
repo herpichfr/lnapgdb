@@ -31,12 +31,12 @@
       "failed_directory": "$BC060_FAILED_PATH",
       "model_name": "cam1.json"
     },
-    "robocam01": {
-      "name": "ROBOCAM01",
+    "robocam": {
+      "name": "ROBOCAM",
       "description": "Simple Large FoV Camera for the ROBO43 telescope",
-      "raw_data_directory": "$ROBOCAM01_PATH",
-      "failed_directory": "$ROBOCAM1_FAILED_PATH",
-      "model_name": "robocam01.json"
+      "raw_data_directory": "$ROBOCAM_PATH",
+      "failed_directory": "$ROBOCAM_FAILED_PATH",
+      "model_name": "robocam.json"
     }
   }
 }
