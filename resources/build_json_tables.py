@@ -2,12 +2,16 @@
 
 """
 Create JSON files from CSV tables containing the column definitions
-for the database. The base column in the CSV file for data collection
-is 202A, which contains the in-discussion definitions that are 
-currently agreed upon.
+for the database. Each model has its own CSV file under the models
+directory (e.g. primary_table.csv, sparc4.csv, cam1.csv, robocam.csv),
+already filtered to that model's rows via its INSTRUME column. This
+script reads every such CSV (or a selected subset) and writes the
+matching JSON file, deriving the output filename from the CSV
+basename.
 """
 
 import os
+import sys
 import pandas as pd
 import json
 import argparse
@@ -17,101 +21,124 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Create JSON files from CSV tables containing the column definitions for the database."
     )
-    parser.add_argument('model_type',
-                        type=str,
-                        choices=['primary', 'inst_spec'],
-                        help="Type of model to build: 'primary' for primary data model, 'inst_spec' for instrument-specific model."
-                        )
     parser.add_argument(
-        "--data-path",
+        "models",
         type=str,
-        default="resources",
+        nargs="*",
+        help="Model names or CSV paths to process. If omitted, every *.csv file in --models-path is processed."
+    )
+    parser.add_argument(
+        "--models-path",
+        type=str,
+        default="models",
         help="Path to the directory containing the CSV files."
     )
     parser.add_argument(
         "--output-path",
         type=str,
-        default="data",
-        help="Path to the directory where the JSON files will be saved."
-    )
-    parser.add_argument(
-        "--csv-filename",
-        type=str,
-        default="LNA-DXU-Header-standards-mandatory.csv",
-        help="Name of the CSV file containing the column definitions."
-    )
-    parser.add_argument(
-        "--instrument",
-        type=str,
         default=None,
-        help="Name of the instrument for instrument-specific model (required if model_type is 'inst_spec')."
+        help="Path to the directory where the JSON files will be saved. Defaults to --models-path."
+    )
+    parser.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="Do not back up an existing JSON file before overwriting it."
     )
     return parser.parse_args()
 
 
-def main(args):
-    # get path where this script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    resources_path = os.path.join(script_dir, '..', args.data_path)
-    model_path = os.path.join(script_dir, '..', args.output_path)
-    csv_path = os.path.join(resources_path, args.csv_filename)
+def resolve_csv_path(model, models_path):
+    if os.path.exists(model):
+        return model
+    filename = model if model.endswith(".csv") else f"{model}.csv"
+    return os.path.join(models_path, filename)
+
+
+def build_table(csv_path, output_path, make_backup):
+    basename = os.path.splitext(os.path.basename(csv_path))[0]
+    expected_model = "primary" if basename == "primary_table" else basename
+
+    print(f"Building data model for {basename}...")
     csv_table = pd.read_csv(csv_path)
 
-    if args.model_type == 'primary':
-        print("Building primary data model...")
-        json_filename = "primary_table.json"
-        csv_table = csv_table[csv_table['INST_SPEC'] == 'n']
-    elif args.model_type == 'inst_spec':
-        if not args.instrument:
-            raise ValueError(
-                "Instrument name must be provided for instrument-specific model.")
-        print(
-            f"Building instrument-specific data model for {args.instrument}...")
-        json_filename = f"{args.instrument.lower()}.json"
-        csv_table = csv_table[csv_table['INST_SPEC'] == 'y']
-    else:
-        raise ValueError(
-            "Invalid model type. Must be 'primary' or 'inst_spec'.")
-
-    # tables will be located in a back directory "data"
-    json_path = os.path.join(model_path, json_filename)
+    json_filename = f"{basename}.json"
+    json_path = os.path.join(output_path, json_filename)
     if os.path.exists(json_path):
-        print(f"Warning: {json_path} already. Renaming existing file to {
-              json_path}.bak")
-        os.rename(json_path, json_path + ".bak")
+        if make_backup:
+            print(f"Warning: {json_path} already exists. Renaming existing file to {json_path}.bak")
+            os.rename(json_path, json_path + ".bak")
+        else:
+            print(f"Warning: {json_path} already exists and will be overwritten (--no-backup).")
+
     json_table = []
 
     for line in csv_table.itertuples():
-        if not pd.isna(line.S2026A):
-            colname = line.S2026A
-            entry = {
-                "colname": colname,
-            }
-            is_nullable = line.Nullable
-            if not is_nullable:
-                entry["nullable"] = False
-            else:
-                default_value = line.Default
-                if default_value is not None and not pd.isna(default_value):
-                    entry["default_value"] = default_value
-            datatype = line.Type
-            if datatype is None or pd.isna(datatype):
-                raise ValueError(
-                    f"Datatype is required for column {colname} but is missing.")
-            else:
-                entry["datatype"] = datatype
-            allowed_values = line.Allowed_Values
-            if allowed_values is not None and not pd.isna(allowed_values):
-                entry["allowed_values"] = allowed_values
-            description = line.Comment
-            if description is not None and not pd.isna(description):
-                entry["description"] = description
-            json_table.append(entry)
+        if pd.isna(line.KWS2026A):
+            continue
+
+        colname = str(line.KWS2026A).strip()
+
+        instrume = line.INSTRUME
+        if instrume is not None and not pd.isna(instrume):
+            associations = [a.strip() for a in str(instrume).split(",")]
+            if expected_model not in associations:
+                print(
+                    f"Warning: {basename}.csv row {colname}: INSTRUME {associations} "
+                    f"does not include expected model '{expected_model}'",
+                    file=sys.stderr
+                )
+
+        entry = {"colname": colname}
+
+        entry["mandatory"] = str(line.Mandatory).strip()
+
+        is_nullable = line.Nullable
+        if not is_nullable:
+            entry["nullable"] = False
+
+        default_value = line.Default
+        if default_value is not None and not pd.isna(default_value):
+            entry["default_value"] = str(default_value).strip()
+
+        datatype = line.Type
+        if datatype is None or pd.isna(datatype):
+            raise ValueError(
+                f"Datatype is required for column {colname} but is missing.")
+        entry["datatype"] = str(datatype).strip()
+
+        allowed_values = line.Allowed_Values
+        if allowed_values is not None and not pd.isna(allowed_values):
+            entry["allowed_values"] = str(allowed_values).strip()
+
+        description = line.Comment
+        if description is not None and not pd.isna(description):
+            entry["description"] = str(description).strip()
+
+        json_table.append(entry)
 
     with open(json_path, "w") as json_file:
         json.dump(json_table, json_file, indent=4)
 
     print(f"JSON table written to {json_path}")
+
+
+def main(args):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    models_path = os.path.join(script_dir, '..', args.models_path)
+    output_path = args.output_path if args.output_path is not None else args.models_path
+    output_path = os.path.join(script_dir, '..', output_path)
+
+    if args.models:
+        csv_paths = [resolve_csv_path(m, models_path) for m in args.models]
+    else:
+        csv_paths = sorted(
+            os.path.join(models_path, f)
+            for f in os.listdir(models_path)
+            if f.endswith(".csv")
+        )
+
+    for csv_path in csv_paths:
+        build_table(csv_path, output_path, make_backup=not args.no_backup)
 
 
 if __name__ == "__main__":

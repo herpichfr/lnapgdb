@@ -6,10 +6,13 @@ data_collector.py (ingestion) and model.py (backfill) to derive decimal
 degree values from the raw RA/DEC strings stored in FITS headers.
 Right ascension is conventionally recorded either as sexagesimal hours
 ('HH:MM:SS.ss') or as a bare number already in decimal degrees; declination
-is always degrees, either sexagesimal ('+/-DD:MM:SS.ss') or bare. Both
-public functions are total: they never raise and return None for anything
-they cannot confidently convert, so that a bad or missing coordinate never
-turns a valid file into a failed one.
+is always degrees, either sexagesimal ('+/-DD:MM:SS.ss') or bare. A third
+helper, angle_to_degrees(), does the same degrees parsing with no range
+restriction at all, for angles (e.g. a site longitude) whose valid range is
+a model concern rather than this module's. All three public functions are
+total: they never raise and return None for anything they cannot
+confidently convert, so that a bad or missing coordinate never turns a
+valid file into a failed one.
 
 Copyright (c) 2025, LNA DB Team. All rights reserved.
 
@@ -59,10 +62,15 @@ def _parse_sexagesimal(text):
     return sign * (degrees + minutes / 60.0 + seconds / 3600.0)
 
 
-def _to_degrees(value, is_ra):
+def _to_degrees(value, is_ra, clamp=True):
     """
-    Shared conversion core for ra_to_degrees()/dec_to_degrees(). Never
-    raises; returns None for anything it cannot convert.
+    Shared conversion core for ra_to_degrees()/dec_to_degrees()/
+    angle_to_degrees(). Never raises; returns None for anything it cannot
+    convert.
+
+    `is_ra` selects hours-to-degrees (x15) plus modulo-360 normalisation.
+    `clamp` (ignored when `is_ra` is True) selects the +/-90 rejection that
+    dec_to_degrees() wants and angle_to_degrees() doesn't.
     """
     if value is None:
         return None
@@ -94,7 +102,7 @@ def _to_degrees(value, is_ra):
 
     if is_ra:
         degrees = degrees % 360.0
-    elif degrees < -90.0 or degrees > 90.0:
+    elif clamp and (degrees < -90.0 or degrees > 90.0):
         return None
 
     return degrees
@@ -125,3 +133,20 @@ def dec_to_degrees(value):
     not parse, or a value outside [-90, +90].
     """
     return _to_degrees(value, is_ra=False)
+
+
+def angle_to_degrees(value):
+    """
+    Convert a generic signed angle (e.g. a geographic longitude) to decimal
+    degrees.
+
+    Accepts an int/float or a bare-float string already in degrees, or a
+    sexagesimal '+/-D:M:S.ss' string (colon- or space-separated), with the
+    leading sign applied to the whole value -- the same parsing as
+    dec_to_degrees(). Unlike dec_to_degrees(), no +/-90 range restriction
+    is applied: an angle's valid range (e.g. -180..180 for a longitude) is
+    the caller's (the data model's) business, not this module's. Returns
+    None (never raises) for None, an empty string, a known sentinel, or
+    anything that does not parse.
+    """
+    return _to_degrees(value, is_ra=False, clamp=False)

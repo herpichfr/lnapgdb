@@ -1,315 +1,357 @@
 [
     {
         "colname": "SIMPLE",
+        "mandatory": "y",
         "nullable": false,
+        "default_value": "T",
         "datatype": "Boolean",
         "description": "Standard FITS (NOST-100-2.0)"
     },
     {
         "colname": "BSCALE",
-        "default_value": "1",
-        "datatype": "integer",
+        "mandatory": "y",
+        "datatype": "Integer",
         "description": "Linear factor in scaling equation"
     },
     {
         "colname": "BZERO",
-        "default_value": "32768",
-        "datatype": "float",
+        "mandatory": "y",
+        "datatype": "Float",
         "description": "value = fits-value*BSCALE+BZERO"
     },
     {
         "colname": "BUNIT",
-        "default_value": "adu",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "String",
         "description": "Physical unit of array values"
     },
     {
         "colname": "BITPIX",
-        "default_value": "16",
-        "datatype": "integer",
+        "mandatory": "y",
+        "datatype": "Integer",
         "description": "# bits storing pix values"
     },
     {
         "colname": "NAXIS",
+        "mandatory": "y",
         "nullable": false,
-        "datatype": "integer",
+        "datatype": "Integer",
         "description": "# of axes in frame"
     },
     {
         "colname": "NAXIS1",
+        "mandatory": "y",
         "nullable": false,
-        "datatype": "integer",
+        "datatype": "Integer",
         "description": "# of pixels/row"
     },
     {
         "colname": "NAXIS2",
+        "mandatory": "y",
         "nullable": false,
-        "datatype": "integer",
+        "datatype": "Integer",
         "description": "# of rows (also # of scan lines)"
     },
     {
         "colname": "EXTEND",
+        "mandatory": "y",
         "default_value": "T",
         "datatype": "Boolean",
-        "allowed_values": "T,F",
         "description": "Extensions may be present"
     },
     {
         "colname": "PROPID",
-        "default_value": "EN2026A-0001",
+        "mandatory": "y",
         "nullable": false,
-        "datatype": "string",
+        "default_value": "UNKNOWN",
+        "datatype": "String",
         "description": "The identification code assigned to each observing run by the Science Committee"
     },
     {
         "colname": "PROPOSAL",
-        "default_value": "SOAR",
-        "datatype": "string"
+        "mandatory": "n",
+        "datatype": "String",
+        "description": "Through where the proposal was received"
     },
     {
         "colname": "OBSERVER",
-        "default_value": "CHIMERA",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "String",
         "description": "Name of the observer"
     },
     {
         "colname": "OBJECT",
-        "default_value": "NGC1234",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "String",
         "description": "Target as given by the user"
     },
     {
         "colname": "ORIGIN",
+        "mandatory": "n",
         "default_value": "LNA",
-        "datatype": "string",
+        "datatype": "String",
         "description": "Who delivers the data"
     },
     {
         "colname": "TELESCOP",
-        "default_value": "PE160",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "String",
         "description": "Telescope name"
     },
     {
-        "colname": "FOCRED",
-        "default_value": false,
-        "datatype": "Boolean",
-        "description": "Focal reducer used"
-    },
-    {
         "colname": "SITEID",
-        "default_value": "OPD",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "String",
         "description": "Observatory/Site"
     },
     {
         "colname": "OBSLONG",
-        "default_value": "-45:34:57",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "Float",
         "allowed_values": "range:-180,180",
         "description": "Observatory East Longitude (DEG, -180 to 180)"
     },
     {
         "colname": "OBSLAT",
-        "default_value": "-22:32:04",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "Float",
         "allowed_values": "range:-90,90",
         "description": "Observatory North Latitude (DEG, -90 to 90)"
     },
     {
         "colname": "OBSALT",
-        "default_value": "1864",
+        "mandatory": "n",
         "datatype": "float",
         "allowed_values": "range:0,inf",
         "description": "Observatory elevation above sea level (m)"
     },
     {
         "colname": "INSTRUME",
+        "mandatory": "y",
         "nullable": false,
-        "datatype": "string",
+        "datatype": "String",
         "description": "Instrument used"
     },
     {
         "colname": "OBSTYPE",
-        "default_value": "OBJECT",
+        "mandatory": "y",
         "datatype": "string",
-        "allowed_values": "OBJECT,ZERO,FLAT,DARK,FOCUS",
+        "allowed_values": "OBJECT,ZERO,FLAT,DARK,FOCUS,COMP",
         "description": "Image type: OBJECT, ZERO, FLAT, DARK, FOCUS"
     },
     {
         "colname": "FILENAME",
+        "mandatory": "y",
         "nullable": false,
-        "datatype": "string",
-        "unique": true,
+        "datatype": "String",
         "description": "Original file name"
     },
     {
         "colname": "DATEFILE",
-        "default_value": "2001-08-19T09:33:11.950",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "String",
         "description": "File creation date"
     },
     {
         "colname": "DATE-OBS",
+        "mandatory": "y",
         "nullable": false,
-        "datatype": "string",
+        "datatype": "String",
         "description": "Exposure start"
     },
     {
         "colname": "UTTIME",
+        "mandatory": "n",
         "datatype": "string",
         "description": "UTC time at start of observation"
     },
     {
         "colname": "UTDATE",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "Float",
         "description": "UTC at start (s)"
     },
     {
         "colname": "EXPTIME",
-        "default_value": "60",
-        "datatype": "float",
+        "mandatory": "n",
+        "datatype": "Float",
         "description": "Exposure time (s)"
     },
     {
         "colname": "RA",
-        "default_value": "21.955217",
+        "mandatory": "y",
         "datatype": "string",
         "description": "Pointing (deg) (J2000.0)"
     },
     {
         "colname": "DEC",
-        "default_value": "-1.8821",
+        "mandatory": "y",
         "datatype": "string",
         "description": "Pointing (deg) (J2000.0)"
     },
     {
         "colname": "EQUINOX",
-        "default_value": "2000",
+        "mandatory": "n",
+        "nullable": false,
         "datatype": "string",
-        "description": "Standard FK5 epoc"
+        "description": "Standard FK5 epoch"
     },
     {
         "colname": "TELFOCUS",
-        "default_value": "0",
+        "mandatory": "n",
         "datatype": "integer",
         "allowed_values": "range:0,inf",
         "description": "Telescope focus position (arbitrary units)"
     },
     {
         "colname": "TCSHA",
-        "default_value": "00:00:00",
+        "mandatory": "n",
         "datatype": "string",
         "description": "TCS hour angle: HH:MM:SS"
     },
     {
         "colname": "TCSDATE",
+        "mandatory": "n",
         "datatype": "string",
         "description": "TCS local date (isot)"
     },
     {
         "colname": "EXTTEMP",
-        "default_value": "-20.0",
+        "mandatory": "n",
         "datatype": "float",
-        "allowed_values": "range:-20,40",
+        "allowed_values": "range:-60,60",
         "description": "Temperature (deg C), weather tower"
     },
     {
         "colname": "AIRMASS",
+        "mandatory": "n",
         "datatype": "float",
         "allowed_values": "range:1,inf",
         "description": "Airmass at start of observation"
     },
     {
         "colname": "PRESSURE",
+        "mandatory": "n",
         "datatype": "float",
         "allowed_values": "range:0,inf",
         "description": "Barometric pressure (mb), weather tower"
     },
     {
         "colname": "HUMIDITY",
-        "default_value": "90",
+        "mandatory": "n",
         "datatype": "float",
         "allowed_values": "range:0,100",
         "description": "Relative humidity (%), weather tower"
     },
     {
+        "colname": "WEIGHT",
+        "mandatory": "p",
+        "datatype": "Float",
+        "description": "This is the median over all pixels of the weight map"
+    },
+    {
+        "colname": "BLANK",
+        "mandatory": "n",
+        "datatype": "Integer",
+        "description": "Value used for NULL pixels"
+    },
+    {
         "colname": "DATE",
-        "default_value": "2001-08-19T09:34:52.676",
-        "datatype": "string",
+        "mandatory": "y",
+        "datatype": "String",
         "description": "Date the file was written"
     },
     {
+        "colname": "DATAMAX",
+        "mandatory": "n",
+        "datatype": "Float",
+        "description": "Maximal pixel value"
+    },
+    {
+        "colname": "DATAMIN",
+        "mandatory": "n",
+        "datatype": "Float",
+        "description": "Minimal pixel value"
+    },
+    {
         "colname": "TEXPTIME",
-        "default_value": "240",
-        "datatype": "float",
-        "description": "The arithmetic sum of the integration time of all exposures included in this product (s)."
+        "mandatory": "n",
+        "datatype": "Float",
+        "description": "The arithmetic sum of the integration time of all exposures included in this\nproduct (s)."
     },
     {
         "colname": "MJD-OBS",
-        "default_value": "52140.39805",
-        "datatype": "float",
+        "mandatory": "n",
+        "datatype": "Float",
         "description": "MJD at exposure start (d)"
     },
     {
         "colname": "MJD-END",
-        "default_value": "52140.39875",
-        "datatype": "float",
+        "mandatory": "n",
+        "datatype": "Float",
         "description": "MJD at exposure end (d)"
     },
     {
         "colname": "DATE-END",
-        "default_value": "2001-08-19T09:34:51.950",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "String",
         "description": "Exposure end"
     },
     {
         "colname": "TIMESYS",
-        "default_value": "UTC",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "String",
         "description": "Time system used"
     },
     {
         "colname": "LST",
-        "default_value": "19:51:15.380",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "String",
         "description": "LST at start (s)"
     },
     {
         "colname": "PI-COI",
-        "default_value": "SCIENTIST",
-        "datatype": "string",
+        "mandatory": "n",
+        "default_value": "UNKNOWN",
+        "datatype": "String",
         "description": "Name of the PI/Co-I"
     },
     {
         "colname": "OBID",
-        "default_value": "311",
-        "datatype": "integer",
+        "mandatory": "n",
+        "datatype": "Integer",
         "description": "Observation Block ID run number"
     },
     {
         "colname": "PRODCATG",
-        "default_value": "SCIENCE.IMAGE",
-        "datatype": "string",
+        "mandatory": "n",
+        "datatype": "String",
         "description": "Data product category"
     },
     {
         "colname": "CHECKSUM",
-        "default_value": "1234567890",
+        "mandatory": "y",
         "nullable": false,
-        "datatype": "string",
+        "datatype": "String",
         "description": "HDU checksum"
     },
     {
         "colname": "DATASUM",
-        "default_value": "1234567890",
+        "mandatory": "y",
         "nullable": false,
-        "datatype": "string",
+        "datatype": "String",
         "description": "Data unit checksum"
     },
     {
         "colname": "COMMENT",
+        "mandatory": "n",
         "default_value": "Any comment",
-        "datatype": "string"
+        "datatype": "String"
+    },
+    {
+        "colname": "FOCRED",
+        "mandatory": "n",
+        "datatype": "boolean",
+        "description": "Focal reducer used"
     }
 ]

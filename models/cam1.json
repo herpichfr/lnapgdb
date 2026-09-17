@@ -1,117 +1,119 @@
 [
     {
         "colname": "INSTMODE",
-        "default_value": "PHOTOMETRY",
+        "mandatory": "y",
         "datatype": "String",
         "description": "Technique used during the observation"
     },
     {
+        "colname": "FILTER",
+        "mandatory": "y",
+        "datatype": "String",
+        "description": "Filter name"
+    },
+    {
         "colname": "CCDSERN",
-        "default_value": "Dummy SN",
+        "mandatory": "n",
         "datatype": "string",
         "description": "CCD serial number"
     },
     {
         "colname": "NFRAMES",
-        "default_value": "1",
+        "mandatory": "n",
         "datatype": "integer",
         "description": "Number of frames in sequence"
     },
     {
         "colname": "ACQMODE",
-        "default_value": "Single Scan",
+        "mandatory": "n",
         "datatype": "string",
         "description": "Acquisition mode"
     },
     {
         "colname": "PREAMP",
-        "default_value": "1",
+        "mandatory": "n",
         "datatype": "string",
         "description": "Pre-amplifier gain"
     },
     {
         "colname": "VSHIFT",
-        "default_value": "1.13",
+        "mandatory": "n",
         "datatype": "float",
         "description": "Vertical shift speed (ms)"
     },
     {
         "colname": "EMGAIN",
+        "mandatory": "n",
         "datatype": "integer",
         "allowed_values": "range:0,inf",
         "description": "Electron multiplier gain"
     },
     {
         "colname": "VBIN",
-        "default_value": "1",
+        "mandatory": "n",
         "datatype": "integer",
         "description": "Vertical binning (pix)"
     },
     {
         "colname": "HBIN",
-        "default_value": "1",
+        "mandatory": "n",
         "datatype": "integer",
         "description": "Horizontal binning (pix)"
     },
     {
         "colname": "CCDTEMP",
-        "datatype": "float",
+        "mandatory": "n",
+        "datatype": "integer",
         "allowed_values": "range:-80,25",
         "description": "CCD temperature (deg C)"
     },
     {
         "colname": "VCLKAMP",
-        "default_value": "Normal",
+        "mandatory": "n",
         "datatype": "string",
         "description": "Clock amplitude: Normal, +1, +2, +3, +4"
     },
     {
         "colname": "GAIN",
-        "default_value": "2",
-        "datatype": "float",
+        "mandatory": "n",
+        "datatype": "Float",
         "description": "Specifies the detector sensitivity in number of electrons per data"
     },
     {
         "colname": "RDNOISE",
-        "default_value": "10.1",
-        "datatype": "float",
+        "mandatory": "n",
+        "datatype": "Float",
         "description": "Specifies the detector readout noise in electrons"
     },
     {
         "colname": "ACSVRSN",
-        "default_value": "0.0.0",
+        "mandatory": "n",
         "datatype": "string",
-        "description": "ACS software version"
+        "description": "S4ACS software version"
     },
     {
         "colname": "DETECTOR",
-        "default_value": "QHY600M",
+        "mandatory": "y",
         "nullable": false,
         "datatype": "string",
         "description": "Name of the detector"
     },
     {
-        "colname": "FILTER",
-        "default_value": "V",
-        "nullable": false,
-        "datatype": "string",
-        "description": "Filter name"
-    },
-    {
         "colname": "READMODE",
-        "default_value": "Image",
+        "mandatory": "n",
         "datatype": "string",
         "description": "Readout Mode"
     },
     {
         "colname": "READTIME",
-        "default_value": "1.00E-06",
+        "mandatory": "n",
         "datatype": "float",
         "description": "Pixel readout time"
     },
     {
         "colname": "PLATESCL",
-        "default_value": "0.68",
+        "mandatory": "n",
+        "nullable": false,
         "datatype": "float",
         "allowed_values": "range:0,inf",
         "description": "Plate scale in arcsec/pixel"

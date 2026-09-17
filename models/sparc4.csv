@@ -1,7 +1,7 @@
 KWS2026A,Mandatory,INSTRUME,Default,Example,Type,Nullable,Allowed_Values,Comment
 INSTMODE,y,"sparc4,cam1,robocam",,PHOTOMETRY,String,TRUE,,Technique used during the observation
 SYNCMODE,n,sparc4,,,String,TRUE,"SYNC,ASYNC",Synchronization across channels at start of acq
-INSTROT,n,sparc4,,GUIDEANG,float,TRUE,360,Instrument rotator angle in degrees
+INSTROT,n,sparc4,,GUIDEANG,float,TRUE,"range:0,360",Instrument rotator angle in degrees
 FILTER,y,"sparc4,cam1,robocam",,V,String,TRUE,,Filter name
 CHANNEL,n,sparc4,,,integer,TRUE,"1,2,3,4","Instrument channel: 1 (g), 2 (r), 3 (i), 4 (z)"
 CHANNEL1,n,sparc4,,CHANNEL 1,boolean,TRUE,"true,false",Channel 1 is on (T) or off (F)
@@ -24,10 +24,10 @@ EMMODE,n,sparc4,,,string,TRUE,"Electron Multiplying,Conventional",Output amplifi
 EMGAIN,n,"sparc4,cam1",,,integer,TRUE,"range:0,inf",Electron multiplier gain
 VBIN,n,"sparc4,cam1",,1,integer,TRUE,,Vertical binning (pix)
 HBIN,n,"sparc4,cam1",,1,integer,TRUE,,Horizontal binning (pix)
-INITLIN,n,sparc4,,,integer,TRUE,"11,024",Initial line (pix)
-INITCOL,n,sparc4,,,integer,TRUE,"11,024",Initial column (pix)
-FINALLIN,n,sparc4,,,integer,TRUE,"11,024",Final line (pix)
-FINALCOL,n,sparc4,,,integer,TRUE,"11,024",Final column (pix)
+INITLIN,n,sparc4,,,integer,TRUE,"range:1,1024",Initial line (pix)
+INITCOL,n,sparc4,,,integer,TRUE,"range:1,1024",Initial column (pix)
+FINALLIN,n,sparc4,,,integer,TRUE,"range:1,1024",Final line (pix)
+FINALCOL,n,sparc4,,,integer,TRUE,"range:1,1024",Final column (pix)
 SHUTTER,n,sparc4,,,string,TRUE,"Open,Closed",Shutter mode
 COOLER,n,sparc4,,,boolean,TRUE,"true,false",CCD cooler on: T or F
 CCDTEMP,n,"sparc4,cam1",,,integer,TRUE,"range:-80,25",CCD temperature (deg C)
@@ -39,7 +39,7 @@ GAIN,n,"sparc4,cam1",,2,Float,TRUE,,Specifies the detector sensitivity in number
 RDNOISE,n,"sparc4,cam1",,10.1,Float,TRUE,,Specifies the detector readout noise in electrons
 EFFRON,n,sparc4,,1.1,Float,TRUE,,Specifies the median over all pixels of the effective readout noise
 GFOC,n,sparc4,,,float,TRUE,"range:0,inf",Guiding focus position (mm)
-GMIR,n,sparc4,,,float,TRUE,360,Rotation angle of the guiding mirror (deg)
+GMIR,n,sparc4,,,float,TRUE,"range:0,360",Rotation angle of the guiding mirror (deg)
 ACSVRSN,n,"sparc4,cam1",,,string,TRUE,,S4ACS software version
 ICSVRSN,n,sparc4,,,string,TRUE,,S4ICS software version
 GUIVRSN,n,sparc4,,,string,TRUE,,S4GUI software version
@@ -60,11 +60,11 @@ GMIRSTAT,n,sparc4,,,string,TRUE,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Guiduing mir
 GFOCSTAT,n,sparc4,,,string,TRUE,"READY,ACK,BUSY,ERROR,TIMEOUT,NONE",Guiding focuser status
 WPSEL,n,sparc4,,,string,TRUE,"None,L2,L4","Waveplate: half-wave (L2), quarter-wave (L4)"
 WPSELPO,n,sparc4,,,float,TRUE,"range:-5,165",Waveplate selector position (mm)
-WPPOS,n,sparc4,,,integer,TRUE,"0,16","Waveplate idx position from 1 to 16, 0 if none"
-WPANG,n,sparc4,,,float,TRUE,360,Waveplate position angle (deg)
+WPPOS,n,sparc4,,,integer,TRUE,"range:0,16","Waveplate idx position from 1 to 16, 0 if none"
+WPANG,n,sparc4,,,float,TRUE,"range:0,360",Waveplate position angle (deg)
 CALW,n,sparc4,,,string,TRUE,"POLARIZER,DEPOLARIZER,CLEAR,SPARE,CLOSED",Selected element in calibration wheel
-CALWANG,n,sparc4,,,float,TRUE,360,Calibration wheel position angle (deg)
+CALWANG,n,sparc4,,,float,TRUE,"range:0,360",Calibration wheel position angle (deg)
 ASEL,n,sparc4,,,boolean,TRUE,"true,false",Savart prism analyzer selected
-ANALANG,n,sparc4,,,float,TRUE,360,Analyzer position angle (deg)
+ANALANG,n,sparc4,,,float,TRUE,"range:0,360",Analyzer position angle (deg)
 ACQERROR,n,sparc4,,,boolean,TRUE,"true,false",Acquisition error - see comments
 RADESYS,n,sparc4,,FK5,String,TRUE,,Reference system
