@@ -4,59 +4,59 @@
         "mandatory": "y",
         "nullable": false,
         "default_value": "T",
-        "datatype": "Boolean",
+        "datatype": "boolean",
         "description": "Standard FITS (NOST-100-2.0)"
     },
     {
         "colname": "BSCALE",
         "mandatory": "y",
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "Linear factor in scaling equation"
     },
     {
         "colname": "BZERO",
         "mandatory": "y",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "value = fits-value*BSCALE+BZERO"
     },
     {
         "colname": "BUNIT",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Physical unit of array values"
     },
     {
         "colname": "BITPIX",
         "mandatory": "y",
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "# bits storing pix values"
     },
     {
         "colname": "NAXIS",
         "mandatory": "y",
         "nullable": false,
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "# of axes in frame"
     },
     {
         "colname": "NAXIS1",
         "mandatory": "y",
         "nullable": false,
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "# of pixels/row"
     },
     {
         "colname": "NAXIS2",
         "mandatory": "y",
         "nullable": false,
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "# of rows (also # of scan lines)"
     },
     {
         "colname": "EXTEND",
         "mandatory": "y",
         "default_value": "T",
-        "datatype": "Boolean",
+        "datatype": "boolean",
         "description": "Extensions may be present"
     },
     {
@@ -64,57 +64,57 @@
         "mandatory": "y",
         "nullable": false,
         "default_value": "UNKNOWN",
-        "datatype": "String",
+        "datatype": "string",
         "description": "The identification code assigned to each observing run by the Science Committee"
     },
     {
         "colname": "PROPOSAL",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Through where the proposal was received"
     },
     {
         "colname": "OBSERVER",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Name of the observer"
     },
     {
         "colname": "OBJECT",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Target as given by the user"
     },
     {
         "colname": "ORIGIN",
         "mandatory": "n",
         "default_value": "LNA",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Who delivers the data"
     },
     {
         "colname": "TELESCOP",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Telescope name"
     },
     {
         "colname": "SITEID",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Observatory/Site"
     },
     {
         "colname": "OBSLONG",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "allowed_values": "range:-180,180",
         "description": "Observatory East Longitude (DEG, -180 to 180)"
     },
     {
         "colname": "OBSLAT",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "allowed_values": "range:-90,90",
         "description": "Observatory North Latitude (DEG, -90 to 90)"
     },
@@ -129,7 +129,7 @@
         "colname": "INSTRUME",
         "mandatory": "y",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "description": "Instrument used"
     },
     {
@@ -143,20 +143,20 @@
         "colname": "FILENAME",
         "mandatory": "y",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "description": "Original file name"
     },
     {
         "colname": "DATEFILE",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "File creation date"
     },
     {
         "colname": "DATE-OBS",
         "mandatory": "y",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "description": "Exposure start"
     },
     {
@@ -168,13 +168,13 @@
     {
         "colname": "UTDATE",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "UTC at start (s)"
     },
     {
         "colname": "EXPTIME",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Exposure time (s)"
     },
     {
@@ -246,107 +246,107 @@
     {
         "colname": "WEIGHT",
         "mandatory": "p",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "This is the median over all pixels of the weight map"
     },
     {
         "colname": "BLANK",
         "mandatory": "n",
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "Value used for NULL pixels"
     },
     {
         "colname": "DATE",
         "mandatory": "y",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Date the file was written"
     },
     {
         "colname": "DATAMAX",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Maximal pixel value"
     },
     {
         "colname": "DATAMIN",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Minimal pixel value"
     },
     {
         "colname": "TEXPTIME",
         "mandatory": "n",
-        "datatype": "Float",
-        "description": "The arithmetic sum of the integration time of all exposures included in this\nproduct (s)."
+        "datatype": "float",
+        "description": "The arithmetic sum of the integration time of all exposures included in this product (s)."
     },
     {
         "colname": "MJD-OBS",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "MJD at exposure start (d)"
     },
     {
         "colname": "MJD-END",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "MJD at exposure end (d)"
     },
     {
         "colname": "DATE-END",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Exposure end"
     },
     {
         "colname": "TIMESYS",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Time system used"
     },
     {
         "colname": "LST",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "LST at start (s)"
     },
     {
         "colname": "PI-COI",
         "mandatory": "n",
         "default_value": "UNKNOWN",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Name of the PI/Co-I"
     },
     {
         "colname": "OBID",
         "mandatory": "n",
-        "datatype": "Integer",
+        "datatype": "integer",
         "description": "Observation Block ID run number"
     },
     {
         "colname": "PRODCATG",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Data product category"
     },
     {
         "colname": "CHECKSUM",
         "mandatory": "y",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "description": "HDU checksum"
     },
     {
         "colname": "DATASUM",
         "mandatory": "y",
         "nullable": false,
-        "datatype": "String",
+        "datatype": "string",
         "description": "Data unit checksum"
     },
     {
         "colname": "COMMENT",
         "mandatory": "n",
         "default_value": "Any comment",
-        "datatype": "String"
+        "datatype": "string"
     },
     {
         "colname": "FOCRED",

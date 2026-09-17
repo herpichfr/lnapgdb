@@ -2,13 +2,13 @@
     {
         "colname": "INSTMODE",
         "mandatory": "y",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Technique used during the observation"
     },
     {
         "colname": "FILTER",
         "mandatory": "y",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Filter name"
     },
     {
@@ -76,13 +76,13 @@
     {
         "colname": "GAIN",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Specifies the detector sensitivity in number of electrons per data"
     },
     {
         "colname": "RDNOISE",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Specifies the detector readout noise in electrons"
     },
     {

@@ -2,13 +2,13 @@
     {
         "colname": "INSTMODE",
         "mandatory": "y",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Technique used during the observation"
     },
     {
         "colname": "FILTER",
         "mandatory": "y",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Filter name"
     },
     {
@@ -20,7 +20,7 @@
     {
         "colname": "DETEXP",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "allowed_values": "range:0,inf",
         "description": "[s] Actual exposure time"
     },

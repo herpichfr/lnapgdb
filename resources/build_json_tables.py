@@ -7,14 +7,52 @@ directory (e.g. primary_table.csv, sparc4.csv, cam1.csv, robocam.csv),
 already filtered to that model's rows via its INSTRUME column. This
 script reads every such CSV (or a selected subset) and writes the
 matching JSON file, deriving the output filename from the CSV
-basename.
+basename. Every string written into a JSON entry is sanitized first,
+so control characters and non-ASCII punctuation from the hand-maintained
+CSVs cannot leak into downstream FITS-header validation or Postgres DDL.
+Declared datatypes are also lowercased, because the CSVs mix cases
+(Float and float, String and string) for the same type.
 """
 
 import os
 import sys
+import re
+import unicodedata
 import pandas as pd
 import json
 import argparse
+
+
+_TRANSLITERATION_MAP = {
+    "\u2018": "'",
+    "\u2019": "'",
+    "\u201c": '"',
+    "\u201d": '"',
+    "\u2013": "-",
+    "\u2014": "-",
+    "\u00a0": " ",
+    "\u2026": "...",
+}
+
+
+def clean_text(value, basename, colname, field):
+    original = str(value)
+    text = original
+    for src, dst in _TRANSLITERATION_MAP.items():
+        text = text.replace(src, dst)
+    text = unicodedata.normalize("NFKD", text)
+    text = text.encode("ascii", "ignore").decode("ascii")
+    text = "".join(" " if ord(c) < 32 or ord(c) == 127 else c for c in text)
+    text = re.sub(r"\s+", " ", text).strip()
+
+    if text != original:
+        row_label = colname if colname is not None else text
+        print(
+            f"Warning: {basename}.csv row {row_label}: field '{field}' was sanitized",
+            file=sys.stderr
+        )
+
+    return text
 
 
 def parse_args():
@@ -76,7 +114,7 @@ def build_table(csv_path, output_path, make_backup):
         if pd.isna(line.KWS2026A):
             continue
 
-        colname = str(line.KWS2026A).strip()
+        colname = clean_text(line.KWS2026A, basename, None, "colname")
 
         instrume = line.INSTRUME
         if instrume is not None and not pd.isna(instrume):
@@ -90,7 +128,7 @@ def build_table(csv_path, output_path, make_backup):
 
         entry = {"colname": colname}
 
-        entry["mandatory"] = str(line.Mandatory).strip()
+        entry["mandatory"] = clean_text(line.Mandatory, basename, colname, "mandatory")
 
         is_nullable = line.Nullable
         if not is_nullable:
@@ -98,26 +136,26 @@ def build_table(csv_path, output_path, make_backup):
 
         default_value = line.Default
         if default_value is not None and not pd.isna(default_value):
-            entry["default_value"] = str(default_value).strip()
+            entry["default_value"] = clean_text(default_value, basename, colname, "default_value")
 
         datatype = line.Type
         if datatype is None or pd.isna(datatype):
             raise ValueError(
                 f"Datatype is required for column {colname} but is missing.")
-        entry["datatype"] = str(datatype).strip()
+        entry["datatype"] = clean_text(datatype, basename, colname, "datatype").lower()
 
         allowed_values = line.Allowed_Values
         if allowed_values is not None and not pd.isna(allowed_values):
-            entry["allowed_values"] = str(allowed_values).strip()
+            entry["allowed_values"] = clean_text(allowed_values, basename, colname, "allowed_values")
 
         description = line.Comment
         if description is not None and not pd.isna(description):
-            entry["description"] = str(description).strip()
+            entry["description"] = clean_text(description, basename, colname, "description")
 
         json_table.append(entry)
 
     with open(json_path, "w") as json_file:
-        json.dump(json_table, json_file, indent=4)
+        json.dump(json_table, json_file, indent=4, ensure_ascii=True)
 
     print(f"JSON table written to {json_path}")
 

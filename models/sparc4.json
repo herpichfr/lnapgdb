@@ -2,13 +2,13 @@
     {
         "colname": "INSTMODE",
         "mandatory": "y",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Technique used during the observation"
     },
     {
         "colname": "SYNCMODE",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "allowed_values": "SYNC,ASYNC",
         "description": "Synchronization across channels at start of acq"
     },
@@ -22,7 +22,7 @@
     {
         "colname": "FILTER",
         "mandatory": "y",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Filter name"
     },
     {
@@ -243,19 +243,19 @@
     {
         "colname": "GAIN",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Specifies the detector sensitivity in number of electrons per data"
     },
     {
         "colname": "RDNOISE",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Specifies the detector readout noise in electrons"
     },
     {
         "colname": "EFFRON",
         "mandatory": "n",
-        "datatype": "Float",
+        "datatype": "float",
         "description": "Specifies the median over all pixels of the effective readout noise"
     },
     {
@@ -461,7 +461,7 @@
     {
         "colname": "RADESYS",
         "mandatory": "n",
-        "datatype": "String",
+        "datatype": "string",
         "description": "Reference system"
     }
 ]
