@@ -63,8 +63,8 @@
     {
         "colname": "CCDTEMP",
         "mandatory": "n",
-        "datatype": "integer",
-        "allowed_values": "range:-80,25",
+        "datatype": "float",
+        "allowed_values": "range:-180,25",
         "description": "CCD temperature (deg C)"
     },
     {

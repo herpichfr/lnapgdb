@@ -9,7 +9,7 @@ VSHIFT,n,"sparc4,cam1",,1.13,float,TRUE,,Vertical shift speed (ms)
 EMGAIN,n,"sparc4,cam1",,,integer,TRUE,"range:0,inf",Electron multiplier gain
 VBIN,n,"sparc4,cam1",,1,integer,TRUE,,Vertical binning (pix)
 HBIN,n,"sparc4,cam1",,1,integer,TRUE,,Horizontal binning (pix)
-CCDTEMP,n,"sparc4,cam1",,,integer,TRUE,"range:-80,25",CCD temperature (deg C)
+CCDTEMP,n,"sparc4,cam1",,,float,TRUE,"range:-180,25",CCD temperature (deg C)
 VCLKAMP,n,"sparc4,cam1",,Normal,string,TRUE,,"Clock amplitude: Normal, +1, +2, +3, +4"
 GAIN,n,"sparc4,cam1",,2,Float,TRUE,,Specifies the detector sensitivity in number of electrons per data
 RDNOISE,n,"sparc4,cam1",,10.1,Float,TRUE,,Specifies the detector readout noise in electrons

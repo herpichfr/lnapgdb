@@ -30,7 +30,7 @@ FINALLIN,n,sparc4,,,integer,TRUE,"range:1,1024",Final line (pix)
 FINALCOL,n,sparc4,,,integer,TRUE,"range:1,1024",Final column (pix)
 SHUTTER,n,sparc4,,,string,TRUE,"Open,Closed",Shutter mode
 COOLER,n,sparc4,,,boolean,TRUE,"true,false",CCD cooler on: T or F
-CCDTEMP,n,"sparc4,cam1",,,integer,TRUE,"range:-80,25",CCD temperature (deg C)
+CCDTEMP,n,"sparc4,cam1",,,float,TRUE,"range:-180,25",CCD temperature (deg C)
 TGTEMP,n,sparc4,,,integer,TRUE,"range:-80,25",CCD target temperature (deg C)
 TEMPST,n,sparc4,,,string,TRUE,"TEMPERATURE_OFF,TEMPERATURE_NOT_REACHED,TEMPERATURE_NOT_STABILIZED,TEMPERATURE_STABILIZED",CCD temperature status
 FRAMETRF,n,sparc4,,,boolean,TRUE,"true,false",Frame transfer on: T or F
