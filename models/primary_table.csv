@@ -24,7 +24,7 @@ FILENAME,y,primary,,20251105_S4C1_00001.fits,String,FALSE,,Original file name
 DATEFILE,n,primary,,2001-08-19T09:33:11.950,String,TRUE,,File creation date
 DATE-OBS,y,primary,,2001-08-19T09:33:11.950,String,FALSE,,Exposure start
 UTTIME,n,primary,,,string,TRUE,,UTC time at start of observation
-UTDATE,n,primary,,34391,Float,TRUE,,UTC at start (s)
+UTDATE,n,primary,,2026-02-19,String,TRUE,,UTC date at start of observation (YYYY-MM-DD)
 EXPTIME,n,primary,,60,Float,TRUE,,Exposure time (s)
 RA,y,primary,,21.955217,string,TRUE,,Pointing (deg) (J2000.0)
 DEC,y,primary,,-1.8821,string,TRUE,,Pointing (deg) (J2000.0)

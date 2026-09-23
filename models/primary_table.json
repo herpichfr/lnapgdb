@@ -168,8 +168,8 @@
     {
         "colname": "UTDATE",
         "mandatory": "n",
-        "datatype": "float",
-        "description": "UTC at start (s)"
+        "datatype": "string",
+        "description": "UTC date at start of observation (YYYY-MM-DD)"
     },
     {
         "colname": "EXPTIME",
