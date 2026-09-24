@@ -1,4 +1,4 @@
-# 🌌 BancoINA – Astronomical Image Database (FITS)
+# 🌌 LNADB – LNA Observations Database
 Postgresql database for LNA observations
 
 ## 📖 About the Project
